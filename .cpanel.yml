@@ -1,23 +1,27 @@
 ---
 deployment:
   tasks:
-    # Deploy frontend files (HTML, CSS, JS, images, vendor files)
-    - export: /
-      to: public_html/
-      only_if: git
-      purge: false
-      exclude:
-        - "*.py"
-        - "*.ps1"
-        - "*.bat"
-        - ".git/"
-        - ".gitignore"
-        - "*.md"
-        - "README*"
-        - "FIX_*"
-        - "assets/"
-    # Deploy backend files
-    - export: backend/
-      to: public_html/backend/
-      only_if: git
-      purge: false
+    # Set deployment path to /st1 subdirectory
+    - export DEPLOYPATH=/home3/startech/public_html/st1/
+    
+    # Deploy HTML files (excluding development files)
+    - /bin/find . -maxdepth 1 -name "*.html" -not -name "*.ps1" -exec /bin/cp {} $DEPLOYPATH \;
+    
+    # Deploy CSS directory
+    - /bin/cp -R css $DEPLOYPATH 2>/dev/null || true
+    
+    # Deploy JS directory
+    - /bin/cp -R js $DEPLOYPATH 2>/dev/null || true
+    
+    # Deploy images directory
+    - /bin/cp -R images $DEPLOYPATH 2>/dev/null || true
+    
+    # Deploy vendor directory
+    - /bin/cp -R vendor $DEPLOYPATH 2>/dev/null || true
+    
+    # Deploy backend directory
+    - /bin/cp -R backend $DEPLOYPATH 2>/dev/null || true
+    
+    # Remove development files if they were copied
+    - /bin/rm -f $DEPLOYPATH*.py $DEPLOYPATH*.ps1 $DEPLOYPATH*.bat 2>/dev/null || true
+    - /bin/rm -rf $DEPLOYPATH.git $DEPLOYPATHassets 2>/dev/null || true
