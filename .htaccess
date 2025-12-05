@@ -3,12 +3,12 @@
 # Prevent WordPress from intercepting this directory
 <IfModule mod_rewrite.c>
 RewriteEngine On
-RewriteBase /st1/
+RewriteBase /st_new_web/
 RewriteRule ^(.*)$ - [L]
 </IfModule>
 
-# Set default index file
-DirectoryIndex index.html
+# Set default index files
+DirectoryIndex index.html index2.html
 
 # Prevent directory listing
 Options -Indexes
