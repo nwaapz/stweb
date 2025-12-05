@@ -1,4 +1,11 @@
-# Startech E-commerce - Simple Apache Configuration for cPanel
+# Startech E-commerce - Prevent WordPress Interference
+
+# Prevent WordPress from intercepting this directory
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteBase /st1/
+RewriteRule ^(.*)$ - [L]
+</IfModule>
 
 # Set default index file
 DirectoryIndex index.html
