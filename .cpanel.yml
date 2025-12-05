@@ -7,17 +7,11 @@ deployment:
     # Create directory if it doesn't exist
     - /bin/mkdir -p $DEPLOYPATH
     
-    # Deploy HTML files
-    - /bin/cp index.html $DEPLOYPATH
-    - /bin/cp index2.html $DEPLOYPATH
-    - /bin/cp 404.html $DEPLOYPATH
-    - /bin/cp about-us.html $DEPLOYPATH
-    - /bin/cp cart.html $DEPLOYPATH
-    - /bin/cp checkout.html $DEPLOYPATH
-    - /bin/cp contact-us.html $DEPLOYPATH
-    - /bin/cp product-full.html $DEPLOYPATH
-    - /bin/cp product-sidebar.html $DEPLOYPATH
-    - /bin/cp wishlist.html $DEPLOYPATH
+    # Deploy all HTML files
+    - /bin/cp *.html $DEPLOYPATH 2>/dev/null || true
+    
+    # Deploy .htaccess file
+    - /bin/cp .htaccess $DEPLOYPATH 2>/dev/null || true
     
     # Deploy CSS directory
     - /bin/cp -R css $DEPLOYPATH
