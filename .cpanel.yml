@@ -1,0 +1,23 @@
+---
+deployment:
+  tasks:
+    # Deploy frontend files (HTML, CSS, JS, images, vendor files)
+    - export: /
+      to: public_html/
+      only_if: git
+      purge: false
+      exclude:
+        - "*.py"
+        - "*.ps1"
+        - "*.bat"
+        - ".git/"
+        - ".gitignore"
+        - "*.md"
+        - "README*"
+        - "FIX_*"
+        - "assets/"
+    # Deploy backend files
+    - export: backend/
+      to: public_html/backend/
+      only_if: git
+      purge: false
