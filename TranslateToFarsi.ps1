@@ -264,3 +264,5 @@ Write-Host "  - Changed lang='en' to lang='fa'" -ForegroundColor White
 Write-Host "  - Changed dir='ltr' to dir='rtl'" -ForegroundColor White
 Write-Host "  - Translated all UI text to Farsi" -ForegroundColor White
 
+
+

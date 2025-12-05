@@ -76,3 +76,5 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Farsi text should now be restored!" -ForegroundColor Green
 
+
+

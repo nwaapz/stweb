@@ -1,0 +1,28 @@
+# Startech CMS - Security Settings
+
+# Prevent directory listing
+Options -Indexes
+
+# Protect config files
+<FilesMatch "^(database\.php|\.htaccess)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# Allow access to uploads folder
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Protect uploads from PHP execution
+    RewriteRule ^uploads/.*\.php$ - [F,L]
+</IfModule>
+
+# Set default charset
+AddDefaultCharset UTF-8
+
+# Security headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+</IfModule>
