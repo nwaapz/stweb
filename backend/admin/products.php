@@ -4,15 +4,16 @@
  * مدیریت محصولات
  */
 
-$pageTitle = 'محصولات';
-require_once 'header.php';
+// Include functions first (before any output)
+require_once __DIR__ . '/../includes/functions.php';
+requireLogin();
 
 $conn = getConnection();
 $action = $_GET['action'] ?? 'list';
 $id = $_GET['id'] ?? null;
 $error = '';
 
-// Handle form submissions
+// Handle form submissions (BEFORE including header.php to allow redirects)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = sanitize($_POST['name'] ?? '');
     $category_id = !empty($_POST['category_id']) ? (int)$_POST['category_id'] : null;
@@ -86,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Handle delete
+// Handle delete (BEFORE including header.php)
 if ($action === 'delete' && $id) {
     $product = getProductById($id);
     if ($product) {
@@ -104,7 +105,7 @@ if ($action === 'delete' && $id) {
     exit;
 }
 
-// Get product for editing
+// Get product for editing (check before redirect)
 $product = null;
 if ($action === 'edit' && $id) {
     $product = getProductById($id);
@@ -113,6 +114,10 @@ if ($action === 'edit' && $id) {
         exit;
     }
 }
+
+// Now include header.php (after all redirects are handled)
+$pageTitle = 'محصولات';
+require_once 'header.php';
 
 // Get categories for select
 $categories = getCategories();

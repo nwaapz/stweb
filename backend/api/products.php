@@ -75,8 +75,10 @@ try {
         $filters['limit'] = (int)$_GET['limit'];
     }
     
-    // Only active products for API
-    $filters['is_active'] = 1;
+    // Only active products for API (unless debug mode)
+    if (!isset($_GET['include_inactive'])) {
+        $filters['is_active'] = 1;
+    }
     
     $products = getProducts($filters);
     

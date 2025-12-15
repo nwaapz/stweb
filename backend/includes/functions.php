@@ -172,7 +172,8 @@ function getProducts($filters = []) {
         $params[] = $search;
     }
     
-    $sql .= " ORDER BY p.created_at DESC";
+    // Order by created_at DESC, fallback to id DESC if created_at is null
+    $sql .= " ORDER BY p.created_at DESC, p.id DESC";
     
     if (!empty($filters['limit'])) {
         $sql .= " LIMIT " . (int)$filters['limit'];
