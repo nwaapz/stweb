@@ -266,3 +266,5 @@ Write-Host "  - Translated all UI text to Farsi" -ForegroundColor White
 
 
 
+
+

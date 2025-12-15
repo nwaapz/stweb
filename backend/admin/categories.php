@@ -4,12 +4,15 @@
  * مدیریت دسته‌بندی‌ها
  */
 
-$pageTitle = 'دسته‌بندی‌ها';
-require_once 'header.php';
+// Start output buffering to prevent headers already sent errors
+ob_start();
+
+require_once __DIR__ . '/../includes/functions.php';
+requireLogin();
 
 $conn = getConnection();
-$action = $_GET['action'] ?? 'list';
-$id = $_GET['id'] ?? null;
+$action = $_GET['action'] ?? $_POST['action'] ?? 'list';
+$id = $_GET['id'] ?? $_POST['id'] ?? null;
 $error = '';
 $success = '';
 
@@ -53,6 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute($params);
             
             setFlashMessage('success', 'دسته‌بندی با موفقیت ویرایش شد');
+            ob_end_clean(); // Clear any output before redirect
             header('Location: categories.php');
             exit;
         } else {
@@ -64,6 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([$name, $slug, $description, $image, $parent_id, $sort_order, $is_active]);
             
             setFlashMessage('success', 'دسته‌بندی جدید با موفقیت اضافه شد');
+            ob_end_clean(); // Clear any output before redirect
             header('Location: categories.php');
             exit;
         }
@@ -91,6 +96,7 @@ if ($action === 'delete' && $id) {
         
         setFlashMessage('success', 'دسته‌بندی با موفقیت حذف شد');
     }
+    ob_end_clean(); // Clear any output before redirect
     header('Location: categories.php');
     exit;
 }
@@ -100,10 +106,15 @@ $category = null;
 if ($action === 'edit' && $id) {
     $category = getCategoryById($id);
     if (!$category) {
+        ob_end_clean(); // Clear any output before redirect
         header('Location: categories.php');
         exit;
     }
 }
+
+// Set page title and include header AFTER all redirects are handled
+$pageTitle = 'دسته‌بندی‌ها';
+require_once 'header.php';
 
 // Get all categories for parent select
 $categories = getCategories();
@@ -145,6 +156,10 @@ $flash = getFlashMessage();
             <?php endif; ?>
             
             <form method="POST" enctype="multipart/form-data">
+                <?php if ($action === 'edit' && $id): ?>
+                <input type="hidden" name="action" value="edit">
+                <input type="hidden" name="id" value="<?= $id ?>">
+                <?php endif; ?>
                 <div class="row">
                     <div class="col-md-8">
                         <div class="mb-3">

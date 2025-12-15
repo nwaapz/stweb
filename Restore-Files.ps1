@@ -78,3 +78,5 @@ Write-Host "Farsi text should now be restored!" -ForegroundColor Green
 
 
 
+
+
