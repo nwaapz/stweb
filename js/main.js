@@ -408,25 +408,71 @@
     // vehicle-picker-modal
     */
     $(function() {
+        // Update vehicle picker button text
+        function updateVehiclePickerButton(vehicle) {
+            if (vehicle && vehicle.name) {
+                // Update mobile vehicle picker label
+                $('.mobile-search__vehicle-picker-label').text(vehicle.name);
+                // Update desktop vehicle picker label if it exists
+                $('.search__button--start .search__button-label').text(vehicle.name);
+            }
+        }
+
+        // Load saved vehicle on page load
+        function loadSavedVehicle() {
+            try {
+                const savedVehicle = localStorage.getItem('selectedVehicle');
+                if (savedVehicle) {
+                    const vehicle = JSON.parse(savedVehicle);
+                    // Find and select the matching vehicle radio button
+                    $('input[name="header-vehicle"]').each(function() {
+                        const $item = $(this).closest('.vehicles-list__item');
+                        const vehicleName = $item.find('.vehicles-list__item-name').text().trim();
+                        if (vehicleName === vehicle.name) {
+                            $(this).prop('checked', true);
+                        }
+                    });
+                    // Update vehicle picker button text
+                    updateVehiclePickerButton(vehicle);
+                }
+            } catch (e) {
+                console.error('Error loading saved vehicle:', e);
+            }
+        }
+
+        // Load saved vehicle when page loads
+        loadSavedVehicle();
+
         $('.vehicle-picker-modal').closest('.modal').each(function() {
             const modal = $(this);
 
-            modal.on('hidden.bs.modal', function() {
-                modal.find('[data-panel]')
-                    .removeClass('vehicle-picker-modal__panel--active')
-                    .first()
-                    .addClass('vehicle-picker-modal__panel--active');
+            // Restore saved vehicle selection when modal opens
+            modal.on('shown.bs.modal', function() {
+                loadSavedVehicle();
             });
 
-            modal.find('[data-to-panel]').on('click', function(event) {
-                event.preventDefault();
-
-                const toPanel = $(this).data('to-panel');
-                const currentPanel = modal.find('.vehicle-picker-modal__panel--active');
-                const nextPanel = modal.find('[data-panel="' + toPanel + '"]');
-
-                currentPanel.removeClass('vehicle-picker-modal__panel--active');
-                nextPanel.addClass('vehicle-picker-modal__panel--active');
+            // Save vehicle and close modal when a vehicle is selected
+            modal.find('input[name="header-vehicle"]').on('change', function() {
+                const $item = $(this).closest('.vehicles-list__item');
+                const vehicleName = $item.find('.vehicles-list__item-name').text().trim();
+                const vehicleDetails = $item.find('.vehicles-list__item-details').text().trim();
+                
+                // Save to localStorage
+                const vehicle = {
+                    name: vehicleName,
+                    details: vehicleDetails,
+                    timestamp: new Date().toISOString()
+                };
+                
+                try {
+                    localStorage.setItem('selectedVehicle', JSON.stringify(vehicle));
+                    // Update vehicle picker button text
+                    updateVehiclePickerButton(vehicle);
+                } catch (e) {
+                    console.error('Error saving vehicle:', e);
+                }
+                
+                modal.modal('hide');
             });
 
             modal.find('.vehicle-picker-modal__close, .vehicle-picker-modal__close-button').on('click', function () {
@@ -1294,4 +1340,30 @@
             item.find('~ .vehicle-form__item--select select').trigger('change.select2');
         });
     });
+
+    /*
+    // Vehicle storage utility functions
+    */
+    window.getSelectedVehicle = function() {
+        try {
+            const savedVehicle = localStorage.getItem('selectedVehicle');
+            if (savedVehicle) {
+                return JSON.parse(savedVehicle);
+            }
+        } catch (e) {
+            console.error('Error getting selected vehicle:', e);
+        }
+        return null;
+    };
+
+    window.clearSelectedVehicle = function() {
+        try {
+            localStorage.removeItem('selectedVehicle');
+            // Reset vehicle picker button text
+            $('.mobile-search__vehicle-picker-label').text('وسیله نقلیه شما');
+            $('.search__button--start .search__button-label').text('Vehicle');
+        } catch (e) {
+            console.error('Error clearing selected vehicle:', e);
+        }
+    };
 })(jQuery);
