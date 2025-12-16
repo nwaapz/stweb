@@ -191,6 +191,16 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link <?= $currentPage === 'factories' ? 'active' : '' ?>" href="factories.php">
+                        <i class="bi bi-building"></i> کارخانجات خودروسازی
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= $currentPage === 'vehicles' ? 'active' : '' ?>" href="vehicles.php">
+                        <i class="bi bi-car-front"></i> وسایل نقلیه
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link <?= $currentPage === 'products' ? 'active' : '' ?>" href="products.php">
                         <i class="bi bi-box"></i> محصولات
                     </a>

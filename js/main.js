@@ -405,9 +405,15 @@
     });
 
     /*
-    // vehicle-picker-modal
+    // vehicle-picker-modal - Two-phase selection: Factory -> Vehicle
     */
     $(function() {
+        let factoriesCache = null;
+        let factoriesCacheTimestamp = null;
+        let selectedFactoryId = null;
+        let selectedFactoryName = null;
+        const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
         // Update vehicle picker button text
         function updateVehiclePickerButton(vehicle) {
             if (vehicle && vehicle.name) {
@@ -418,7 +424,167 @@
             }
         }
 
-        // Load saved vehicle on page load
+        // Fetch factories from API
+        function fetchFactories(forceRefresh = false) {
+            if (factoriesCache && !forceRefresh) {
+                const now = Date.now();
+                if (factoriesCacheTimestamp && (now - factoriesCacheTimestamp) < CACHE_DURATION) {
+                    return Promise.resolve(factoriesCache);
+                }
+            }
+
+            return fetch('backend/api/factories.php')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.data) {
+                        factoriesCache = data.data;
+                        factoriesCacheTimestamp = Date.now();
+                        return factoriesCache;
+                    }
+                    return [];
+                })
+                .catch(error => {
+                    console.error('Error fetching factories:', error);
+                    return [];
+                });
+        }
+
+        // Fetch vehicles for a specific factory
+        function fetchVehiclesByFactory(factoryId) {
+            return fetch('backend/api/vehicles.php?factory_id=' + factoryId)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.data) {
+                        return data.data;
+                    }
+                    return [];
+                })
+                .catch(error => {
+                    console.error('Error fetching vehicles:', error);
+                    return [];
+                });
+        }
+
+        // Render factories list (Phase 1)
+        function renderFactoriesList(factories, container) {
+            container.empty();
+            
+            if (factories.length === 0) {
+                container.html('<div class="vehicles-list__empty">هیچ کارخانه‌ای یافت نشد</div>');
+                return;
+            }
+
+            factories.forEach(function(factory) {
+                const factoryId = factory.id || '';
+                const factoryName = factory.name || 'بدون نام';
+                const vehicleCount = factory.vehicle_count || 0;
+
+                const $item = $('<div class="vehicles-list__item vehicles-list__item--factory"></div>');
+                $item.attr('data-factory-id', factoryId);
+                $item.css('cursor', 'pointer');
+                
+                const $info = $('<span class="vehicles-list__item-info"></span>');
+                const $name = $('<span class="vehicles-list__item-name"></span>').text(factoryName);
+                const $count = $('<span class="vehicles-list__item-details"></span>').text(vehicleCount + ' وسیله نقلیه');
+                
+                $info.append($name).append(' ').append($count);
+                $item.append($info);
+                
+                // Click handler to go to phase 2
+                $item.on('click', function() {
+                    selectedFactoryId = factoryId;
+                    selectedFactoryName = factoryName;
+                    showVehiclesPanel(factoryId, factoryName);
+                });
+                
+                container.append($item);
+            });
+        }
+
+        // Render vehicles list (Phase 2)
+        function renderVehiclesList(vehicles, container) {
+            container.empty();
+            
+            if (vehicles.length === 0) {
+                container.html('<div class="vehicles-list__empty">هیچ وسیله نقلیه‌ای برای این کارخانه یافت نشد</div>');
+                return;
+            }
+
+            vehicles.forEach(function(vehicle) {
+                const vehicleId = vehicle.id || '';
+                const vehicleName = vehicle.name || 'بدون نام';
+                const vehicleDetails = vehicle.details || vehicle.description || vehicle.engine || '';
+
+                const $item = $('<label class="vehicles-list__item"></label>');
+                $item.attr('data-vehicle-id', vehicleId);
+                
+                const $radio = $('<span class="vehicles-list__item-radio input-radio"></span>');
+                const $radioBody = $('<span class="input-radio__body"></span>');
+                const $radioInput = $('<input class="input-radio__input" name="header-vehicle" type="radio">');
+                $radioInput.attr('value', vehicleId);
+                $radioInput.attr('data-vehicle-name', vehicleName);
+                $radioInput.attr('data-vehicle-details', vehicleDetails);
+                const $radioCircle = $('<span class="input-radio__circle"></span>');
+                
+                $radioBody.append($radioInput).append($radioCircle);
+                $radio.append($radioBody);
+                
+                const $info = $('<span class="vehicles-list__item-info"></span>');
+                const $name = $('<span class="vehicles-list__item-name"></span>').text(vehicleName);
+                const $details = $('<span class="vehicles-list__item-details"></span>').text(vehicleDetails);
+                
+                $info.append($name).append(' ').append($details);
+                
+                $item.append($radio).append($info);
+                container.append($item);
+            });
+        }
+
+        // Show factories panel (Phase 1)
+        function showFactoriesPanel(modal) {
+            const factoriesPanel = modal.find('[data-panel="factories"]');
+            const vehiclesPanel = modal.find('[data-panel="vehicles"]');
+            const vehiclesContainer = vehiclesPanel.find('.vehicles-list__body');
+            
+            // Hide vehicles panel, show factories panel
+            vehiclesPanel.removeClass('vehicle-picker-modal__panel--active');
+            factoriesPanel.addClass('vehicle-picker-modal__panel--active');
+            
+            // Clear vehicles container
+            vehiclesContainer.empty();
+            
+            // Reset selected factory
+            selectedFactoryId = null;
+            selectedFactoryName = null;
+        }
+
+        // Show vehicles panel (Phase 2)
+        function showVehiclesPanel(factoryId, factoryName) {
+            const modal = $('.vehicle-picker-modal').closest('.modal');
+            const factoriesPanel = modal.find('[data-panel="factories"]');
+            const vehiclesPanel = modal.find('[data-panel="vehicles"]');
+            const vehiclesContainer = vehiclesPanel.find('.vehicles-list__body');
+            const vehiclesTitle = vehiclesPanel.find('.vehicle-picker-modal__title');
+            
+            // Update title to show factory name
+            vehiclesTitle.text('انتخاب وسیله نقلیه - ' + factoryName);
+            
+            // Hide factories panel, show vehicles panel
+            factoriesPanel.removeClass('vehicle-picker-modal__panel--active');
+            vehiclesPanel.addClass('vehicle-picker-modal__panel--active');
+            
+            // Show loading
+            vehiclesContainer.html('<div class="vehicles-list__loading">در حال بارگذاری...</div>');
+            
+            // Fetch and render vehicles
+            fetchVehiclesByFactory(factoryId).then(function(vehicles) {
+                renderVehiclesList(vehicles, vehiclesContainer);
+                // Load saved vehicle after rendering
+                loadSavedVehicle();
+            });
+        }
+
+        // Load saved vehicle and select it
         function loadSavedVehicle() {
             try {
                 const savedVehicle = localStorage.getItem('selectedVehicle');
@@ -426,8 +592,7 @@
                     const vehicle = JSON.parse(savedVehicle);
                     // Find and select the matching vehicle radio button
                     $('input[name="header-vehicle"]').each(function() {
-                        const $item = $(this).closest('.vehicles-list__item');
-                        const vehicleName = $item.find('.vehicles-list__item-name').text().trim();
+                        const vehicleName = $(this).attr('data-vehicle-name') || $(this).closest('.vehicles-list__item').find('.vehicles-list__item-name').text().trim();
                         if (vehicleName === vehicle.name) {
                             $(this).prop('checked', true);
                         }
@@ -440,27 +605,52 @@
             }
         }
 
-        // Load saved vehicle when page loads
-        loadSavedVehicle();
-
+        // Initialize modal
         $('.vehicle-picker-modal').closest('.modal').each(function() {
             const modal = $(this);
+            const factoriesPanel = modal.find('[data-panel="factories"]');
+            const vehiclesPanel = modal.find('[data-panel="vehicles"]');
+            const factoriesContainer = factoriesPanel.find('.vehicles-list__body');
+            let hasLoadedFactories = false;
 
-            // Restore saved vehicle selection when modal opens
+            // Reset to factories panel when modal is hidden
+            modal.on('hidden.bs.modal', function() {
+                showFactoriesPanel(modal);
+            });
+
+            // Load factories when modal is shown
             modal.on('shown.bs.modal', function() {
-                loadSavedVehicle();
+                if (!hasLoadedFactories || !factoriesCache) {
+                    hasLoadedFactories = true;
+                    // Show loading state
+                    factoriesContainer.html('<div class="vehicles-list__loading">در حال بارگذاری...</div>');
+                    
+                    fetchFactories().then(function(factories) {
+                        renderFactoriesList(factories, factoriesContainer);
+                    });
+                }
+                // Always show factories panel first
+                showFactoriesPanel(modal);
+            });
+
+            // Back button handler (from vehicles to factories)
+            vehiclesPanel.find('[data-back-to-factories]').on('click', function() {
+                showFactoriesPanel(modal);
             });
 
             // Save vehicle and close modal when a vehicle is selected
-            modal.find('input[name="header-vehicle"]').on('change', function() {
-                const $item = $(this).closest('.vehicles-list__item');
-                const vehicleName = $item.find('.vehicles-list__item-name').text().trim();
-                const vehicleDetails = $item.find('.vehicles-list__item-details').text().trim();
+            modal.on('change', 'input[name="header-vehicle"]', function() {
+                const vehicleId = $(this).val();
+                const vehicleName = $(this).attr('data-vehicle-name') || $(this).closest('.vehicles-list__item').find('.vehicles-list__item-name').text().trim();
+                const vehicleDetails = $(this).attr('data-vehicle-details') || $(this).closest('.vehicles-list__item').find('.vehicles-list__item-details').text().trim();
                 
                 // Save to localStorage
                 const vehicle = {
+                    id: vehicleId,
                     name: vehicleName,
                     details: vehicleDetails,
+                    factory_id: selectedFactoryId,
+                    factory_name: selectedFactoryName,
                     timestamp: new Date().toISOString()
                 };
                 
@@ -479,6 +669,9 @@
                 modal.modal('hide');
             });
         });
+
+        // Load saved vehicle on page load (for button text)
+        loadSavedVehicle();
     });
 
     /*

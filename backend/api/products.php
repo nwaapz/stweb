@@ -7,6 +7,7 @@
  * GET /api/products.php                    - Get all products
  * GET /api/products.php?id=1               - Get single product
  * GET /api/products.php?category=1         - Get products by category
+ * GET /api/products.php?vehicle=1         - Get products by vehicle
  * GET /api/products.php?featured=1         - Get featured products
  * GET /api/products.php?discounted=1       - Get discounted products
  * GET /api/products.php?search=keyword     - Search products
@@ -59,6 +60,10 @@ try {
         $filters['category_id'] = (int)$_GET['category'];
     }
     
+    if (isset($_GET['vehicle'])) {
+        $filters['vehicle_id'] = (int)$_GET['vehicle'];
+    }
+    
     if (isset($_GET['featured'])) {
         $filters['is_featured'] = true;
     }
@@ -89,6 +94,7 @@ try {
         $product['formatted_price'] = formatPrice($product['price']);
         $product['formatted_discount_price'] = $product['discount_price'] ? formatPrice($product['discount_price']) : null;
         $product['image_url'] = $product['image'] ? UPLOAD_URL . $product['image'] : null;
+        // Vehicle info is already included from the JOIN in getProducts()
     }
     
     echo json_encode([

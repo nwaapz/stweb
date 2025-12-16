@@ -48,6 +48,7 @@
 GET /backend/api/products.php
 GET /backend/api/products.php?id=1           // محصول خاص
 GET /backend/api/products.php?category=1     // بر اساس دسته‌بندی
+GET /backend/api/products.php?vehicle=1      // بر اساس وسیله نقلیه
 GET /backend/api/products.php?featured=1     // محصولات ویژه
 GET /backend/api/products.php?discounted=1   // محصولات تخفیف‌دار
 GET /backend/api/products.php?search=کلمه   // جستجو
@@ -59,6 +60,20 @@ GET /backend/api/products.php?limit=10       // محدود کردن نتایج
 GET /backend/api/categories.php
 GET /backend/api/categories.php?id=1         // دسته‌بندی خاص با محصولات
 GET /backend/api/categories.php?tree=1       // ساختار درختی
+```
+
+### دریافت وسایل نقلیه
+```
+GET /backend/api/vehicles.php
+GET /backend/api/vehicles.php?id=1          // وسیله نقلیه خاص با محصولات
+GET /backend/api/vehicles.php?include_inactive=1  // شامل غیرفعال‌ها
+```
+
+### دریافت کارخانجات خودروسازی
+```
+GET /backend/api/factories.php
+GET /backend/api/factories.php?id=1         // کارخانه خاص با وسایل نقلیه
+GET /backend/api/factories.php?include_inactive=1  // شامل غیرفعال‌ها
 ```
 
 ### نمونه پاسخ
@@ -102,6 +117,35 @@ fetch('/backend/api/products.php?discounted=1')
     .then(data => {
         // نمایش محصولات تخفیف‌دار
     });
+
+// دریافت همه وسایل نقلیه
+fetch('/backend/api/vehicles.php')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            data.data.forEach(vehicle => {
+                console.log(vehicle.name, vehicle.product_count + ' محصول');
+            });
+        }
+    });
+
+// دریافت محصولات یک وسیله نقلیه خاص
+fetch('/backend/api/products.php?vehicle=1')
+    .then(response => response.json())
+    .then(data => {
+        // نمایش محصولات وسیله نقلیه
+    });
+
+// دریافت همه کارخانجات
+fetch('/backend/api/factories.php')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            data.data.forEach(factory => {
+                console.log(factory.name, factory.vehicle_count + ' وسیله');
+            });
+        }
+    });
 ```
 
 ---
@@ -114,12 +158,16 @@ backend/
 │   ├── index.php       # داشبورد
 │   ├── products.php    # مدیریت محصولات
 │   ├── categories.php  # مدیریت دسته‌بندی‌ها
+│   ├── factories.php   # مدیریت کارخانجات خودروسازی
+│   ├── vehicles.php    # مدیریت وسایل نقلیه
 │   ├── discounts.php   # مدیریت تخفیف‌ها
 │   ├── settings.php    # تنظیمات
 │   └── ...
 ├── api/                # API endpoints
 │   ├── products.php
-│   └── categories.php
+│   ├── categories.php
+│   ├── vehicles.php
+│   └── factories.php
 ├── config/             # تنظیمات
 │   └── database.php
 ├── includes/           # توابع کمکی

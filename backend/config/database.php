@@ -94,11 +94,43 @@ function setupDatabase() {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
         ");
         
+        // Create factories table
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `factories` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `name` VARCHAR(255) NOT NULL,
+                `slug` VARCHAR(255) NOT NULL UNIQUE,
+                `description` TEXT,
+                `logo` VARCHAR(500),
+                `is_active` TINYINT(1) DEFAULT 1,
+                `sort_order` INT DEFAULT 0,
+                `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
+        ");
+        
+        // Create vehicles table
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `vehicles` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `factory_id` INT DEFAULT NULL,
+                `name` VARCHAR(255) NOT NULL,
+                `slug` VARCHAR(255) NOT NULL UNIQUE,
+                `description` TEXT,
+                `is_active` TINYINT(1) DEFAULT 1,
+                `sort_order` INT DEFAULT 0,
+                `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (`factory_id`) REFERENCES `factories`(`id`) ON DELETE SET NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
+        ");
+        
         // Create products table
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS `products` (
                 `id` INT AUTO_INCREMENT PRIMARY KEY,
                 `category_id` INT,
+                `vehicle_id` INT DEFAULT NULL,
                 `name` VARCHAR(255) NOT NULL,
                 `slug` VARCHAR(255) NOT NULL UNIQUE,
                 `description` TEXT,
@@ -117,7 +149,8 @@ function setupDatabase() {
                 `views` INT DEFAULT 0,
                 `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                FOREIGN KEY (`category_id`) REFERENCES `categories`(`id`) ON DELETE SET NULL
+                FOREIGN KEY (`category_id`) REFERENCES `categories`(`id`) ON DELETE SET NULL,
+                FOREIGN KEY (`vehicle_id`) REFERENCES `vehicles`(`id`) ON DELETE SET NULL
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
         ");
         
@@ -152,6 +185,22 @@ function setupDatabase() {
                 `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
         ");
+        
+        // Add vehicle_id column to products table if it doesn't exist (for existing databases)
+        try {
+            $pdo->exec("ALTER TABLE `products` ADD COLUMN `vehicle_id` INT DEFAULT NULL AFTER `category_id`");
+            $pdo->exec("ALTER TABLE `products` ADD FOREIGN KEY (`vehicle_id`) REFERENCES `vehicles`(`id`) ON DELETE SET NULL");
+        } catch (PDOException $e) {
+            // Column might already exist, ignore error
+        }
+        
+        // Add factory_id column to vehicles table if it doesn't exist (for existing databases)
+        try {
+            $pdo->exec("ALTER TABLE `vehicles` ADD COLUMN `factory_id` INT DEFAULT NULL AFTER `id`");
+            $pdo->exec("ALTER TABLE `vehicles` ADD FOREIGN KEY (`factory_id`) REFERENCES `factories`(`id`) ON DELETE SET NULL");
+        } catch (PDOException $e) {
+            // Column might already exist, ignore error
+        }
         
         return true;
     } catch (PDOException $e) {

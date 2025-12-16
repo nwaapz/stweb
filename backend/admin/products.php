@@ -17,6 +17,7 @@ $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = sanitize($_POST['name'] ?? '');
     $category_id = !empty($_POST['category_id']) ? (int)$_POST['category_id'] : null;
+    $vehicle_id = !empty($_POST['vehicle_id']) ? (int)$_POST['vehicle_id'] : null;
     $description = $_POST['description'] ?? '';
     $short_description = sanitize($_POST['short_description'] ?? '');
     $price = (int)str_replace(',', '', $_POST['price'] ?? 0);
@@ -49,10 +50,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($action === 'edit' && $id) {
             // Update existing product
             $sql = "UPDATE products SET 
-                    name = ?, slug = ?, category_id = ?, description = ?, short_description = ?,
+                    name = ?, slug = ?, category_id = ?, vehicle_id = ?, description = ?, short_description = ?,
                     price = ?, discount_price = ?, discount_percent = ?, discount_start = ?, discount_end = ?,
                     sku = ?, stock = ?, is_active = ?, is_featured = ?";
-            $params = [$name, $slug, $category_id, $description, $short_description,
+            $params = [$name, $slug, $category_id, $vehicle_id, $description, $short_description,
                       $price, $discount_price, $discount_percent, $discount_start, $discount_end,
                       $sku, $stock, $is_active, $is_featured];
             
@@ -73,11 +74,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             // Add new product
             $stmt = $conn->prepare("
-                INSERT INTO products (name, slug, category_id, description, short_description, price, 
+                INSERT INTO products (name, slug, category_id, vehicle_id, description, short_description, price, 
                     discount_price, discount_percent, discount_start, discount_end, image, sku, stock, is_active, is_featured) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
-            $stmt->execute([$name, $slug, $category_id, $description, $short_description, $price,
+            $stmt->execute([$name, $slug, $category_id, $vehicle_id, $description, $short_description, $price,
                            $discount_price, $discount_percent, $discount_start, $discount_end, $image, $sku, $stock, $is_active, $is_featured]);
             
             setFlashMessage('success', 'محصول جدید با موفقیت اضافه شد');
@@ -121,6 +122,8 @@ require_once 'header.php';
 
 // Get categories for select
 $categories = getCategories();
+// Get vehicles for select
+$vehicles = getVehicles();
 
 // Get products with filters
 $filters = [
@@ -266,6 +269,19 @@ $flash = getFlashMessage();
                         </div>
                         
                         <div class="mb-3">
+                            <label class="form-label">وسیله نقلیه</label>
+                            <select name="vehicle_id" class="form-select">
+                                <option value="">انتخاب وسیله نقلیه</option>
+                                <?php foreach ($vehicles as $vehicle): ?>
+                                <option value="<?= $vehicle['id'] ?>" 
+                                    <?= ($product && $product['vehicle_id'] == $vehicle['id']) ? 'selected' : '' ?>>
+                                    <?= sanitize($vehicle['name']) ?>
+                                </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
                             <label class="form-label">کد محصول (SKU)</label>
                             <input type="text" name="sku" class="form-control"
                                    value="<?= $product ? sanitize($product['sku']) : '' ?>">
@@ -348,6 +364,7 @@ $flash = getFlashMessage();
                             <th style="width: 80px">تصویر</th>
                             <th>نام محصول</th>
                             <th>دسته‌بندی</th>
+                            <th>وسیله نقلیه</th>
                             <th>قیمت</th>
                             <th>موجودی</th>
                             <th>وضعیت</th>
@@ -376,6 +393,15 @@ $flash = getFlashMessage();
                                 <span class="badge bg-secondary">
                                     <?= $p['category_name'] ?? 'بدون دسته' ?>
                                 </span>
+                            </td>
+                            <td>
+                                <?php if ($p['vehicle_name']): ?>
+                                <span class="badge bg-info">
+                                    <?= sanitize($p['vehicle_name']) ?>
+                                </span>
+                                <?php else: ?>
+                                <span class="text-muted">-</span>
+                                <?php endif; ?>
                             </td>
                             <td>
                                 <?php if (hasActiveDiscount($p)): ?>

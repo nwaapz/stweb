@@ -135,19 +135,80 @@ function getCategoryById($id) {
 }
 
 /**
+ * Get all factories
+ */
+function getFactories($activeOnly = false) {
+    $conn = getConnection();
+    $sql = "SELECT * FROM factories";
+    if ($activeOnly) {
+        $sql .= " WHERE is_active = 1";
+    }
+    $sql .= " ORDER BY sort_order, name";
+    $stmt = $conn->query($sql);
+    return $stmt->fetchAll();
+}
+
+/**
+ * Get factory by ID
+ */
+function getFactoryById($id) {
+    $conn = getConnection();
+    $stmt = $conn->prepare("SELECT * FROM factories WHERE id = ?");
+    $stmt->execute([$id]);
+    return $stmt->fetch();
+}
+
+/**
+ * Get all vehicles
+ */
+function getVehicles($activeOnly = false) {
+    $conn = getConnection();
+    $sql = "SELECT v.*, f.name as factory_name 
+            FROM vehicles v 
+            LEFT JOIN factories f ON v.factory_id = f.id";
+    if ($activeOnly) {
+        $sql .= " WHERE v.is_active = 1";
+    }
+    $sql .= " ORDER BY v.sort_order, v.name";
+    $stmt = $conn->query($sql);
+    return $stmt->fetchAll();
+}
+
+/**
+ * Get vehicle by ID
+ */
+function getVehicleById($id) {
+    $conn = getConnection();
+    $stmt = $conn->prepare("
+        SELECT v.*, f.name as factory_name 
+        FROM vehicles v 
+        LEFT JOIN factories f ON v.factory_id = f.id 
+        WHERE v.id = ?
+    ");
+    $stmt->execute([$id]);
+    return $stmt->fetch();
+}
+
+/**
  * Get all products
  */
 function getProducts($filters = []) {
     $conn = getConnection();
-    $sql = "SELECT p.*, c.name as category_name 
+    $sql = "SELECT p.*, c.name as category_name, v.name as vehicle_name 
             FROM products p 
             LEFT JOIN categories c ON p.category_id = c.id 
+            LEFT JOIN vehicles v ON p.vehicle_id = v.id 
             WHERE 1=1";
     $params = [];
     
     if (!empty($filters['category_id'])) {
         $sql .= " AND p.category_id = ?";
         $params[] = $filters['category_id'];
+    }
+    
+    if (!empty($filters['vehicle_id'])) {
+        $sql .= " AND p.vehicle_id = ?";
+        $params[] = $filters['vehicle_id'];
     }
     
     if (isset($filters['is_active'])) {
@@ -190,9 +251,10 @@ function getProducts($filters = []) {
 function getProductById($id) {
     $conn = getConnection();
     $stmt = $conn->prepare("
-        SELECT p.*, c.name as category_name 
+        SELECT p.*, c.name as category_name, v.name as vehicle_name 
         FROM products p 
         LEFT JOIN categories c ON p.category_id = c.id 
+        LEFT JOIN vehicles v ON p.vehicle_id = v.id 
         WHERE p.id = ?
     ");
     $stmt->execute([$id]);
