@@ -12,7 +12,7 @@ define('DB_NAME', 'startech_cms');
 define('DB_CHARSET', 'utf8mb4');
 
 // Site settings
-define('SITE_URL', 'http://localhost/st1/backend');
+define('SITE_URL', 'http://localhost/backend');
 define('UPLOAD_PATH', __DIR__ . '/../uploads/');
 define('UPLOAD_URL', SITE_URL . '/uploads/');
 
