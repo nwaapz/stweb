@@ -95,7 +95,7 @@
     /*
     // .product-gallery
     */
-    const initProductGallery = function(element, layout) {
+    const initProductGallery = function (element, layout) {
         layout = layout !== undefined ? layout : 'standard';
 
         const options = {
@@ -106,33 +106,33 @@
         const layoutOptions = {
             'product-sidebar': {
                 responsive: {
-                    1400: {items: 8, margin: 10},
-                    1200: {items: 6, margin: 10},
-                    992: {items: 8, margin: 10},
-                    768: {items: 8, margin: 10},
-                    576: {items: 6, margin: 10},
-                    420: {items: 5, margin: 8},
-                    0: {items: 4, margin: 8}
+                    1400: { items: 8, margin: 10 },
+                    1200: { items: 6, margin: 10 },
+                    992: { items: 8, margin: 10 },
+                    768: { items: 8, margin: 10 },
+                    576: { items: 6, margin: 10 },
+                    420: { items: 5, margin: 8 },
+                    0: { items: 4, margin: 8 }
                 },
             },
             'product-full': {
                 responsive: {
-                    1400: {items: 6, margin: 10},
-                    1200: {items: 5, margin: 8},
-                    992: {items: 7, margin: 10},
-                    768: {items: 5, margin: 8},
-                    576: {items: 6, margin: 8},
-                    420: {items: 5, margin: 8},
-                    0: {items: 4, margin: 8}
+                    1400: { items: 6, margin: 10 },
+                    1200: { items: 5, margin: 8 },
+                    992: { items: 7, margin: 10 },
+                    768: { items: 5, margin: 8 },
+                    576: { items: 6, margin: 8 },
+                    420: { items: 5, margin: 8 },
+                    0: { items: 4, margin: 8 }
                 }
             },
             quickview: {
                 responsive: {
-                    992: {items: 5},
-                    520: {items: 6},
-                    440: {items: 5},
-                    340: {items: 4},
-                    0: {items: 3}
+                    992: { items: 5 },
+                    520: { items: 6 },
+                    440: { items: 5 },
+                    340: { items: 4 },
+                    0: { items: 3 }
                 }
             },
         };
@@ -143,7 +143,7 @@
         const carousel = gallery.find('.product-gallery__thumbnails .owl-carousel');
 
         image
-            .owlCarousel({items: 1, dots: false, rtl: isRTL()})
+            .owlCarousel({ items: 1, dots: false, rtl: isRTL() })
             .on('changed.owl.carousel', syncPosition);
 
         carousel
@@ -152,17 +152,17 @@
             })
             .owlCarousel($.extend({}, options, layoutOptions[layout]));
 
-        carousel.on('click', '.owl-item', function(e){
+        carousel.on('click', '.owl-item', function (e) {
             e.preventDefault();
 
             image.data('owl.carousel').to($(this).index(), 300, true);
         });
 
-        gallery.find('.product-gallery__zoom').on('click', function() {
+        gallery.find('.product-gallery__zoom').on('click', function () {
             openPhotoSwipe(image.find('.owl-item.active').index());
         });
 
-        image.on('click', '.owl-item > a', function(event) {
+        image.on('click', '.owl-item > a', function (event) {
             event.preventDefault();
 
             openPhotoSwipe($(this).closest('.owl-item').index());
@@ -178,7 +178,7 @@
         }
 
         function openPhotoSwipe(index) {
-            const photoSwipeImages = image.find('.owl-item a').toArray().map(function(element) {
+            const photoSwipeImages = image.find('.owl-item a').toArray().map(function (element) {
                 const img = $(element).find('img')[0];
                 const width = $(element).data('width') || img.naturalWidth;
                 const height = $(element).data('height') || img.naturalHeight;
@@ -232,7 +232,7 @@
             photoSwipeGallery.init();
         }
 
-        function syncPosition (el) {
+        function syncPosition(el) {
             let current = el.item.index;
 
             carousel
@@ -253,7 +253,7 @@
         }
     };
 
-    $(function() {
+    $(function () {
         $('.product').each(function () {
             const gallery = $(this).find('.product-gallery');
 
@@ -297,8 +297,8 @@
     /*
     // .departments
     */
-    $(function() {
-        $('.departments__button').on('click', function(event) {
+    $(function () {
+        $('.departments__button').on('click', function (event) {
             event.preventDefault();
 
             $(this).closest('.departments').toggleClass('departments--open');
@@ -314,8 +314,8 @@
     /*
     // .topbar__menu
     */
-    $(function() {
-        $('.topbar__menu-button').on('click', function() {
+    $(function () {
+        $('.topbar__menu-button').on('click', function () {
             $(this).closest('.topbar__menu').toggleClass('topbar__menu--open');
         });
 
@@ -329,8 +329,8 @@
     /*
     // .indicator (dropcart, account-menu)
     */
-    $(function() {
-        $('.indicator--trigger--click .indicator__button').on('click', function(event) {
+    $(function () {
+        $('.indicator--trigger--click .indicator__button').on('click', function (event) {
             event.preventDefault();
 
             const dropdown = $(this).closest('.indicator');
@@ -353,7 +353,7 @@
     // .layout-switcher
     */
     $(function () {
-        $('.layout-switcher__button').on('click', function() {
+        $('.layout-switcher__button').on('click', function () {
             const layoutSwitcher = $(this).closest('.layout-switcher');
             const productsView = $(this).closest('.products-view');
             const productsList = productsView.find('.products-list');
@@ -375,11 +375,11 @@
     /*
     // mobile search
     */
-    $(function() {
+    $(function () {
         const mobileSearch = $('.mobile-header__search');
 
         if (mobileSearch.length) {
-            $('.mobile-indicator--search .mobile-indicator__button').on('click', function() {
+            $('.mobile-indicator--search .mobile-indicator__button').on('click', function () {
                 if (mobileSearch.is('.mobile-header__search--open')) {
                     mobileSearch.removeClass('mobile-header__search--open');
                 } else {
@@ -388,11 +388,11 @@
                 }
             });
 
-            mobileSearch.find('.mobile-search__button--close').on('click', function() {
+            mobileSearch.find('.mobile-search__button--close').on('click', function () {
                 mobileSearch.removeClass('mobile-header__search--open');
             });
 
-            document.addEventListener('click', function(event) {
+            document.addEventListener('click', function (event) {
                 if (!$(event.target).closest('.mobile-indicator--search, .mobile-header__search, .modal').length) {
                     mobileSearch.removeClass('mobile-header__search--open');
                 }
@@ -407,7 +407,7 @@
     /*
     // vehicle-picker-modal - Two-phase selection: Factory -> Vehicle
     */
-    $(function() {
+    $(function () {
         let factoriesCache = null;
         let factoriesCacheTimestamp = null;
         let selectedFactoryId = null;
@@ -468,13 +468,13 @@
         // Render factories list (Phase 1)
         function renderFactoriesList(factories, container) {
             container.empty();
-            
+
             if (factories.length === 0) {
                 container.html('<div class="vehicles-list__empty">هیچ کارخانه‌ای یافت نشد</div>');
                 return;
             }
 
-            factories.forEach(function(factory) {
+            factories.forEach(function (factory) {
                 const factoryId = factory.id || '';
                 const factoryName = factory.name || 'بدون نام';
                 const vehicleCount = factory.vehicle_count || 0;
@@ -482,21 +482,21 @@
                 const $item = $('<div class="vehicles-list__item vehicles-list__item--factory"></div>');
                 $item.attr('data-factory-id', factoryId);
                 $item.css('cursor', 'pointer');
-                
+
                 const $info = $('<span class="vehicles-list__item-info"></span>');
                 const $name = $('<span class="vehicles-list__item-name"></span>').text(factoryName);
                 const $count = $('<span class="vehicles-list__item-details"></span>').text(vehicleCount + ' وسیله نقلیه');
-                
+
                 $info.append($name).append(' ').append($count);
                 $item.append($info);
-                
+
                 // Click handler to go to phase 2
-                $item.on('click', function() {
+                $item.on('click', function () {
                     selectedFactoryId = factoryId;
                     selectedFactoryName = factoryName;
                     showVehiclesPanel(factoryId, factoryName);
                 });
-                
+
                 container.append($item);
             });
         }
@@ -504,20 +504,20 @@
         // Render vehicles list (Phase 2)
         function renderVehiclesList(vehicles, container) {
             container.empty();
-            
+
             if (vehicles.length === 0) {
                 container.html('<div class="vehicles-list__empty">هیچ وسیله نقلیه‌ای برای این کارخانه یافت نشد</div>');
                 return;
             }
 
-            vehicles.forEach(function(vehicle) {
+            vehicles.forEach(function (vehicle) {
                 const vehicleId = vehicle.id || '';
                 const vehicleName = vehicle.name || 'بدون نام';
                 const vehicleDetails = vehicle.details || vehicle.description || vehicle.engine || '';
 
                 const $item = $('<label class="vehicles-list__item"></label>');
                 $item.attr('data-vehicle-id', vehicleId);
-                
+
                 const $radio = $('<span class="vehicles-list__item-radio input-radio"></span>');
                 const $radioBody = $('<span class="input-radio__body"></span>');
                 const $radioInput = $('<input class="input-radio__input" name="header-vehicle" type="radio">');
@@ -525,16 +525,16 @@
                 $radioInput.attr('data-vehicle-name', vehicleName);
                 $radioInput.attr('data-vehicle-details', vehicleDetails);
                 const $radioCircle = $('<span class="input-radio__circle"></span>');
-                
+
                 $radioBody.append($radioInput).append($radioCircle);
                 $radio.append($radioBody);
-                
+
                 const $info = $('<span class="vehicles-list__item-info"></span>');
                 const $name = $('<span class="vehicles-list__item-name"></span>').text(vehicleName);
                 const $details = $('<span class="vehicles-list__item-details"></span>').text(vehicleDetails);
-                
+
                 $info.append($name).append(' ').append($details);
-                
+
                 $item.append($radio).append($info);
                 container.append($item);
             });
@@ -545,14 +545,14 @@
             const factoriesPanel = modal.find('[data-panel="factories"]');
             const vehiclesPanel = modal.find('[data-panel="vehicles"]');
             const vehiclesContainer = vehiclesPanel.find('.vehicles-list__body');
-            
+
             // Hide vehicles panel, show factories panel
             vehiclesPanel.removeClass('vehicle-picker-modal__panel--active');
             factoriesPanel.addClass('vehicle-picker-modal__panel--active');
-            
+
             // Clear vehicles container
             vehiclesContainer.empty();
-            
+
             // Reset selected factory
             selectedFactoryId = null;
             selectedFactoryName = null;
@@ -565,19 +565,19 @@
             const vehiclesPanel = modal.find('[data-panel="vehicles"]');
             const vehiclesContainer = vehiclesPanel.find('.vehicles-list__body');
             const vehiclesTitle = vehiclesPanel.find('.vehicle-picker-modal__title');
-            
+
             // Update title to show factory name
             vehiclesTitle.text('انتخاب وسیله نقلیه - ' + factoryName);
-            
+
             // Hide factories panel, show vehicles panel
             factoriesPanel.removeClass('vehicle-picker-modal__panel--active');
             vehiclesPanel.addClass('vehicle-picker-modal__panel--active');
-            
+
             // Show loading
             vehiclesContainer.html('<div class="vehicles-list__loading">در حال بارگذاری...</div>');
-            
+
             // Fetch and render vehicles
-            fetchVehiclesByFactory(factoryId).then(function(vehicles) {
+            fetchVehiclesByFactory(factoryId).then(function (vehicles) {
                 renderVehiclesList(vehicles, vehiclesContainer);
                 // Load saved vehicle after rendering
                 loadSavedVehicle();
@@ -591,7 +591,7 @@
                 if (savedVehicle) {
                     const vehicle = JSON.parse(savedVehicle);
                     // Find and select the matching vehicle radio button
-                    $('input[name="header-vehicle"]').each(function() {
+                    $('input[name="header-vehicle"]').each(function () {
                         const vehicleName = $(this).attr('data-vehicle-name') || $(this).closest('.vehicles-list__item').find('.vehicles-list__item-name').text().trim();
                         if (vehicleName === vehicle.name) {
                             $(this).prop('checked', true);
@@ -606,7 +606,7 @@
         }
 
         // Initialize modal
-        $('.vehicle-picker-modal').closest('.modal').each(function() {
+        $('.vehicle-picker-modal').closest('.modal').each(function () {
             const modal = $(this);
             const factoriesPanel = modal.find('[data-panel="factories"]');
             const vehiclesPanel = modal.find('[data-panel="vehicles"]');
@@ -614,18 +614,18 @@
             let hasLoadedFactories = false;
 
             // Reset to factories panel when modal is hidden
-            modal.on('hidden.bs.modal', function() {
+            modal.on('hidden.bs.modal', function () {
                 showFactoriesPanel(modal);
             });
 
             // Load factories when modal is shown
-            modal.on('shown.bs.modal', function() {
+            modal.on('shown.bs.modal', function () {
                 if (!hasLoadedFactories || !factoriesCache) {
                     hasLoadedFactories = true;
                     // Show loading state
                     factoriesContainer.html('<div class="vehicles-list__loading">در حال بارگذاری...</div>');
-                    
-                    fetchFactories().then(function(factories) {
+
+                    fetchFactories().then(function (factories) {
                         renderFactoriesList(factories, factoriesContainer);
                     });
                 }
@@ -634,16 +634,16 @@
             });
 
             // Back button handler (from vehicles to factories)
-            vehiclesPanel.find('[data-back-to-factories]').on('click', function() {
+            vehiclesPanel.find('[data-back-to-factories]').on('click', function () {
                 showFactoriesPanel(modal);
             });
 
             // Save vehicle and close modal when a vehicle is selected
-            modal.on('change', 'input[name="header-vehicle"]', function() {
+            modal.on('change', 'input[name="header-vehicle"]', function () {
                 const vehicleId = $(this).val();
                 const vehicleName = $(this).attr('data-vehicle-name') || $(this).closest('.vehicles-list__item').find('.vehicles-list__item-name').text().trim();
                 const vehicleDetails = $(this).attr('data-vehicle-details') || $(this).closest('.vehicles-list__item').find('.vehicles-list__item-details').text().trim();
-                
+
                 // Save to localStorage
                 const vehicle = {
                     id: vehicleId,
@@ -653,7 +653,7 @@
                     factory_name: selectedFactoryName,
                     timestamp: new Date().toISOString()
                 };
-                
+
                 try {
                     localStorage.setItem('selectedVehicle', JSON.stringify(vehicle));
                     // Update vehicle picker button text
@@ -661,7 +661,7 @@
                 } catch (e) {
                     console.error('Error saving vehicle:', e);
                 }
-                
+
                 modal.modal('hide');
             });
 
@@ -683,24 +683,24 @@
         const mobileMenuBody = mobileMenu.children('.mobile-menu__body');
 
         if (mobileMenu.length) {
-            const open = function() {
+            const open = function () {
                 const bodyWidth = body.width();
                 body.css('overflow', 'hidden');
                 body.css('paddingRight', (body.width() - bodyWidth) + 'px');
 
                 mobileMenu.addClass('mobile-menu--open');
             };
-            const close = function() {
+            const close = function () {
                 body.css('overflow', 'auto');
                 body.css('paddingRight', '');
 
                 mobileMenu.removeClass('mobile-menu--open');
             };
 
-            $('.mobile-header__menu-button').on('click', function() {
+            $('.mobile-header__menu-button').on('click', function () {
                 open();
             });
-            $('.mobile-menu__backdrop, .mobile-menu__close').on('click', function() {
+            $('.mobile-menu__backdrop, .mobile-menu__close').on('click', function () {
                 close();
             });
         }
@@ -708,7 +708,7 @@
         const panelsStack = [];
         let currentPanel = mobileMenuBody.children('.mobile-menu__panel');
 
-        mobileMenu.on('click', '[data-mobile-menu-trigger]', function(event) {
+        mobileMenu.on('click', '[data-mobile-menu-trigger]', function (event) {
             const trigger = $(this);
             const item = trigger.closest('[data-mobile-menu-item]');
             let panel = item.data('panel');
@@ -733,7 +733,7 @@
                 currentPanel = panel;
             }
         });
-        mobileMenu.on('click', '.mobile-menu__panel-back', function() {
+        mobileMenu.on('click', '.mobile-menu__panel-back', function () {
             currentPanel.addClass('mobile-menu__panel--hidden');
             currentPanel = panelsStack.pop();
             currentPanel.removeClass('mobile-menu__panel--hide');
@@ -750,7 +750,7 @@
         const media = matchMedia('(max-width: 991px)');
 
         if (sidebar.length) {
-            const open = function() {
+            const open = function () {
                 if (offcanvas === 'mobile' && !media.matches) {
                     return;
                 }
@@ -761,13 +761,13 @@
 
                 sidebar.addClass('sidebar--open');
             };
-            const close = function() {
+            const close = function () {
                 body.css('overflow', 'auto');
                 body.css('paddingRight', '');
 
                 sidebar.removeClass('sidebar--open');
             };
-            const onMediaChange = function() {
+            const onMediaChange = function () {
                 if (offcanvas === 'mobile') {
                     if (!media.matches && sidebar.hasClass('sidebar--open')) {
                         close();
@@ -781,10 +781,10 @@
                 media.addListener(onMediaChange);
             }
 
-            $('.filters-button').on('click', function() {
+            $('.filters-button').on('click', function () {
                 open();
             });
-            $('.sidebar__backdrop, .sidebar__close').on('click', function() {
+            $('.sidebar__backdrop, .sidebar__close').on('click', function () {
                 close();
             });
         }
@@ -804,7 +804,7 @@
         let currentItem = null;
         const container = $('.departments__menu-container');
 
-        $('.departments__item').on('mouseenter', function() {
+        $('.departments__item').on('mouseenter', function () {
             if (currentItem) {
                 const megamenu = currentItem.data('megamenu');
 
@@ -832,7 +832,7 @@
                 megamenu.addClass('departments__megamenu--open');
             }
         });
-        $('.departments__list-padding').on('mouseenter', function() {
+        $('.departments__list-padding').on('mouseenter', function () {
             if (currentItem) {
                 const megamenu = currentItem.data('megamenu');
 
@@ -844,7 +844,7 @@
                 currentItem = null;
             }
         });
-        $('.departments__body').on('mouseleave', function() {
+        $('.departments__body').on('mouseleave', function () {
             if (currentItem) {
                 const megamenu = currentItem.data('megamenu');
 
@@ -864,7 +864,7 @@
     $(function () {
         const megamenuArea = $('.megamenu-area');
 
-        $('.main-menu__item--submenu--megamenu').on('mouseenter', function() {
+        $('.main-menu__item--submenu--megamenu').on('mouseenter', function () {
             const megamenu = $(this).children('.main-menu__submenu');
             const offsetParent = megamenu.offsetParent();
 
@@ -948,8 +948,8 @@
     // Quickview
     */
     const quickview = {
-        cancelPreviousModal: function() {},
-        clickHandler: function() {
+        cancelPreviousModal: function () { },
+        clickHandler: function () {
             const modal = $('#quickview-modal');
             const button = $(this);
             const doubleClick = button.is('.product-card__action--loading');
@@ -964,15 +964,15 @@
 
             let xhr = null;
             // timeout ONLY_FOR_DEMO!
-            const timeout = setTimeout(function() {
+            const timeout = setTimeout(function () {
                 xhr = $.ajax({
                     url: 'quickview.html',
-                    success: function(data) {
-                        quickview.cancelPreviousModal = function() {};
+                    success: function (data) {
+                        quickview.cancelPreviousModal = function () { };
                         button.removeClass('product-card__action--loading');
 
                         modal.html(data);
-                        modal.find('.quickview__close').on('click', function() {
+                        modal.find('.quickview__close').on('click', function () {
                             modal.modal('hide');
                         });
                         modal.modal('show');
@@ -980,7 +980,7 @@
                 });
             }, 1000);
 
-            quickview.cancelPreviousModal = function() {
+            quickview.cancelPreviousModal = function () {
                 button.removeClass('product-card__action--loading');
 
                 if (xhr) {
@@ -996,15 +996,15 @@
     $(function () {
         const modal = $('#quickview-modal');
 
-        modal.on('shown.bs.modal', function() {
-            modal.find('.product-gallery').each(function(i, gallery) {
+        modal.on('shown.bs.modal', function () {
+            modal.find('.product-gallery').each(function (i, gallery) {
                 initProductGallery(gallery, $(this).data('layout'));
             });
 
             $('.input-number', modal).customNumber();
         });
 
-        $('.product-card__action--quickview').on('click', function() {
+        $('.product-card__action--quickview').on('click', function () {
             quickview.clickHandler.apply(this, arguments);
         });
     });
@@ -1021,60 +1021,60 @@
             'grid-4-sidebar': {
                 items: 4,
                 responsive: {
-                    1400: {items: 4},
-                    1200: {items: 3},
-                    992: {items: 3, margin: 16},
-                    768: {items: 3, margin: 16},
-                    576: {items: 2, margin: 16},
-                    460: {items: 2, margin: 16},
-                    0: {items: 1},
+                    1400: { items: 4 },
+                    1200: { items: 3 },
+                    992: { items: 3, margin: 16 },
+                    768: { items: 3, margin: 16 },
+                    576: { items: 2, margin: 16 },
+                    460: { items: 2, margin: 16 },
+                    0: { items: 1 },
                 }
             },
             'grid-5': {
                 items: 5,
                 responsive: {
-                    1400: {items: 5},
-                    1200: {items: 4},
-                    992: {items: 4, margin: 16},
-                    768: {items: 3, margin: 16},
-                    576: {items: 2, margin: 16},
-                    460: {items: 2, margin: 16},
-                    0: {items: 1},
+                    1400: { items: 5 },
+                    1200: { items: 4 },
+                    992: { items: 4, margin: 16 },
+                    768: { items: 3, margin: 16 },
+                    576: { items: 2, margin: 16 },
+                    460: { items: 2, margin: 16 },
+                    0: { items: 1 },
                 }
             },
             'grid-6': {
                 items: 6,
                 margin: 16,
                 responsive: {
-                    1400: {items: 6},
-                    1200: {items: 4},
-                    992: {items: 4, margin: 16},
-                    768: {items: 3, margin: 16},
-                    576: {items: 2, margin: 16},
-                    460: {items: 2, margin: 16},
-                    0: {items: 1},
+                    1400: { items: 6 },
+                    1200: { items: 4 },
+                    992: { items: 4, margin: 16 },
+                    768: { items: 3, margin: 16 },
+                    576: { items: 2, margin: 16 },
+                    460: { items: 2, margin: 16 },
+                    0: { items: 1 },
                 }
             },
             'horizontal': {
                 items: 4,
                 responsive: {
-                    1400: {items: 4, margin: 14},
-                    992: {items: 3, margin: 14},
-                    768: {items: 2, margin: 14},
-                    0: {items: 1, margin: 14},
+                    1400: { items: 4, margin: 14 },
+                    992: { items: 3, margin: 14 },
+                    768: { items: 2, margin: 14 },
+                    0: { items: 1, margin: 14 },
                 }
             },
             'horizontal-sidebar': {
                 items: 3,
                 responsive: {
-                    1400: {items: 3, margin: 14},
-                    768: {items: 2, margin: 14},
-                    0: {items: 1, margin: 14},
+                    1400: { items: 3, margin: 14 },
+                    768: { items: 2, margin: 14 },
+                    0: { items: 1, margin: 14 },
                 }
             }
         };
 
-        $('.block-products-carousel').each(function() {
+        $('.block-products-carousel').each(function () {
             const block = $(this);
             const layout = $(this).data('layout');
             const owlCarousel = $(this).find('.owl-carousel');
@@ -1086,16 +1086,16 @@
                 rtl: isRTL()
             }, carouselOptions[layout]));
 
-            $(this).find('.section-header__arrow--prev').on('click', function() {
+            $(this).find('.section-header__arrow--prev').on('click', function () {
                 owlCarousel.trigger('prev.owl.carousel', [500]);
             });
-            $(this).find('.section-header__arrow--next').on('click', function() {
+            $(this).find('.section-header__arrow--next').on('click', function () {
                 owlCarousel.trigger('next.owl.carousel', [500]);
             });
 
-            let cancelPreviousGroupChange = function() {};
+            let cancelPreviousGroupChange = function () { };
 
-            $(this).find('.section-header__groups-button').on('click', function() {
+            $(this).find('.section-header__groups-button').on('click', function () {
                 const carousel = block.find('.block-products-carousel__carousel');
 
                 if ($(this).is('.section-header__groups-button--active')) {
@@ -1111,7 +1111,7 @@
 
                 // timeout ONLY_FOR_DEMO! you can replace it with an ajax request
                 let timer;
-                timer = setTimeout(function() {
+                timer = setTimeout(function () {
                     let items = block.find('.owl-carousel .owl-item:not(".cloned") .block-products-carousel__column');
 
                     /*** this is ONLY_FOR_DEMO! / start */
@@ -1123,7 +1123,8 @@
                         /**/     const randomItem = itemsArray.splice(randomIndex, 1)[0];
                         /**/
                         /**/     newItemsArray.push(randomItem);
-                        /**/ }
+                        /**/
+                    }
                     /**/ items = $(newItemsArray);
                     /*** this is ONLY_FOR_DEMO! / end */
 
@@ -1132,16 +1133,16 @@
                         .trigger('refresh.owl.carousel')
                         .trigger('to.owl.carousel', [0, 0]);
 
-                    $('.product-card__action--quickview', block).on('click', function() {
+                    $('.product-card__action--quickview', block).on('click', function () {
                         quickview.clickHandler.apply(this, arguments);
                     });
 
                     carousel.removeClass('block-products-carousel__carousel--loading');
                 }, 1000);
-                cancelPreviousGroupChange = function() {
+                cancelPreviousGroupChange = function () {
                     // timeout ONLY_FOR_DEMO!
                     clearTimeout(timer);
-                    cancelPreviousGroupChange = function() {};
+                    cancelPreviousGroupChange = function () { };
                 };
             });
         });
@@ -1161,33 +1162,33 @@
             grid: {
                 items: 4,
                 responsive: {
-                    1400: {items: 4, margin: 20},
-                    1200: {items: 3, margin: 20},
-                    992: {items: 3, margin: 16},
-                    768: {items: 2, margin: 16},
-                    0: {items: 1, margin: 16},
+                    1400: { items: 4, margin: 20 },
+                    1200: { items: 3, margin: 20 },
+                    992: { items: 3, margin: 16 },
+                    768: { items: 2, margin: 16 },
+                    0: { items: 1, margin: 16 },
                 },
             },
             list: {
                 items: 2,
                 responsive: {
-                    1400: {items: 2, margin: 20},
-                    992: {items: 2, margin: 16},
-                    0: {items: 1, margin: 16},
+                    1400: { items: 2, margin: 20 },
+                    992: { items: 2, margin: 16 },
+                    0: { items: 1, margin: 16 },
                 },
             },
         };
 
-        $('.block-posts-carousel').each(function() {
+        $('.block-posts-carousel').each(function () {
             const owlCarousel = $(this).find('.owl-carousel');
             const layout = $(this).data('layout');
 
             owlCarousel.owlCarousel(Object.assign({}, defaultOptions, options[layout]));
 
-            $(this).find('.section-header__arrow--prev').on('click', function() {
+            $(this).find('.section-header__arrow--prev').on('click', function () {
                 owlCarousel.trigger('prev.owl.carousel', [500]);
             });
-            $(this).find('.section-header__arrow--next').on('click', function() {
+            $(this).find('.section-header__arrow--next').on('click', function () {
                 owlCarousel.trigger('next.owl.carousel', [500]);
             });
         });
@@ -1197,7 +1198,7 @@
     // .block-teammates
     */
     $(function () {
-        $('.block-teammates').each(function() {
+        $('.block-teammates').each(function () {
             const owlCarousel = $(this).find('.owl-carousel');
 
             owlCarousel.owlCarousel({
@@ -1205,11 +1206,11 @@
                 margin: 20,
                 rtl: isRTL(),
                 responsive: {
-                    1200: {items: 5},
-                    992: {items: 4},
-                    768: {items: 3},
-                    440: {items: 2},
-                    0: {items: 1}
+                    1200: { items: 5 },
+                    992: { items: 4 },
+                    768: { items: 3 },
+                    440: { items: 2 },
+                    0: { items: 1 }
                 }
             });
         });
@@ -1219,7 +1220,7 @@
     // .block-reviews
     */
     $(function () {
-        $('.block-reviews').each(function() {
+        $('.block-reviews').each(function () {
             const owlCarousel = $(this).find('.owl-carousel');
 
             owlCarousel.owlCarousel({
@@ -1236,7 +1237,7 @@
     // .block-zone
     */
     $(function () {
-        $('.block-zone').each(function() {
+        $('.block-zone').each(function () {
             const owlCarousel = $(this).find('.owl-carousel');
 
             owlCarousel.owlCarousel({
@@ -1246,23 +1247,23 @@
                 items: 4,
                 rtl: isRTL(),
                 responsive: {
-                    1400: {items: 4, margin: 20},
-                    992: {items: 3, margin: 16},
-                    460: {items: 2, margin: 16},
-                    0: {items: 1},
+                    1400: { items: 4, margin: 20 },
+                    992: { items: 3, margin: 16 },
+                    460: { items: 2, margin: 16 },
+                    0: { items: 1 },
                 }
             });
 
-            $(this).find('.block-zone__arrow--prev').on('click', function() {
+            $(this).find('.block-zone__arrow--prev').on('click', function () {
                 owlCarousel.trigger('prev.owl.carousel', [500]);
             });
-            $(this).find('.block-zone__arrow--next').on('click', function() {
+            $(this).find('.block-zone__arrow--next').on('click', function () {
                 owlCarousel.trigger('next.owl.carousel', [500]);
             });
 
-            let cancelPreviousTabChange = function() {};
+            let cancelPreviousTabChange = function () { };
 
-            $(this).find('.block-zone__tabs-button').on('click', function() {
+            $(this).find('.block-zone__tabs-button').on('click', function () {
                 const block = $(this).closest('.block-zone');
                 const carousel = block.find('.block-zone__carousel');
 
@@ -1279,7 +1280,7 @@
 
                 // timeout ONLY_FOR_DEMO! you can replace it with an ajax request
                 let timer;
-                timer = setTimeout(function() {
+                timer = setTimeout(function () {
                     let items = block.find('.owl-carousel .owl-item:not(".cloned") .block-zone__carousel-item');
 
                     /*** this is ONLY_FOR_DEMO! / start */
@@ -1291,7 +1292,8 @@
                         /**/     const randomItem = itemsArray.splice(randomIndex, 1)[0];
                         /**/
                         /**/     newItemsArray.push(randomItem);
-                        /**/ }
+                        /**/
+                    }
                     /**/ items = $(newItemsArray);
                     /*** this is ONLY_FOR_DEMO! / end */
 
@@ -1300,16 +1302,16 @@
                         .trigger('refresh.owl.carousel')
                         .trigger('to.owl.carousel', [0, 0]);
 
-                    $('.product-card__action--quickview', block).on('click', function() {
+                    $('.product-card__action--quickview', block).on('click', function () {
                         quickview.clickHandler.apply(this, arguments);
                     });
 
                     carousel.removeClass('block-zone__carousel--loading');
                 }, 1000);
-                cancelPreviousTabChange = function() {
+                cancelPreviousTabChange = function () {
                     // timeout ONLY_FOR_DEMO!
                     clearTimeout(timer);
-                    cancelPreviousTabChange = function() {};
+                    cancelPreviousTabChange = function () { };
                 };
             });
         });
@@ -1331,19 +1333,19 @@
         const vehiclePicker = $('.search__dropdown--vehicle-picker');
         const vehiclePickerButton = $('.search__button--start');
 
-        input.on('focus', function() {
+        input.on('focus', function () {
             suggestions.addClass('search__dropdown--open');
         });
-        input.on('blur', function() {
+        input.on('blur', function () {
             suggestions.removeClass('search__dropdown--open');
         });
 
-        vehiclePickerButton.on('click', function() {
+        vehiclePickerButton.on('click', function () {
             vehiclePickerButton.toggleClass('search__button--hover');
             vehiclePicker.toggleClass('search__dropdown--open');
         });
 
-        vehiclePicker.on('transitionend', function(event) {
+        vehiclePicker.on('transitionend', function (event) {
             if (event.originalEvent.propertyName === 'visibility' && vehiclePicker.is(event.target)) {
                 vehiclePicker.find('.vehicle-picker__panel:eq(0)').addClass('vehicle-picker__panel--active');
                 vehiclePicker.find('.vehicle-picker__panel:gt(0)').removeClass('vehicle-picker__panel--active');
@@ -1360,7 +1362,7 @@
             }
         });
 
-        $('.vehicle-picker [data-to-panel]').on('click', function(event) {
+        $('.vehicle-picker [data-to-panel]').on('click', function (event) {
             event.preventDefault();
 
             const toPanel = $(this).data('to-panel');
@@ -1376,7 +1378,7 @@
     // .block-sale
     */
     $(function () {
-        $('.block-sale').each(function() {
+        $('.block-sale').each(function () {
             const owlCarousel = $(this).find('.owl-carousel');
 
             owlCarousel.owlCarousel({
@@ -1386,24 +1388,24 @@
                 loop: true,
                 rtl: isRTL(),
                 responsive: {
-                    1400: {items: 5},
-                    1200: {items: 4},
-                    992: {items: 4, margin: 16},
-                    768: {items: 3, margin: 16},
-                    576: {items: 2, margin: 16},
-                    460: {items: 2, margin: 16},
-                    0: {items: 1},
+                    1400: { items: 5 },
+                    1200: { items: 4 },
+                    992: { items: 4, margin: 16 },
+                    768: { items: 3, margin: 16 },
+                    576: { items: 2, margin: 16 },
+                    460: { items: 2, margin: 16 },
+                    0: { items: 1 },
                 },
             });
 
-            $(this).find('.block-sale__arrow--prev').on('click', function() {
+            $(this).find('.block-sale__arrow--prev').on('click', function () {
                 owlCarousel.trigger('prev.owl.carousel', [500]);
             });
-            $(this).find('.block-sale__arrow--next').on('click', function() {
+            $(this).find('.block-sale__arrow--next').on('click', function () {
                 owlCarousel.trigger('next.owl.carousel', [500]);
             });
         });
-        $('.block-sale__timer').each(function() {
+        $('.block-sale__timer').each(function () {
             const timer = $(this);
             const MINUTE = 60;
             const HOUR = MINUTE * 60;
@@ -1411,7 +1413,7 @@
 
             let left = DAY * 3;
 
-            const format = function(number) {
+            const format = function (number) {
                 let result = number.toFixed();
 
                 if (result.length === 1) {
@@ -1421,7 +1423,7 @@
                 return result;
             };
 
-            const updateTimer = function() {
+            const updateTimer = function () {
                 left -= 1;
 
                 if (left < 0) {
@@ -1451,7 +1453,7 @@
     // .block-slideshow
     */
     $(function () {
-        $('.block-slideshow__carousel').each(function() {
+        $('.block-slideshow__carousel').each(function () {
             const owlCarousel = $(this).find('.owl-carousel');
 
             owlCarousel.owlCarousel({
@@ -1467,7 +1469,7 @@
     // .block-finder
     */
     $(function () {
-        $('.block-finder__form-control--select select').on('change', function() {
+        $('.block-finder__form-control--select select').on('change', function () {
             const item = $(this).closest('.block-finder__form-control--select');
 
             if ($(this).val() !== 'none') {
@@ -1484,17 +1486,17 @@
     /*
     // .block-header
     */
-    (function(){
+    (function () {
         // So that breadcrumbs correctly flow around the page title, we need to know its width.
         // This code simply conveys the width of the page title in CSS.
 
         const media = matchMedia('(min-width: 1200px)');
-        const updateTitleWidth = function() {
+        const updateTitleWidth = function () {
             const width = $('.block-header__title').outerWidth();
             const titleSafeArea = $('.breadcrumb__title-safe-area').get(0);
 
             if (titleSafeArea && width) {
-                titleSafeArea.style.setProperty('--block-header-title-width', width+'px');
+                titleSafeArea.style.setProperty('--block-header-title-width', width + 'px');
             }
         };
 
@@ -1513,14 +1515,14 @@
     // select2
     */
     $(function () {
-        $('.form-control-select2, .block-finder__form-control--select select').select2({width: ''});
+        $('.form-control-select2, .block-finder__form-control--select select').select2({ width: '' });
     });
 
     /*
     // .vehicle-form
     */
     $(function () {
-        $('.vehicle-form__item--select select').on('change', function() {
+        $('.vehicle-form__item--select select').on('change', function () {
             const item = $(this).closest('.vehicle-form__item--select');
 
             if ($(this).val() !== 'none') {
@@ -1537,7 +1539,7 @@
     /*
     // Vehicle storage utility functions
     */
-    window.getSelectedVehicle = function() {
+    window.getSelectedVehicle = function () {
         try {
             const savedVehicle = localStorage.getItem('selectedVehicle');
             if (savedVehicle) {
@@ -1549,7 +1551,7 @@
         return null;
     };
 
-    window.clearSelectedVehicle = function() {
+    window.clearSelectedVehicle = function () {
         try {
             localStorage.removeItem('selectedVehicle');
             // Reset vehicle picker button text
@@ -1562,15 +1564,36 @@
     /*
     // Dynamic Breadcrumb for Product Pages
     */
-    $(function() {
+    $(function () {
+        console.log("Breadcrumb Sync Script Started");
+
+        // Product Title
         const productTitle = $('.product__title').text().trim();
         if (productTitle) {
-            // Update the last breadcrumb item
             const lastBreadcrumbItem = $('.breadcrumb__item--last .breadcrumb__item-link');
             if (lastBreadcrumbItem.length) {
                 lastBreadcrumbItem.text(productTitle);
             }
         }
+
+        // Product Category (from Tags)
+        /*
+        // Disabled as per user request to use "فروشگاه" (Shop) statically
+        const firstTagRef = $('.product__tags .tags__list a').first();
+        const firstTag = firstTagRef.text().trim();
+
+        console.log("First Tag Found:", firstTag);
+
+        if (firstTag) {
+            const categoryBreadcrumbItem = $('.breadcrumb__item--category');
+            console.log("Category Breadcrumb Item Length:", categoryBreadcrumbItem.length);
+
+            if (categoryBreadcrumbItem.length) {
+                categoryBreadcrumbItem.text(firstTag);
+                console.log("Updated category to:", firstTag);
+            }
+        }
+        */
     });
 
 })(jQuery);
