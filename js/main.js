@@ -1559,4 +1559,18 @@
             console.error('Error clearing selected vehicle:', e);
         }
     };
+    /*
+    // Dynamic Breadcrumb for Product Pages
+    */
+    $(function() {
+        const productTitle = $('.product__title').text().trim();
+        if (productTitle) {
+            // Update the last breadcrumb item
+            const lastBreadcrumbItem = $('.breadcrumb__item--last .breadcrumb__item-link');
+            if (lastBreadcrumbItem.length) {
+                lastBreadcrumbItem.text(productTitle);
+            }
+        }
+    });
+
 })(jQuery);
