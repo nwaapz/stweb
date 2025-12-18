@@ -247,6 +247,11 @@ function getProducts($filters = [])
         $params[] = $search;
     }
 
+    if (!empty($filters['category_name'])) {
+        $sql .= " AND c.name = ?";
+        $params[] = $filters['category_name'];
+    }
+
     // Order by created_at DESC, fallback to id DESC if created_at is null
     $sql .= " ORDER BY p.created_at DESC, p.id DESC";
 

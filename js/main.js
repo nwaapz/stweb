@@ -1596,4 +1596,129 @@
         */
     });
 
+    /*
+    // Dynamic Analogs (Related Products)
+    */
+    $(function () {
+        const analogsTab = $('#product-tab-analogs');
+
+        if (analogsTab.length) {
+            const tbody = analogsTab.find('.analogs-table tbody');
+
+            // Get product ID or Slug from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            // Check 'product' param (slug) or fallback to 'id'
+            const productParam = urlParams.get('product') || urlParams.get('id') || '1';
+
+            if (productParam) {
+                // Show loading state
+                tbody.html('<tr><td colspan="4" style="text-align:center;">در حال بارگذاری...</td></tr>');
+
+                // Step 1: Determine API endpoint (ID vs Slug)
+                let apiEndpoint = 'backend/api/products.php?id=' + encodeURIComponent(productParam);
+                if (isNaN(productParam)) {
+                    apiEndpoint = 'backend/api/products.php?slug=' + encodeURIComponent(productParam);
+                }
+
+                // Step 1: Fetch current product
+                fetch(apiEndpoint)
+                    .then(response => response.json())
+                    .then(productData => {
+                        if (productData.success && productData.data) {
+                            const categoryId = productData.data.category_id;
+                            const currentProductId = productData.data.id;
+
+                            // Step 2: Fetch related products by category ID
+                            if (categoryId) {
+                                // Pass current ID to filter it out in next step if needed, 
+                                // though we filter client side below.
+                                return fetch('backend/api/products.php?category=' + categoryId + '&limit=4') // Get 4 to have buffer for filtering
+                                    .then(res => res.json())
+                                    .then(data => ({
+                                        ...data,
+                                        currentId: currentProductId
+                                    }));
+                            }
+                        }
+                        throw new Error('Product or category not found');
+                    })
+                    .then(data => {
+                        tbody.empty();
+
+                        // Step 3: Display related products
+                        if (data.success && data.data && data.data.length > 0) {
+                            // Filter out current product
+                            const relatedProducts = data.data.filter(p => p.id != data.currentId).slice(0, 3);
+
+                            if (relatedProducts.length > 0) {
+                                relatedProducts.forEach(product => {
+                                    const tr = $('<tr>');
+
+                                    // Name & SKU
+                                    const nameCol = $('<td class="analogs-table__column analogs-table__column--name">');
+                                    const nameLink = $('<a>')
+                                        .addClass('analogs-table__product-name')
+                                        // Use Slug in URL
+                                        .attr('href', 'product-full.html?product=' + encodeURIComponent(product.slug))
+                                        .text(product.name);
+                                    const skuDiv = $('<div>')
+                                        .addClass('analogs-table__sku')
+                                        .attr('data-title', 'SKU')
+                                        .text(product.sku || 'N/A');
+                                    nameCol.append(nameLink, '<br>', skuDiv);
+
+                                    // Rating
+                                    const ratingCol = $('<td class="analogs-table__column analogs-table__column--rating">');
+                                    const ratingDiv = $('<div class="analogs-table__rating">');
+                                    const starsHtml = getStarsHtml(product.rating || 5);
+                                    const ratingStars = $('<div class="analogs-table__rating-stars">')
+                                        .html('<div class="rating"><div class="rating__body">' + starsHtml + '</div></div>');
+                                    const ratingLabel = $('<div class="analogs-table__rating-label">')
+                                        .text((product.reviews || 0) + ' نظرات');
+                                    ratingDiv.append(ratingStars, ratingLabel);
+                                    ratingCol.append(ratingDiv);
+
+                                    // Vendor
+                                    const vendorCol = $('<td class="analogs-table__column analogs-table__column--vendor" data-title="Vendor">');
+                                    const vendorName = product.vehicle_name || 'Brandix'; // Default or from DB
+                                    const country = product.country || 'Germany'; // Default or from DB
+                                    vendorCol.html(vendorName + ' <div class="analogs-table__country">(' + country + ')</div>');
+
+                                    // Price
+                                    const priceCol = $('<td class="analogs-table__column analogs-table__column--price">')
+                                        .text(product.formatted_price);
+
+                                    tr.append(nameCol, ratingCol, vendorCol, priceCol);
+                                    tbody.append(tr);
+                                });
+                            } else {
+                                tbody.html('<tr><td colspan="4" style="text-align:center;">محصول مشابهی یافت نشد</td></tr>');
+                            }
+
+                        } else {
+                            tbody.html('<tr><td colspan="4" style="text-align:center;">محصول مشابهی یافت نشد</td></tr>');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching analogs:', error);
+                        tbody.html('<tr><td colspan="4" style="text-align:center;">محصول مشابهی یافت نشد</td></tr>');
+                    });
+            } else {
+                tbody.html('<tr><td colspan="4" style="text-align:center;">محصول مشخص نیست</td></tr>');
+            }
+        }
+
+        function getStarsHtml(rating) {
+            let html = '';
+            for (let i = 0; i < 5; i++) {
+                if (i < rating) {
+                    html += '<div class="rating__star rating__star--active"></div>';
+                } else {
+                    html += '<div class="rating__star"></div>';
+                }
+            }
+            return html;
+        }
+    });
+
 })(jQuery);

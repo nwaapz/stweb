@@ -56,8 +56,27 @@ try {
 
     // Single product by ID
     if (isset($_GET['id'])) {
-        $id = (int) $_GET['id'];
-        $product = getProductById($id);
+        $idParam = $_GET['id'];
+
+        if (is_numeric($idParam)) {
+            $id = (int) $idParam;
+            $product = getProductById($id);
+        } else {
+            // Get product by name
+            $stmt = $conn->prepare("
+                SELECT p.*, c.name as category_name, v.name as vehicle_name 
+                FROM products p 
+                LEFT JOIN categories c ON p.category_id = c.id 
+                LEFT JOIN vehicles v ON p.vehicle_id = v.id 
+                WHERE p.name = ?
+            ");
+            $stmt->execute([$idParam]);
+            $product = $stmt->fetch();
+
+            if ($product) {
+                $id = $product['id'];
+            }
+        }
 
         if (!$product) {
             http_response_code(404);
@@ -88,6 +107,10 @@ try {
 
     if (isset($_GET['category'])) {
         $filters['category_id'] = (int) $_GET['category'];
+    }
+
+    if (isset($_GET['category_name'])) {
+        $filters['category_name'] = $_GET['category_name'];
     }
 
     if (isset($_GET['vehicle'])) {
