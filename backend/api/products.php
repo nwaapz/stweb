@@ -40,6 +40,17 @@ try {
         $stmt = $conn->prepare("UPDATE products SET views = views + 1 WHERE id = ?");
         $stmt->execute([$id]);
 
+        // Calculate discount_price from discount_percent if discount_price is NULL but discount_percent exists
+        // This should happen BEFORE checking hasActiveDiscount
+        if ((empty($product['discount_price']) || $product['discount_price'] == 0) && !empty($product['discount_percent']) && !empty($product['price'])) {
+            $numericPrice = (float)$product['price'];
+            $discountPercent = (float)$product['discount_percent'];
+            $calculatedPrice = (int)round($numericPrice - ($numericPrice * $discountPercent / 100));
+            if ($calculatedPrice > 0 && $calculatedPrice < $numericPrice) {
+                $product['discount_price'] = $calculatedPrice;
+            }
+        }
+
         // Format response
         $product['has_discount'] = hasActiveDiscount($product);
         $product['effective_price'] = getEffectivePrice($product);
@@ -91,11 +102,43 @@ try {
         $stmt = $conn->prepare("UPDATE products SET views = views + 1 WHERE id = ?");
         $stmt->execute([$id]);
 
+        // Calculate discount_price from discount_percent if discount_price is NULL but discount_percent exists
+        // This should happen BEFORE checking hasActiveDiscount
+        if ((empty($product['discount_price']) || $product['discount_price'] == 0) && !empty($product['discount_percent']) && !empty($product['price'])) {
+            $numericPrice = (float)$product['price'];
+            $discountPercent = (float)$product['discount_percent'];
+            $calculatedPrice = (int)round($numericPrice - ($numericPrice * $discountPercent / 100));
+            if ($calculatedPrice > 0 && $calculatedPrice < $numericPrice) {
+                $product['discount_price'] = $calculatedPrice;
+            }
+        }
+
         // Format response
         $product['has_discount'] = hasActiveDiscount($product);
         $product['effective_price'] = getEffectivePrice($product);
         $product['formatted_price'] = formatPrice($product['price']);
-        $product['formatted_discount_price'] = $product['discount_price'] ? formatPrice($product['discount_price']) : null;
+        
+        // Always return formatted_discount_price if discount_percent exists, even if discount isn't active yet
+        if (!empty($product['discount_percent']) && !empty($product['price'])) {
+            // If discount_price wasn't calculated above, calculate it now
+            if (empty($product['discount_price']) || $product['discount_price'] == 0) {
+                $numericPrice = (float)$product['price'];
+                $discountPercent = (float)$product['discount_percent'];
+                $calculatedPrice = (int)round($numericPrice - ($numericPrice * $discountPercent / 100));
+                if ($calculatedPrice > 0 && $calculatedPrice < $numericPrice) {
+                    $product['discount_price'] = $calculatedPrice;
+                }
+            }
+            // Format the discount price
+            if ($product['discount_price'] && $product['discount_price'] > 0) {
+                $product['formatted_discount_price'] = formatPrice($product['discount_price']);
+            } else {
+                $product['formatted_discount_price'] = null;
+            }
+        } else {
+            $product['formatted_discount_price'] = $product['discount_price'] ? formatPrice($product['discount_price']) : null;
+        }
+        
         $product['image_url'] = $product['image'] ? UPLOAD_URL . $product['image'] : null;
 
 
@@ -146,10 +189,41 @@ try {
 
     // Format products
     foreach ($products as &$product) {
+        // Calculate discount_price from discount_percent if discount_price is NULL but discount_percent exists
+        // This should happen BEFORE checking hasActiveDiscount
+        if ((empty($product['discount_price']) || $product['discount_price'] == 0) && !empty($product['discount_percent']) && !empty($product['price'])) {
+            $numericPrice = (float)$product['price'];
+            $discountPercent = (float)$product['discount_percent'];
+            $calculatedPrice = (int)round($numericPrice - ($numericPrice * $discountPercent / 100));
+            if ($calculatedPrice > 0 && $calculatedPrice < $numericPrice) {
+                $product['discount_price'] = $calculatedPrice;
+            }
+        }
+        
         $product['has_discount'] = hasActiveDiscount($product);
         $product['effective_price'] = getEffectivePrice($product);
         $product['formatted_price'] = formatPrice($product['price']);
-        $product['formatted_discount_price'] = $product['discount_price'] ? formatPrice($product['discount_price']) : null;
+        
+        // Always return formatted_discount_price if discount_percent exists, even if discount isn't active yet
+        if (!empty($product['discount_percent']) && !empty($product['price'])) {
+            // If discount_price wasn't calculated above, calculate it now
+            if (empty($product['discount_price']) || $product['discount_price'] == 0) {
+                $numericPrice = (float)$product['price'];
+                $discountPercent = (float)$product['discount_percent'];
+                $calculatedPrice = (int)round($numericPrice - ($numericPrice * $discountPercent / 100));
+                if ($calculatedPrice > 0 && $calculatedPrice < $numericPrice) {
+                    $product['discount_price'] = $calculatedPrice;
+                }
+            }
+            // Format the discount price
+            if ($product['discount_price'] && $product['discount_price'] > 0) {
+                $product['formatted_discount_price'] = formatPrice($product['discount_price']);
+            } else {
+                $product['formatted_discount_price'] = null;
+            }
+        } else {
+            $product['formatted_discount_price'] = $product['discount_price'] ? formatPrice($product['discount_price']) : null;
+        }
         $product['image_url'] = $product['image'] ? UPLOAD_URL . $product['image'] : null;
         $product['rating'] = $product['rating'] ?? 0;
         $product['reviews'] = $product['reviews'] ?? 0;

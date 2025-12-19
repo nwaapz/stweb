@@ -3967,6 +3967,17 @@
 					.then(function (data) {
 						if (data.success && data.data) {
 							const product = data.data;
+							
+							// Debug: Log product discount info
+							console.log('Product discount info:', {
+								has_discount: product.has_discount,
+								discount_price: product.discount_price,
+								discount_percent: product.discount_percent,
+								formatted_discount_price: product.formatted_discount_price,
+								price: product.price,
+								discount_start: product.discount_start,
+								discount_end: product.discount_end
+							});
 
 							// Update Title
 							const titleEl = document.querySelector('.product__title');
@@ -3976,11 +3987,45 @@
 							// Update Price
 							const priceEl = document.querySelector('.product__price');
 							if (priceEl) {
-								if (product.has_discount) {
-									priceEl.innerHTML = '<span class="product__price--new">' + product.formatted_discount_price + '</span> <span class="product__price--old">' + product.formatted_price + '</span>';
+								// Show discount if formatted_discount_price exists OR discount_percent exists
+								let hasDiscount = false;
+								let discountPrice = product.formatted_discount_price;
+								
+								// Priority 1: Use formatted_discount_price if it exists (from API)
+								if (product.formatted_discount_price && product.formatted_discount_price.trim() !== '') {
+									hasDiscount = true;
+									discountPrice = product.formatted_discount_price;
+								}
+								// Priority 2: Check if discount_percent exists and calculate if needed
+								else if (product.discount_percent && product.discount_percent > 0 && product.price) {
+									hasDiscount = true;
+									
+									// Get numeric price (remove any formatting)
+									const priceStr = product.price.toString().replace(/[^\d]/g, '');
+									const originalPrice = parseFloat(priceStr);
+									const discountPercent = parseFloat(product.discount_percent);
+									
+									if (!isNaN(originalPrice) && !isNaN(discountPercent) && discountPercent > 0) {
+										const calculatedDiscountPrice = Math.round(originalPrice - (originalPrice * discountPercent / 100));
+										// Format the calculated price
+										discountPrice = calculatedDiscountPrice.toLocaleString('fa-IR') + ' تومان';
+									}
+								}
+								// Priority 3: Use has_discount flag as fallback
+								else if (product.has_discount && product.formatted_discount_price) {
+									hasDiscount = true;
+									discountPrice = product.formatted_discount_price;
+								}
+								
+								// Display the price
+								if (hasDiscount && discountPrice && discountPrice.trim() !== '') {
+									priceEl.innerHTML = '<span class="product__price--new">' + discountPrice + '</span> <span class="product__price--old">' + product.formatted_price + '</span>';
 									priceEl.classList.add('product__price--new'); // Ensure styling
+									console.log('Displaying discount:', { discountPrice, originalPrice: product.formatted_price });
 								} else {
 									priceEl.textContent = product.formatted_price;
+									priceEl.classList.remove('product__price--new');
+									console.log('No discount displayed. hasDiscount:', hasDiscount, 'discountPrice:', discountPrice);
 								}
 							}
 

@@ -303,7 +303,13 @@ function getProductBySlug($slug)
  */
 function hasActiveDiscount($product)
 {
-    if (empty($product['discount_price'])) {
+    // Calculate discount_price from discount_percent if it's not set
+    if (empty($product['discount_price']) && !empty($product['discount_percent']) && !empty($product['price'])) {
+        $product['discount_price'] = (int)round($product['price'] - ($product['price'] * $product['discount_percent'] / 100));
+    }
+    
+    // Check if discount_price exists and is greater than 0
+    if (empty($product['discount_price']) || $product['discount_price'] <= 0) {
         return false;
     }
 

@@ -1375,12 +1375,157 @@
     });
 
     /*
-    // .block-sale
+    // .block-sale - Load discounted products from CMS
     */
     $(function () {
         $('.block-sale').each(function () {
+            const block = $(this);
             const owlCarousel = $(this).find('.owl-carousel');
+            const initialProductsHtml = owlCarousel.html(); // Store static products as fallback
 
+            // Function to render discounted products in sale carousel
+            function renderSaleProducts(products) {
+                // Filter to only show products with active discounts
+                const discountedProducts = products.filter(function(product) {
+                    return product.has_discount && product.formatted_discount_price;
+                });
+
+                if (discountedProducts.length === 0) {
+                    // If no discounted products, keep static products or show message
+                    return;
+                }
+
+                // Destroy existing carousel if initialized
+                if (owlCarousel.data('owl.carousel')) {
+                    owlCarousel.trigger('destroy.owl.carousel');
+                    owlCarousel.removeClass('owl-loaded owl-drag');
+                }
+
+                owlCarousel.empty();
+                owlCarousel.css('opacity', '0'); // Hide while loading
+
+                discountedProducts.forEach(function(product) {
+                    const productUrl = product.slug ? 'product-full.html?product=' + encodeURIComponent(product.slug) : 'product-full.html?id=' + product.id;
+                    const productImage = product.image_url || 'images/products/product-1-245x245.jpg';
+                    const productName = product.name || 'بدون نام';
+                    const productPrice = product.formatted_price || '0';
+                    const discountPrice = product.formatted_discount_price || null;
+                    const productSku = product.sku || '';
+                    const vehicleName = product.vehicle_name || '';
+
+                    // Create sale item
+                    const saleItem = $('<div class="block-sale__item"></div>');
+                    const productCard = $('<div class="product-card"></div>');
+
+                    // Product actions
+                    const actionsList = $('<div class="product-card__actions-list"></div>');
+                    actionsList.append('<button class="product-card__action product-card__action--quickview" type="button" aria-label="Quick view"><svg width="16" height="16"><path d="M14,15h-4v-2h3v-3h2v4C15,14.6,14.6,15,14,15z M13,3h-3V1h4c0.6,0,1,0.4,1,1v4h-2V3z M6,3H3v3H1V2c0-0.6,0.4-1,1-1h4V3z M3,13h3v2H2c-0.6,0-1-0.4-1-1v-4h2V13z"/></svg></button>');
+                    actionsList.append('<button class="product-card__action product-card__action--wishlist" type="button" aria-label="Add to wish list"><svg width="16" height="16"><path d="M13.9,8.4l-5.4,5.4c-0.3,0.3-0.7,0.3-1,0L2.1,8.4c-1.5-1.5-1.5-3.8,0-5.3C2.8,2.4,3.8,2,4.8,2s1.9,0.4,2.6,1.1L8,3.7l0.6-0.6C9.3,2.4,10.3,2,11.3,2c1,0,1.9,0.4,2.6,1.1C15.4,4.6,15.4,6.9,13.9,8.4z"/></svg></button>');
+                    actionsList.append('<button class="product-card__action product-card__action--compare" type="button" aria-label="Add to compare"><svg width="16" height="16"><path d="M9,15H7c-0.6,0-1-0.4-1-1V2c0-0.6,0.4-1,1-1h2c0.6,0,1,0.4,1,1v12C10,14.6,9.6,15,9,15z"/><path d="M1,9h2c0.6,0,1,0.4,1,1v4c0,0.6-0.4,1-1,1H1c-0.6,0-1-0.4-1-1v-4C0,9.4,0.4,9,1,9z"/><path d="M15,5h-2c-0.6,0-1,0.4-1,1v8c0,0.6,0.4,1,1,1h2c0.6,0,1-0.4,1-1V6C16,5.4,15.6,5,15,5z"/></svg></button>');
+
+                    // Product image
+                    const imageDiv = $('<div class="product-card__image"></div>');
+                    const image = $('<div class="image image--type--product"></div>');
+                    const imageLink = $('<a href="' + productUrl + '" class="image__body"></a>');
+                    imageLink.append('<img class="image__tag" src="' + productImage + '" alt="' + productName + '" onerror="this.src=\'images/products/product-1-245x245.jpg\'">');
+                    image.append(imageLink);
+                    imageDiv.append(image);
+
+                    // Vehicle badge if available
+                    if (vehicleName) {
+                        const statusBadge = $('<div class="status-badge status-badge--style--success product-card__fit status-badge--has-icon status-badge--has-text"></div>');
+                        const badgeBody = $('<div class="status-badge__body"></div>');
+                        badgeBody.append('<div class="status-badge__icon"><svg width="13" height="13"><path d="M12,4.4L5.5,11L1,6.5l1.4-1.4l3.1,3.1L10.6,3L12,4.4z"/></svg></div>');
+                        badgeBody.append('<div class="status-badge__text">مناسب برای ' + vehicleName + '</div>');
+                        badgeBody.append('<div class="status-badge__tooltip" tabindex="0" data-toggle="tooltip" title="" data-original-title="مناسب برای ' + vehicleName + '"></div>');
+                        statusBadge.append(badgeBody);
+                        imageDiv.append(statusBadge);
+                    }
+
+                    // Product info
+                    const infoDiv = $('<div class="product-card__info"></div>');
+                    if (productSku) {
+                        infoDiv.append('<div class="product-card__meta"><span class="product-card__meta-title">شناسه:</span> ' + productSku + '</div>');
+                    }
+                    const nameDiv = $('<div class="product-card__name"></div>');
+                    nameDiv.append('<div><a href="' + productUrl + '">' + productName + '</a></div>');
+                    infoDiv.append(nameDiv);
+
+                    // Product footer with discount prices
+                    const footerDiv = $('<div class="product-card__footer"></div>');
+                    const pricesDiv = $('<div class="product-card__prices"></div>');
+                    // Always show discount price as new price and original as old price
+                    pricesDiv.append('<div class="product-card__price product-card__price--new">' + discountPrice + '</div>');
+                    pricesDiv.append('<div class="product-card__price product-card__price--old">' + productPrice + '</div>');
+                    footerDiv.append(pricesDiv);
+                    footerDiv.append('<button class="product-card__addtocart-icon" type="button" aria-label="Add to cart"><svg width="20" height="20"><circle cx="7" cy="17" r="2"/><circle cx="15" cy="17" r="2"/><path d="M20,4.4V5l-1.8,6.3c-0.1,0.4-0.5,0.7-1,0.7H6.7c-0.4,0-0.8-0.3-1-0.7L3.3,3.9C3.1,3.3,2.6,3,2.1,3H0.4C0.2,3,0,2.8,0,2.6V1.4C0,1.2,0.2,1,0.4,1h2.5c1,0,1.8,0.6,2.1,1.6L5.1,3l2.3,6.8c0,0.1,0.2,0.2,0.3,0.2h8.6c0.1,0,0.3-0.1,0.3-0.2l1.3-4.4C17.9,5.2,17.7,5,17.5,5H9.4C9.2,5,9,4.8,9,4.6V3.4C9,3.2,9.2,3,9.4,3h9.2C19.4,3,20,3.6,20,4.4z"/></svg></button>');
+
+                    // Assemble product card
+                    productCard.append(actionsList);
+                    productCard.append(imageDiv);
+                    productCard.append(infoDiv);
+                    productCard.append(footerDiv);
+
+                    saleItem.append(productCard);
+                    owlCarousel.append(saleItem);
+                });
+
+                // Re-initialize carousel with new content
+                owlCarousel.owlCarousel({
+                    items: 5,
+                    dots: true,
+                    margin: 24,
+                    loop: discountedProducts.length > 5,
+                    rtl: isRTL(),
+                    responsive: {
+                        1400: { items: 5 },
+                        1200: { items: 4 },
+                        992: { items: 4, margin: 16 },
+                        768: { items: 3, margin: 16 },
+                        576: { items: 2, margin: 16 },
+                        460: { items: 2, margin: 16 },
+                        0: { items: 1 },
+                    },
+                });
+
+                owlCarousel.css('opacity', '1'); // Show carousel
+
+                // Re-bind arrow handlers
+                block.find('.block-sale__arrow--prev').off('click').on('click', function () {
+                    owlCarousel.trigger('prev.owl.carousel', [500]);
+                });
+                block.find('.block-sale__arrow--next').off('click').on('click', function () {
+                    owlCarousel.trigger('next.owl.carousel', [500]);
+                });
+
+                // Re-initialize quickview handlers
+                $('.product-card__action--quickview', block).off('click').on('click', function() {
+                    if (typeof quickview !== 'undefined' && quickview.clickHandler) {
+                        quickview.clickHandler.apply(this, arguments);
+                    }
+                });
+            }
+
+            // Fetch discounted products from API
+            const apiUrl = 'backend/api/products.php?discounted=1&limit=20';
+            
+            fetch(apiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.data && data.data.length > 0) {
+                        renderSaleProducts(data.data);
+                    } else {
+                        // If no discounted products, keep static products
+                        owlCarousel.css('opacity', '1');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching discounted products:', error);
+                    // On error, keep static products
+                    owlCarousel.css('opacity', '1');
+                });
+
+            // Initialize carousel with static products first (will be replaced if API call succeeds)
             owlCarousel.owlCarousel({
                 items: 5,
                 dots: true,
@@ -1466,21 +1611,110 @@
     });
 
     /*
-    // .block-finder
+    // .block-finder - Dynamic loading from CMS
     */
     $(function () {
-        $('.block-finder__form-control--select select').on('change', function () {
-            const item = $(this).closest('.block-finder__form-control--select');
+        const $makeSelect = $('#block-finder-make');
+        const $modelSelect = $('#block-finder-model');
+        const $blockFinderForm = $('.block-finder__form');
 
-            if ($(this).val() !== 'none') {
-                item.find('~ .block-finder__form-control--select:eq(0) select').prop('disabled', false).val('none');
-                item.find('~ .block-finder__form-control--select:gt(0) select').prop('disabled', true).val('none');
-            } else {
-                item.find('~ .block-finder__form-control--select select').prop('disabled', true).val('none');
+        // Load factories (brands) from CMS API
+        function loadFactories() {
+            $.ajax({
+                url: 'backend/api/factories.php',
+                method: 'GET',
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success && response.data) {
+                        // Clear existing options except the default
+                        $makeSelect.find('option:not([value="none"])').remove();
+                        
+                        // Add factories to dropdown
+                        response.data.forEach(function(factory) {
+                            $makeSelect.append($('<option>', {
+                                value: factory.id,
+                                text: factory.name
+                            }));
+                        });
+                        
+                        // Enable the make select
+                        $makeSelect.prop('disabled', false);
+                        $makeSelect.trigger('change.select2');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error loading factories:', error);
+                }
+            });
+        }
+
+        // Load vehicles (models) for selected factory
+        function loadVehicles(factoryId) {
+            if (!factoryId || factoryId === 'none') {
+                $modelSelect.prop('disabled', true).val('none');
+                $modelSelect.find('option:not([value="none"])').remove();
+                $modelSelect.trigger('change.select2');
+                return;
             }
 
-            item.find('~ .block-finder__form-control--select select').trigger('change.select2');
+            $.ajax({
+                url: 'backend/api/vehicles.php',
+                method: 'GET',
+                data: { factory_id: factoryId },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success && response.data) {
+                        // Clear existing options except the default
+                        $modelSelect.find('option:not([value="none"])').remove();
+                        
+                        // Add vehicles to dropdown
+                        response.data.forEach(function(vehicle) {
+                            $modelSelect.append($('<option>', {
+                                value: vehicle.id,
+                                text: vehicle.name || (vehicle.make + ' ' + vehicle.model)
+                            }));
+                        });
+                        
+                        // Enable the model select
+                        $modelSelect.prop('disabled', false);
+                        $modelSelect.trigger('change.select2');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error loading vehicles:', error);
+                    $modelSelect.prop('disabled', true);
+                }
+            });
+        }
+
+        // Handle make (brand) selection change
+        $makeSelect.on('change', function () {
+            const selectedFactoryId = $(this).val();
+            loadVehicles(selectedFactoryId);
         });
+
+        // Handle form submission
+        $blockFinderForm.on('submit', function(e) {
+            e.preventDefault();
+            
+            const makeId = $makeSelect.val();
+            const modelId = $modelSelect.val();
+            
+            if (makeId === 'none' || modelId === 'none') {
+                alert('لطفاً برند و مدل را انتخاب کنید');
+                return false;
+            }
+            
+            // Redirect to search/category page with selected vehicle
+            // You can customize this URL based on your routing structure
+            const searchUrl = 'category.html?make=' + makeId + '&model=' + modelId;
+            window.location.href = searchUrl;
+            
+            return false;
+        });
+
+        // Initialize: Load factories on page load
+        loadFactories();
     });
 
     /*

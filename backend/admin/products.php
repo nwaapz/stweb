@@ -32,6 +32,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $discount_start = !empty($_POST['discount_start']) ? $_POST['discount_start'] : null;
     $discount_end = !empty($_POST['discount_end']) ? $_POST['discount_end'] : null;
     
+    // If discount_percent is provided but discount_price is not, calculate it from the product price
+    if ($discount_percent && !$discount_price && $price) {
+        // Ensure price is numeric (remove commas if present)
+        $numericPrice = is_numeric($price) ? $price : (int)str_replace(',', '', $price);
+        $discount_price = (int)round($numericPrice - ($numericPrice * $discount_percent / 100));
+    }
+    
+    // If discount_percent is removed but discount_price exists, clear discount_price
+    if (!$discount_percent && !$discount_price) {
+        $discount_price = null;
+    }
+    
     // Generate slug
     $slug = generateSlug($name);
     

@@ -16,6 +16,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['quick_discount'])) {
     $discountPercent = !empty($_POST['discount_percent']) ? (int)$_POST['discount_percent'] : null;
     $discountEnd = !empty($_POST['discount_end']) ? $_POST['discount_end'] : null;
     
+    // If discount_percent is provided but discount_price is not, calculate it from the product price
+    if ($discountPercent && !$discountPrice) {
+        $product = getProductById($productId);
+        if ($product && $product['price']) {
+            $discountPrice = (int)round($product['price'] - ($product['price'] * $discountPercent / 100));
+        }
+    }
+    
     $stmt = $conn->prepare("
         UPDATE products 
         SET discount_price = ?, discount_percent = ?, discount_start = NOW(), discount_end = ?

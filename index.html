@@ -2669,7 +2669,7 @@
 				<div class="block-sale__content">
 					<div class="block-sale__header">
 						<div class="block-sale__title">پیشنهاد ویژه!</div>
-						<div class="block-sale__subtitle">عجله کنید! تخفیف تا ۷۰٪</div>
+						<div class="block-sale__subtitle">تخفیف تا 25%</div>
 						<div class="block-sale__timer">
 							<div class="timer">
 								<div class="timer__part">
@@ -7867,8 +7867,27 @@
 						const productImage = product.image_url || 'images/products/product-1-245x245.jpg';
 						const productName = product.name || 'بدون نام';
 						const productPrice = product.formatted_price || '0';
-						const discountPrice = product.formatted_discount_price || null;
-						const hasDiscount = product.has_discount && discountPrice;
+						let discountPrice = product.formatted_discount_price || null;
+						
+						// Show discount if formatted_discount_price exists OR discount_percent exists
+						// Don't rely on has_discount flag since it might be false if discount hasn't started yet
+						let hasDiscount = false;
+						
+						if (discountPrice && discountPrice.trim() !== '') {
+							hasDiscount = true;
+						} else if (product.discount_percent && product.discount_percent > 0 && product.price) {
+							// Calculate discount price if not provided
+							const priceStr = product.price.toString().replace(/[^\d]/g, '');
+							const originalPrice = parseFloat(priceStr);
+							const discountPercent = parseFloat(product.discount_percent);
+							
+							if (!isNaN(originalPrice) && !isNaN(discountPercent) && discountPercent > 0) {
+								const calculatedPrice = Math.round(originalPrice - (originalPrice * discountPercent / 100));
+								discountPrice = calculatedPrice.toLocaleString('fa-IR') + ' تومان';
+								hasDiscount = true;
+							}
+						}
+						
 						const productSku = product.sku || '';
 
 						// Create product card column

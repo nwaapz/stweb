@@ -34,6 +34,16 @@ try {
         
         // Format products
         foreach ($products as &$product) {
+            // Calculate discount_price from discount_percent if discount_price is NULL but discount_percent exists
+            if ((empty($product['discount_price']) || $product['discount_price'] == 0) && !empty($product['discount_percent']) && !empty($product['price'])) {
+                $numericPrice = (float)$product['price'];
+                $discountPercent = (float)$product['discount_percent'];
+                $calculatedPrice = (int)round($numericPrice - ($numericPrice * $discountPercent / 100));
+                if ($calculatedPrice > 0 && $calculatedPrice < $numericPrice) {
+                    $product['discount_price'] = $calculatedPrice;
+                }
+            }
+            
             $product['has_discount'] = hasActiveDiscount($product);
             $product['effective_price'] = getEffectivePrice($product);
             $product['formatted_price'] = formatPrice($product['price']);
