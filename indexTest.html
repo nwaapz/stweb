@@ -6836,7 +6836,11 @@
 				</div>
 			</div>
 			<div class="block-space block-space--layout--before-footer"></div>
-		</div><!-- site__body / end --><!-- site__footer -->
+		</div><!-- site__body / end -->
+
+		<div id="iran-map"></div>
+
+		<!-- site__footer -->
 		<footer class="site__footer">
 			<div class="site-footer">
 				<div class="decor site-footer__decor decor--type--bottom">
@@ -7752,9 +7756,9 @@
 			}
 
 			// Dynamic Category Buttons for Products Carousel
-			$(function() {
+			$(function () {
 				const categoryGroups = $('.section-header__groups[data-dynamic-categories]');
-				
+
 				if (categoryGroups.length === 0) {
 					return;
 				}
@@ -7762,291 +7766,291 @@
 				const block = categoryGroups.closest('.block-products-carousel');
 				const owlCarousel = block.find('.owl-carousel');
 				const carousel = block.find('.block-products-carousel__carousel');
-				
+
 				// Hide static products immediately to prevent flash
 				owlCarousel.css('opacity', '0');
 				carousel.addClass('block-products-carousel__carousel--loading');
-				
+
 				// Store the initial static products HTML
 				const initialProductsHtml = owlCarousel.html();
-				
+
 				// Wait for carousel to be initialized
-				setTimeout(function() {
+				setTimeout(function () {
 
-				// Function to populate category buttons
-				function populateCategoryButtons(groupsContainer, categories) {
-					groupsContainer.empty();
+					// Function to populate category buttons
+					function populateCategoryButtons(groupsContainer, categories) {
+						groupsContainer.empty();
 
-					// Add "All" button first
-					const allButton = $('<li class="section-header__groups-item"></li>');
-					allButton.append('<button type="button" class="section-header__groups-button section-header__groups-button--active" data-category-id="all">همه</button>');
-					groupsContainer.append(allButton);
+						// Add "All" button first
+						const allButton = $('<li class="section-header__groups-item"></li>');
+						allButton.append('<button type="button" class="section-header__groups-button section-header__groups-button--active" data-category-id="all">همه</button>');
+						groupsContainer.append(allButton);
 
-					// Add category buttons (limit to first 10 categories to avoid clutter)
-					const limitedCategories = categories.slice(0, 10);
-					limitedCategories.forEach(function(category) {
-						const categoryItem = $('<li class="section-header__groups-item"></li>');
-						const categoryButton = $('<button type="button" class="section-header__groups-button" data-category-id="' + category.id + '"></button>');
-						categoryButton.text(category.name || 'بدون نام');
-						categoryItem.append(categoryButton);
-						groupsContainer.append(categoryItem);
-					});
+						// Add category buttons (limit to first 10 categories to avoid clutter)
+						const limitedCategories = categories.slice(0, 10);
+						limitedCategories.forEach(function (category) {
+							const categoryItem = $('<li class="section-header__groups-item"></li>');
+							const categoryButton = $('<button type="button" class="section-header__groups-button" data-category-id="' + category.id + '"></button>');
+							categoryButton.text(category.name || 'بدون نام');
+							categoryItem.append(categoryButton);
+							groupsContainer.append(categoryItem);
+						});
 
-					// Re-initialize click handlers after buttons are created
-					initializeCategoryButtonHandlers(groupsContainer);
-				}
+						// Re-initialize click handlers after buttons are created
+						initializeCategoryButtonHandlers(groupsContainer);
+					}
 
-				// Function to initialize category button click handlers
-				function initializeCategoryButtonHandlers(groupsContainer) {
-					const block = groupsContainer.closest('.block-products-carousel');
-					const carousel = block.find('.block-products-carousel__carousel');
-					const owlCarousel = block.find('.owl-carousel');
+					// Function to initialize category button click handlers
+					function initializeCategoryButtonHandlers(groupsContainer) {
+						const block = groupsContainer.closest('.block-products-carousel');
+						const carousel = block.find('.block-products-carousel__carousel');
+						const owlCarousel = block.find('.owl-carousel');
 
-					groupsContainer.find('.section-header__groups-button').off('click').on('click', function() {
-						if ($(this).is('.section-header__groups-button--active')) {
-							return;
-						}
+						groupsContainer.find('.section-header__groups-button').off('click').on('click', function () {
+							if ($(this).is('.section-header__groups-button--active')) {
+								return;
+							}
 
-						// Update active state
-						groupsContainer.find('.section-header__groups-button').removeClass('section-header__groups-button--active');
-						$(this).addClass('section-header__groups-button--active');
+							// Update active state
+							groupsContainer.find('.section-header__groups-button').removeClass('section-header__groups-button--active');
+							$(this).addClass('section-header__groups-button--active');
 
-						// Get category ID
-						const categoryId = $(this).data('category-id');
-						
-						// Show loading state
-						carousel.addClass('block-products-carousel__carousel--loading');
+							// Get category ID
+							const categoryId = $(this).data('category-id');
 
-						// If "All" is clicked, show featured products from CMS
-						if (categoryId === 'all') {
-							// Fetch featured products from CMS
-							const apiUrl = 'backend/api/products.php?limit=20&featured=1';
-							
+							// Show loading state
+							carousel.addClass('block-products-carousel__carousel--loading');
+
+							// If "All" is clicked, show featured products from CMS
+							if (categoryId === 'all') {
+								// Fetch featured products from CMS
+								const apiUrl = 'backend/api/products.php?limit=20&featured=1';
+
+								fetch(apiUrl)
+									.then(response => response.json())
+									.then(data => {
+										if (data.success && data.data && data.data.length > 0) {
+											renderProductsInCarousel(data.data, owlCarousel, block);
+										} else {
+											// If no featured products, restore static products
+											owlCarousel.html(initialProductsHtml);
+											owlCarousel.trigger('replace.owl.carousel', [owlCarousel.find('.block-products-carousel__column')]);
+											owlCarousel.trigger('refresh.owl.carousel');
+											owlCarousel.trigger('to.owl.carousel', [0, 0]);
+
+											// Re-initialize quickview handlers
+											$('.product-card__action--quickview', block).off('click').on('click', function () {
+												if (typeof quickview !== 'undefined' && quickview.clickHandler) {
+													quickview.clickHandler.apply(this, arguments);
+												}
+											});
+										}
+										carousel.removeClass('block-products-carousel__carousel--loading');
+									})
+									.catch(error => {
+										console.error('Error fetching featured products:', error);
+										// On error, restore static products
+										owlCarousel.html(initialProductsHtml);
+										owlCarousel.trigger('replace.owl.carousel', [owlCarousel.find('.block-products-carousel__column')]);
+										owlCarousel.trigger('refresh.owl.carousel');
+										owlCarousel.trigger('to.owl.carousel', [0, 0]);
+										carousel.removeClass('block-products-carousel__carousel--loading');
+									});
+								return;
+							}
+
+							// Build API URL for specific category - show only featured products from this category
+							const apiUrl = 'backend/api/products.php?limit=20&category=' + categoryId + '&featured=1';
+
+							// Fetch products
 							fetch(apiUrl)
 								.then(response => response.json())
 								.then(data => {
 									if (data.success && data.data && data.data.length > 0) {
 										renderProductsInCarousel(data.data, owlCarousel, block);
 									} else {
-										// If no featured products, restore static products
-										owlCarousel.html(initialProductsHtml);
-										owlCarousel.trigger('replace.owl.carousel', [owlCarousel.find('.block-products-carousel__column')]);
+										owlCarousel.empty();
+										owlCarousel.append('<div class="block-products-carousel__column"><div class="block-products-carousel__cell" style="text-align: center; padding: 40px;">هیچ محصولی یافت نشد</div></div>');
 										owlCarousel.trigger('refresh.owl.carousel');
-										owlCarousel.trigger('to.owl.carousel', [0, 0]);
-										
-										// Re-initialize quickview handlers
-										$('.product-card__action--quickview', block).off('click').on('click', function() {
-											if (typeof quickview !== 'undefined' && quickview.clickHandler) {
-												quickview.clickHandler.apply(this, arguments);
-											}
-										});
 									}
 									carousel.removeClass('block-products-carousel__carousel--loading');
 								})
 								.catch(error => {
-									console.error('Error fetching featured products:', error);
-									// On error, restore static products
-									owlCarousel.html(initialProductsHtml);
-									owlCarousel.trigger('replace.owl.carousel', [owlCarousel.find('.block-products-carousel__column')]);
-									owlCarousel.trigger('refresh.owl.carousel');
-									owlCarousel.trigger('to.owl.carousel', [0, 0]);
+									console.error('Error fetching products:', error);
 									carousel.removeClass('block-products-carousel__carousel--loading');
 								});
-							return;
+						});
+					}
+
+					// Function to render products in carousel
+					function renderProductsInCarousel(products, owlCarousel, block) {
+						// Destroy existing carousel if initialized
+						if (owlCarousel.data('owl.carousel')) {
+							owlCarousel.trigger('destroy.owl.carousel');
+							owlCarousel.removeClass('owl-loaded owl-drag');
 						}
 
-						// Build API URL for specific category - show only featured products from this category
-						const apiUrl = 'backend/api/products.php?limit=20&category=' + categoryId + '&featured=1';
+						owlCarousel.empty();
+						owlCarousel.css('opacity', '0'); // Hide while loading
 
-						// Fetch products
-						fetch(apiUrl)
+						products.forEach(function (product) {
+							const productUrl = product.slug ? 'product-full.html?product=' + encodeURIComponent(product.slug) : 'product-full.html?id=' + product.id;
+							const productImage = product.image_url || 'images/products/product-1-245x245.jpg';
+							const productName = product.name || 'بدون نام';
+							const productPrice = product.formatted_price || '0';
+							const discountPrice = product.formatted_discount_price || null;
+							const hasDiscount = product.has_discount && discountPrice;
+							const productSku = product.sku || '';
+
+							// Create product card column
+							const column = $('<div class="block-products-carousel__column"></div>');
+							const cell = $('<div class="block-products-carousel__cell"></div>');
+							const productCard = $('<div class="product-card product-card--layout--grid"></div>');
+
+							// Product actions
+							const actionsList = $('<div class="product-card__actions-list"></div>');
+							actionsList.append('<button class="product-card__action product-card__action--quickview" type="button" aria-label="Quick view"><svg width="16" height="16"><path d="M14,15h-4v-2h3v-3h2v4C15,14.6,14.6,15,14,15z M13,3h-3V1h4c0.6,0,1,0.4,1,1v4h-2V3z M6,3H3v3H1V2c0-0.6,0.4-1,1-1h4V3z M3,13h3v2H2c-0.6,0-1-0.4-1-1v-4h2V13z"/></svg></button>');
+							actionsList.append('<button class="product-card__action product-card__action--wishlist" type="button" aria-label="Add to wish list"><svg width="16" height="16"><path d="M13.9,8.4l-5.4,5.4c-0.3,0.3-0.7,0.3-1,0L2.1,8.4c-1.5-1.5-1.5-3.8,0-5.3C2.8,2.4,3.8,2,4.8,2s1.9,0.4,2.6,1.1L8,3.7l0.6-0.6C9.3,2.4,10.3,2,11.3,2c1,0,1.9,0.4,2.6,1.1C15.4,4.6,15.4,6.9,13.9,8.4z"/></svg></button>');
+							actionsList.append('<button class="product-card__action product-card__action--compare" type="button" aria-label="Add to compare"><svg width="16" height="16"><path d="M9,15H7c-0.6,0-1-0.4-1-1V2c0-0.6,0.4-1,1-1h2c0.6,0,1,0.4,1,1v12C10,14.6,9.6,15,9,15z"/><path d="M1,9h2c0.6,0,1,0.4,1,1v4c0,0.6-0.4,1-1,1H1c-0.6,0-1-0.4-1-1v-4C0,9.4,0.4,9,1,9z"/><path d="M15,5h-2c-0.6,0-1,0.4-1,1v8c0,0.6,0.4,1,1,1h2c0.6,0,1-0.4,1-1V6C16,5.4,15.6,5,15,5z"/></svg></button>');
+
+							// Product image
+							const imageDiv = $('<div class="product-card__image"></div>');
+							const image = $('<div class="image image--type--product"></div>');
+							const imageLink = $('<a href="' + productUrl + '" class="image__body"></a>');
+							imageLink.append('<img class="image__tag" src="' + productImage + '" alt="' + productName + '" onerror="this.src=\'images/products/product-1-245x245.jpg\'">');
+							image.append(imageLink);
+							imageDiv.append(image);
+
+							// Product info
+							const infoDiv = $('<div class="product-card__info"></div>');
+							if (productSku) {
+								infoDiv.append('<div class="product-card__meta"><span class="product-card__meta-title">شناسه:</span> ' + productSku + '</div>');
+							}
+							const nameDiv = $('<div class="product-card__name"></div>');
+							nameDiv.append('<div><a href="' + productUrl + '">' + productName + '</a></div>');
+							infoDiv.append(nameDiv);
+
+							// Product footer
+							const footerDiv = $('<div class="product-card__footer"></div>');
+							const pricesDiv = $('<div class="product-card__prices"></div>');
+							if (hasDiscount) {
+								pricesDiv.append('<div class="product-card__price product-card__price--new">' + discountPrice + '</div>');
+								pricesDiv.append('<div class="product-card__price product-card__price--old">' + productPrice + '</div>');
+							} else {
+								pricesDiv.append('<div class="product-card__price product-card__price--current">' + productPrice + '</div>');
+							}
+							footerDiv.append(pricesDiv);
+							footerDiv.append('<button class="product-card__addtocart-icon" type="button" aria-label="Add to cart"><svg width="20" height="20"><circle cx="7" cy="17" r="2"/><circle cx="15" cy="17" r="2"/><path d="M20,4.4V5l-1.8,6.3c-0.1,0.4-0.5,0.7-1,0.7H6.7c-0.4,0-0.8-0.3-1-0.7L3.3,3.9C3.1,3.3,2.6,3,2.1,3H0.4C0.2,3,0,2.8,0,2.6V1.4C0,1.2,0.2,1,0.4,1h2.5c1,0,1.8,0.6,2.1,1.6L5.1,3l2.3,6.8c0,0.1,0.2,0.2,0.3,0.2h8.6c0.1,0,0.3-0.1,0.3-0.2l1.3-4.4C17.9,5.2,17.7,5,17.5,5H9.4C9.2,5,9,4.8,9,4.6V3.4C9,3.2,9.2,3,9.4,3h9.2C19.4,3,20,3.6,20,4.4z"/></svg></button>');
+
+							// Assemble product card
+							productCard.append(actionsList);
+							productCard.append(imageDiv);
+							productCard.append(infoDiv);
+							productCard.append(footerDiv);
+
+							cell.append(productCard);
+							column.append(cell);
+							owlCarousel.append(column);
+						});
+
+						// Re-initialize carousel with new content
+						const layout = block.data('layout') || 'grid-5';
+						const carouselOptions = {
+							'grid-5': {
+								items: 5,
+								responsive: {
+									1400: { items: 5, margin: 20 },
+									1200: { items: 4, margin: 20 },
+									992: { items: 3, margin: 16 },
+									768: { items: 2, margin: 16 },
+									0: { items: 1, margin: 16 },
+								},
+							}
+						};
+
+						owlCarousel.owlCarousel(Object.assign({}, {
+							dots: false,
+							margin: 20,
+							loop: true,
+							rtl: document.documentElement.dir === 'rtl'
+						}, carouselOptions[layout] || carouselOptions['grid-5']));
+
+						// Re-bind arrow handlers
+						block.find('.section-header__arrow--prev').off('click').on('click', function () {
+							owlCarousel.trigger('prev.owl.carousel', [500]);
+						});
+						block.find('.section-header__arrow--next').off('click').on('click', function () {
+							owlCarousel.trigger('next.owl.carousel', [500]);
+						});
+
+						// Re-initialize quickview handlers
+						$('.product-card__action--quickview', block).off('click').on('click', function () {
+							if (typeof quickview !== 'undefined' && quickview.clickHandler) {
+								quickview.clickHandler.apply(this, arguments);
+							}
+						});
+
+						// Show carousel after rendering
+						setTimeout(function () {
+							owlCarousel.css('opacity', '1');
+						}, 100);
+					}
+
+					// Load categories and populate buttons, then load featured products
+					fetchCategories().then(function (categories) {
+						if (categories && categories.length > 0) {
+							populateCategoryButtons(categoryGroups, categories);
+						} else {
+							categoryGroups.html('<li class="section-header__groups-item"><button type="button" class="section-header__groups-button section-header__groups-button--active">همه</button></li>');
+						}
+
+						// Load featured products on initial page load
+						fetch('backend/api/products.php?limit=20&featured=1')
 							.then(response => response.json())
 							.then(data => {
 								if (data.success && data.data && data.data.length > 0) {
 									renderProductsInCarousel(data.data, owlCarousel, block);
+									// Show carousel after products are loaded
+									owlCarousel.css('opacity', '1');
 								} else {
-									owlCarousel.empty();
-									owlCarousel.append('<div class="block-products-carousel__column"><div class="block-products-carousel__cell" style="text-align: center; padding: 40px;">هیچ محصولی یافت نشد</div></div>');
-									owlCarousel.trigger('refresh.owl.carousel');
+									// If no featured products, show static products
+									console.log('No featured products found, showing static products');
+									owlCarousel.css('opacity', '1');
 								}
 								carousel.removeClass('block-products-carousel__carousel--loading');
 							})
 							.catch(error => {
-								console.error('Error fetching products:', error);
+								console.error('Error loading featured products:', error);
+								// On error, show static products
+								owlCarousel.css('opacity', '1');
+								carousel.removeClass('block-products-carousel__carousel--loading');
+							});
+					}).catch(function (error) {
+						console.error('Error loading categories for buttons:', error);
+						categoryGroups.html('<li class="section-header__groups-item"><button type="button" class="section-header__groups-button section-header__groups-button--active">همه</button></li>');
+
+						// Still try to load featured products even if categories fail
+						fetch('backend/api/products.php?limit=20&featured=1')
+							.then(response => response.json())
+							.then(data => {
+								if (data.success && data.data && data.data.length > 0) {
+									renderProductsInCarousel(data.data, owlCarousel, block);
+									owlCarousel.css('opacity', '1');
+								} else {
+									owlCarousel.css('opacity', '1');
+								}
+								carousel.removeClass('block-products-carousel__carousel--loading');
+							})
+							.catch(err => {
+								console.error('Error loading featured products:', err);
+								owlCarousel.css('opacity', '1');
 								carousel.removeClass('block-products-carousel__carousel--loading');
 							});
 					});
-				}
-
-				// Function to render products in carousel
-				function renderProductsInCarousel(products, owlCarousel, block) {
-					// Destroy existing carousel if initialized
-					if (owlCarousel.data('owl.carousel')) {
-						owlCarousel.trigger('destroy.owl.carousel');
-						owlCarousel.removeClass('owl-loaded owl-drag');
-					}
-					
-					owlCarousel.empty();
-					owlCarousel.css('opacity', '0'); // Hide while loading
-
-					products.forEach(function(product) {
-						const productUrl = product.slug ? 'product-full.html?product=' + encodeURIComponent(product.slug) : 'product-full.html?id=' + product.id;
-						const productImage = product.image_url || 'images/products/product-1-245x245.jpg';
-						const productName = product.name || 'بدون نام';
-						const productPrice = product.formatted_price || '0';
-						const discountPrice = product.formatted_discount_price || null;
-						const hasDiscount = product.has_discount && discountPrice;
-						const productSku = product.sku || '';
-
-						// Create product card column
-						const column = $('<div class="block-products-carousel__column"></div>');
-						const cell = $('<div class="block-products-carousel__cell"></div>');
-						const productCard = $('<div class="product-card product-card--layout--grid"></div>');
-
-						// Product actions
-						const actionsList = $('<div class="product-card__actions-list"></div>');
-						actionsList.append('<button class="product-card__action product-card__action--quickview" type="button" aria-label="Quick view"><svg width="16" height="16"><path d="M14,15h-4v-2h3v-3h2v4C15,14.6,14.6,15,14,15z M13,3h-3V1h4c0.6,0,1,0.4,1,1v4h-2V3z M6,3H3v3H1V2c0-0.6,0.4-1,1-1h4V3z M3,13h3v2H2c-0.6,0-1-0.4-1-1v-4h2V13z"/></svg></button>');
-						actionsList.append('<button class="product-card__action product-card__action--wishlist" type="button" aria-label="Add to wish list"><svg width="16" height="16"><path d="M13.9,8.4l-5.4,5.4c-0.3,0.3-0.7,0.3-1,0L2.1,8.4c-1.5-1.5-1.5-3.8,0-5.3C2.8,2.4,3.8,2,4.8,2s1.9,0.4,2.6,1.1L8,3.7l0.6-0.6C9.3,2.4,10.3,2,11.3,2c1,0,1.9,0.4,2.6,1.1C15.4,4.6,15.4,6.9,13.9,8.4z"/></svg></button>');
-						actionsList.append('<button class="product-card__action product-card__action--compare" type="button" aria-label="Add to compare"><svg width="16" height="16"><path d="M9,15H7c-0.6,0-1-0.4-1-1V2c0-0.6,0.4-1,1-1h2c0.6,0,1,0.4,1,1v12C10,14.6,9.6,15,9,15z"/><path d="M1,9h2c0.6,0,1,0.4,1,1v4c0,0.6-0.4,1-1,1H1c-0.6,0-1-0.4-1-1v-4C0,9.4,0.4,9,1,9z"/><path d="M15,5h-2c-0.6,0-1,0.4-1,1v8c0,0.6,0.4,1,1,1h2c0.6,0,1-0.4,1-1V6C16,5.4,15.6,5,15,5z"/></svg></button>');
-
-						// Product image
-						const imageDiv = $('<div class="product-card__image"></div>');
-						const image = $('<div class="image image--type--product"></div>');
-						const imageLink = $('<a href="' + productUrl + '" class="image__body"></a>');
-						imageLink.append('<img class="image__tag" src="' + productImage + '" alt="' + productName + '" onerror="this.src=\'images/products/product-1-245x245.jpg\'">');
-						image.append(imageLink);
-						imageDiv.append(image);
-
-						// Product info
-						const infoDiv = $('<div class="product-card__info"></div>');
-						if (productSku) {
-							infoDiv.append('<div class="product-card__meta"><span class="product-card__meta-title">شناسه:</span> ' + productSku + '</div>');
-						}
-						const nameDiv = $('<div class="product-card__name"></div>');
-						nameDiv.append('<div><a href="' + productUrl + '">' + productName + '</a></div>');
-						infoDiv.append(nameDiv);
-
-						// Product footer
-						const footerDiv = $('<div class="product-card__footer"></div>');
-						const pricesDiv = $('<div class="product-card__prices"></div>');
-						if (hasDiscount) {
-							pricesDiv.append('<div class="product-card__price product-card__price--new">' + discountPrice + '</div>');
-							pricesDiv.append('<div class="product-card__price product-card__price--old">' + productPrice + '</div>');
-						} else {
-							pricesDiv.append('<div class="product-card__price product-card__price--current">' + productPrice + '</div>');
-						}
-						footerDiv.append(pricesDiv);
-						footerDiv.append('<button class="product-card__addtocart-icon" type="button" aria-label="Add to cart"><svg width="20" height="20"><circle cx="7" cy="17" r="2"/><circle cx="15" cy="17" r="2"/><path d="M20,4.4V5l-1.8,6.3c-0.1,0.4-0.5,0.7-1,0.7H6.7c-0.4,0-0.8-0.3-1-0.7L3.3,3.9C3.1,3.3,2.6,3,2.1,3H0.4C0.2,3,0,2.8,0,2.6V1.4C0,1.2,0.2,1,0.4,1h2.5c1,0,1.8,0.6,2.1,1.6L5.1,3l2.3,6.8c0,0.1,0.2,0.2,0.3,0.2h8.6c0.1,0,0.3-0.1,0.3-0.2l1.3-4.4C17.9,5.2,17.7,5,17.5,5H9.4C9.2,5,9,4.8,9,4.6V3.4C9,3.2,9.2,3,9.4,3h9.2C19.4,3,20,3.6,20,4.4z"/></svg></button>');
-
-						// Assemble product card
-						productCard.append(actionsList);
-						productCard.append(imageDiv);
-						productCard.append(infoDiv);
-						productCard.append(footerDiv);
-
-						cell.append(productCard);
-						column.append(cell);
-						owlCarousel.append(column);
-					});
-
-					// Re-initialize carousel with new content
-					const layout = block.data('layout') || 'grid-5';
-					const carouselOptions = {
-						'grid-5': {
-							items: 5,
-							responsive: {
-								1400: { items: 5, margin: 20 },
-								1200: { items: 4, margin: 20 },
-								992: { items: 3, margin: 16 },
-								768: { items: 2, margin: 16 },
-								0: { items: 1, margin: 16 },
-							},
-						}
-					};
-					
-					owlCarousel.owlCarousel(Object.assign({}, {
-						dots: false,
-						margin: 20,
-						loop: true,
-						rtl: document.documentElement.dir === 'rtl'
-					}, carouselOptions[layout] || carouselOptions['grid-5']));
-					
-					// Re-bind arrow handlers
-					block.find('.section-header__arrow--prev').off('click').on('click', function () {
-						owlCarousel.trigger('prev.owl.carousel', [500]);
-					});
-					block.find('.section-header__arrow--next').off('click').on('click', function () {
-						owlCarousel.trigger('next.owl.carousel', [500]);
-					});
-
-					// Re-initialize quickview handlers
-					$('.product-card__action--quickview', block).off('click').on('click', function() {
-						if (typeof quickview !== 'undefined' && quickview.clickHandler) {
-							quickview.clickHandler.apply(this, arguments);
-						}
-					});
-					
-					// Show carousel after rendering
-					setTimeout(function() {
-						owlCarousel.css('opacity', '1');
-					}, 100);
-				}
-
-				// Load categories and populate buttons, then load featured products
-				fetchCategories().then(function(categories) {
-					if (categories && categories.length > 0) {
-						populateCategoryButtons(categoryGroups, categories);
-					} else {
-						categoryGroups.html('<li class="section-header__groups-item"><button type="button" class="section-header__groups-button section-header__groups-button--active">همه</button></li>');
-					}
-					
-					// Load featured products on initial page load
-					fetch('backend/api/products.php?limit=20&featured=1')
-						.then(response => response.json())
-						.then(data => {
-							if (data.success && data.data && data.data.length > 0) {
-								renderProductsInCarousel(data.data, owlCarousel, block);
-								// Show carousel after products are loaded
-								owlCarousel.css('opacity', '1');
-							} else {
-								// If no featured products, show static products
-								console.log('No featured products found, showing static products');
-								owlCarousel.css('opacity', '1');
-							}
-							carousel.removeClass('block-products-carousel__carousel--loading');
-						})
-						.catch(error => {
-							console.error('Error loading featured products:', error);
-							// On error, show static products
-							owlCarousel.css('opacity', '1');
-							carousel.removeClass('block-products-carousel__carousel--loading');
-						});
-				}).catch(function(error) {
-					console.error('Error loading categories for buttons:', error);
-					categoryGroups.html('<li class="section-header__groups-item"><button type="button" class="section-header__groups-button section-header__groups-button--active">همه</button></li>');
-					
-					// Still try to load featured products even if categories fail
-					fetch('backend/api/products.php?limit=20&featured=1')
-						.then(response => response.json())
-						.then(data => {
-							if (data.success && data.data && data.data.length > 0) {
-								renderProductsInCarousel(data.data, owlCarousel, block);
-								owlCarousel.css('opacity', '1');
-							} else {
-								owlCarousel.css('opacity', '1');
-							}
-							carousel.removeClass('block-products-carousel__carousel--loading');
-						})
-						.catch(err => {
-							console.error('Error loading featured products:', err);
-							owlCarousel.css('opacity', '1');
-							carousel.removeClass('block-products-carousel__carousel--loading');
-						});
-				});
 				}, 500); // Wait 500ms for carousel initialization
 			});
 		})(jQuery);
-		
+
 		// Force center Select2 dropdown text after initialization
 		$(document).ready(function () {
 			function centerSelect2Text() {

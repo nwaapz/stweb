@@ -12,7 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
             hover: 0xff0055,      // Vibrant Magenta/Red for hover
             outline: 0x00ffff,    // Cyan/Neon Blue for borders
             background: 0xf5f5f5, // Light grey background to match site clean look (or we can go dark)
-            light: 0xffffff       // White light
+            light: 0xffffff,       // White light
+            hasBranch: 0x00a86b    // Classy Jade Green for provinces with branches
         },
         camera: {
             fov: 50,
@@ -33,13 +34,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!container) return; // Exit if container not found
 
     // Setup Dimensions
+    // Setup Dimensions
     let width = container.clientWidth;
-    let height = container.clientHeight || 500; // Default height if 0
-    if (height < 300) height = 500; // Minimum height
-    container.style.height = height + 'px'; // Enforce height
+    let height = 600; // Fixed height for map canvas
+    container.style.height = 'auto'; // Allow container to grow
+    container.style.minHeight = '600px';
+    container.style.display = 'flex';
+    container.style.flexDirection = 'column';
+    container.style.position = 'relative';  // Ensure children are positioned relative to this
 
     // --- Three.js Setup ---
     const scene = new THREE.Scene();
+
+
     scene.background = new THREE.Color(CONFIG.colors.background);
 
     const camera = new THREE.PerspectiveCamera(CONFIG.camera.fov, width / height, 0.1, 1000);
@@ -89,15 +96,244 @@ document.addEventListener('DOMContentLoaded', () => {
     tooltip.innerHTML = '<strong>استان</strong><br><span style="font-size:12px; color:#aaa">آدرس شعبه...</span>';
     container.appendChild(tooltip);
 
+    // --- Legend ---
+    const legend = document.createElement('div');
+    legend.style.position = 'absolute';
+    legend.style.bottom = '30px';
+    legend.style.right = '30px';
+    legend.style.backgroundColor = 'rgba(20, 20, 35, 0.85)';
+    legend.style.backdropFilter = 'blur(5px)';
+    legend.style.padding = '15px 20px';
+    legend.style.borderRadius = '12px';
+    legend.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+    legend.style.color = '#fff';
+    legend.style.fontFamily = 'inherit';
+    legend.style.fontSize = '14px';
+    legend.style.direction = 'rtl';
+    legend.style.zIndex = '10';
+    legend.style.pointerEvents = 'none'; // Allow clicks to pass through if needed (though bottom corner is usually safe)
+    legend.style.boxShadow = '0 5px 20px rgba(0,0,0,0.5)';
+
+    const itemStyle = 'display: flex; align-items: center; margin-bottom: 8px;';
+    const circleStyle = (color) => `width: 12px; height: 12px; background-color: ${color}; border-radius: 50%; margin-left: 10px; box-shadow: 0 0 8px ${color}; border: 1px solid rgba(255,255,255,0.2);`;
+
+    legend.innerHTML = `
+        <div style="${itemStyle}">
+            <div style="${circleStyle('#00a86b')}"></div>
+            <span>استان‌های دارای شعبه</span>
+        </div>
+        <div style="display: flex; align-items: center;">
+            <div style="${circleStyle('#000000')}"></div>
+            <span>سایر استان‌ها</span>
+        </div>
+    `;
+    container.appendChild(legend);
+
+    // --- Interaction State (Hoisted for Table Access) ---
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    let hoveredObject = null;
+    let selectedObject = null;
+    let currentLookAtTarget = { x: 0, y: 0, z: 0 };
+
+    // --- Selection Logic ---
+    const selectProvince = (object) => {
+        if (!object) return;
+
+        // Handle Selection Visuals
+        if (selectedObject && selectedObject !== object) {
+            // Reset previous selection to its specific base color
+            selectedObject.material.color.setHex(selectedObject.userData.baseColor);
+        }
+
+        selectedObject = object;
+        selectedObject.material.color.setHex(CONFIG.colors.hover); // Keep it highlighted
+
+        const provinceName = selectedObject.userData.name;
+        // const provinceAddress = selectedObject.userData.address; // Not used in notification logic currently? check below
+
+        // Calculate bounding box
+        const box = new THREE.Box3().setFromObject(selectedObject);
+        const center = box.getCenter(new THREE.Vector3());
+        const size = box.getSize(new THREE.Vector3());
+
+        // Calculate appropriate camera distance
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const fov = camera.fov * (Math.PI / 180);
+        let cameraZ = Math.abs(maxDim / Math.tan(fov / 2)) * 1.5;
+        cameraZ = Math.max(150, Math.min(cameraZ, 500));
+
+        // Animate Camera
+        const targetPosition = { x: center.x, y: camera.position.y, z: cameraZ };
+        const startPosition = { x: camera.position.x, y: camera.position.y, z: camera.position.z };
+        const startLookAt = { x: currentLookAtTarget.x, y: currentLookAtTarget.y, z: currentLookAtTarget.z };
+        const duration = 1000;
+        const startTime = Date.now();
+
+        const animateCamera = () => {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress;
+
+            camera.position.x = startPosition.x + (targetPosition.x - startPosition.x) * eased;
+            camera.position.y = startPosition.y + (targetPosition.y - startPosition.y) * eased;
+            camera.position.z = startPosition.z + (targetPosition.z - startPosition.z) * eased;
+
+            // Smoothly interpolate the lookAt target
+            const lookAtX = startLookAt.x + (center.x - startLookAt.x) * eased;
+            const lookAtY = startLookAt.y + (center.y - startLookAt.y) * eased;
+            const lookAtZ = startLookAt.z + (0 - startLookAt.z) * eased;
+
+            camera.lookAt(lookAtX, lookAtY, lookAtZ);
+
+            if (progress < 1) {
+                requestAnimationFrame(animateCamera);
+            } else {
+                currentLookAtTarget.x = center.x;
+                currentLookAtTarget.y = center.y;
+                currentLookAtTarget.z = 0;
+            }
+        };
+        animateCamera();
+
+        // Notification UI
+        const existingNote = document.getElementById('map-notification');
+        if (existingNote) existingNote.remove();
+
+        const notification = document.createElement('div');
+        notification.id = 'map-notification';
+        notification.style.position = 'absolute';
+        notification.style.top = '20px';
+        notification.style.left = '20px';
+        notification.style.transform = 'none';
+        notification.style.backgroundColor = 'rgba(20, 20, 35, 0.95)';
+        notification.style.color = '#fff';
+        notification.style.padding = '30px 40px';
+        notification.style.borderRadius = '16px';
+        notification.style.boxShadow = '0 20px 50px rgba(0,0,0,0.6)';
+        notification.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+        notification.style.zIndex = '10000';
+        notification.style.textAlign = 'center';
+        notification.style.direction = 'rtl';
+        notification.style.minWidth = '320px';
+        notification.style.maxWidth = '90%';
+        notification.style.fontFamily = 'inherit';
+        notification.style.animation = 'fadeIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+        notification.style.backdropFilter = 'blur(10px)';
+
+        notification.innerHTML = `
+            <h3 style="margin: 0 0 10px 0; font-size: 26px; font-weight:700; color: #ff0055;">${provinceName}</h3>
+            <div style="width: 50px; height: 3px; background: #ff0055; margin: 0 auto 20px auto; border-radius: 2px;"></div>
+            <div style="font-size: 16px; color: #e0e0e0;">در حال بارگذاری شعب...</div>
+        `;
+
+        container.appendChild(notification);
+
+        // Fetch Data
+        fetch(`backend/api/branches.php?province_slug=${encodeURIComponent(provinceName)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.count > 0) {
+                    let branchesHTML = '';
+                    data.data.forEach((branch, index) => {
+                        branchesHTML += `
+                            <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: ${index < data.count - 1 ? '12px' : '0'}; text-align: right;">
+                                <div style="font-size: 16px; font-weight: 600; color: #00ffff; margin-bottom: 8px;">${branch.name}</div>
+                                <div style="font-size: 14px; color: #ddd; margin-bottom: 6px; line-height: 1.6;">
+                                    <i class="bi bi-geo-alt" style="margin-left: 5px;"></i> ${branch.address}
+                                </div>
+                                ${branch.phone ? `<div style="font-size: 14px; color: #ddd;"><i class="bi bi-telephone" style="margin-left: 5px;"></i> <a href="tel:${branch.phone}" style="color: #00ffff; text-decoration: none;">${branch.phone}</a></div>` : ''}
+                            </div>
+                        `;
+                    });
+
+                    notification.innerHTML = `
+                        <h3 style="margin: 0 0 10px 0; font-size: 26px; font-weight:700; color: #ff0055;">${provinceName}</h3>
+                        <div style="width: 50px; height: 3px; background: #ff0055; margin: 0 auto 20px auto; border-radius: 2px;"></div>
+                        <div style="font-size: 14px; color: #aaa; margin-bottom: 20px;">${data.count} شعبه</div>
+                        <div style="max-height: 400px; overflow-y: auto; margin-bottom: 25px;">${branchesHTML}</div>
+                        <button id="closeNotification" style="background: linear-gradient(45deg, #ff0055, #ff4081); color: white; border: none; padding: 12px 35px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500; font-family: inherit; transition: transform 0.2s; box-shadow: 0 5px 15px rgba(255, 0, 85, 0.3); margin-left: 10px;">بستن</button>
+                        <button id="resetView" style="background: linear-gradient(45deg, #00ffff, #00cccc); color: #000; border: none; padding: 12px 35px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500; font-family: inherit; transition: transform 0.2s; box-shadow: 0 5px 15px rgba(0, 255, 255, 0.3);">بازگشت به نمای کلی</button>
+                    `;
+                } else {
+                    notification.innerHTML = `
+                        <h3 style="margin: 0 0 10px 0; font-size: 26px; font-weight:700; color: #ff0055;">${provinceName}</h3>
+                        <div style="width: 50px; height: 3px; background: #ff0055; margin: 0 auto 20px auto; border-radius: 2px;"></div>
+                        <div style="font-size: 16px; line-height: 1.8; margin-bottom: 25px; color: #e0e0e0;">در حال حاضر شعبه‌ای برای این استان ثبت نشده است.</div>
+                        <button id="closeNotification" style="background: linear-gradient(45deg, #ff0055, #ff4081); color: white; border: none; padding: 12px 35px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500; font-family: inherit; transition: transform 0.2s; box-shadow: 0 5px 15px rgba(255, 0, 85, 0.3); margin-left: 10px;">بستن</button>
+                        <button id="resetView" style="background: linear-gradient(45deg, #00ffff, #00cccc); color: #000; border: none; padding: 12px 35px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500; font-family: inherit; transition: transform 0.2s; box-shadow: 0 5px 15px rgba(0, 255, 255, 0.3);">بازگشت به نمای کلی</button>
+                    `;
+                }
+                attachNotificationHandlers();
+            })
+            .catch(error => {
+                console.error('Error fetching branches:', error);
+                notification.innerHTML = `
+                    <h3 style="margin: 0 0 10px 0; font-size: 26px; font-weight:700; color: #ff0055;">${provinceName}</h3>
+                    <div style="width: 50px; height: 3px; background: #ff0055; margin: 0 auto 20px auto; border-radius: 2px;"></div>
+                    <div style="font-size: 16px; line-height: 1.8; margin-bottom: 25px; color: #e0e0e0;">خطا در دریافت اطلاعات شعب</div>
+                    <button id="closeNotification" style="background: linear-gradient(45deg, #ff0055, #ff4081); color: white; border: none; padding: 12px 35px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500; font-family: inherit; transition: transform 0.2s; box-shadow: 0 5px 15px rgba(255, 0, 85, 0.3); margin-left: 10px;">بستن</button>
+                    <button id="resetView" style="background: linear-gradient(45deg, #00ffff, #00cccc); color: #000; border: none; padding: 12px 35px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500; font-family: inherit; transition: transform 0.2s; box-shadow: 0 5px 15px rgba(0, 255, 255, 0.3);">بازگشت به نمای کلی</button>
+                `;
+                attachNotificationHandlers();
+            });
+
+        // Handlers using shared variables
+        const attachNotificationHandlers = () => {
+            const closeBtn = document.getElementById('closeNotification');
+            const resetBtn = document.getElementById('resetView');
+
+            if (closeBtn) closeBtn.onclick = () => {
+                notification.style.opacity = '0';
+                setTimeout(() => { if (notification.parentNode) notification.remove(); }, 300);
+            };
+
+            if (resetBtn) resetBtn.onclick = () => {
+                // Reset Camera Logic
+                const resetDuration = 1000;
+                const resetStartTime = Date.now();
+                const currentPos = { x: camera.position.x, y: camera.position.y, z: camera.position.z };
+                const targetLookAt = { x: 0, y: 0, z: 0 };
+
+                const resetCameraLoop = () => {
+                    const elapsed = Date.now() - resetStartTime;
+                    const progress = Math.min(elapsed / resetDuration, 1);
+                    const eased = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress;
+
+                    camera.position.x = currentPos.x + (CONFIG.camera.posX - currentPos.x) * eased;
+                    camera.position.y = currentPos.y + (CONFIG.camera.posY - currentPos.y) * eased;
+                    camera.position.z = currentPos.z + (CONFIG.camera.posZ - currentPos.z) * eased;
+                    camera.lookAt(currentLookAtTarget.x * (1 - eased), currentLookAtTarget.y * (1 - eased), 0); // Simplified lookat reset
+
+                    if (progress < 1) requestAnimationFrame(resetCameraLoop);
+                    else currentLookAtTarget = { x: 0, y: 0, z: 0 };
+                };
+                resetCameraLoop();
+
+                if (selectedObject) {
+                    selectedObject.material.color.setHex(selectedObject.userData.baseColor);
+                    selectedObject = null;
+                }
+                if (notification.parentNode) notification.remove();
+            };
+        };
+    };
+
     // --- Load Data & Build Map ---
-    const fileLoader = new THREE.FileLoader();
-    fileLoader.load(CONFIG.jsonPath, (data) => {
-        let geojson;
-        try {
-            geojson = JSON.parse(data);
-        } catch (e) {
-            console.error("Failed to parse GeoJSON", e);
-            return;
+    // Fetch both GeoJSON AND Active Provinces data
+    Promise.all([
+        fetch(CONFIG.jsonPath).then(r => r.json()),
+        fetch('backend/api/provinces.php?is_active=1').then(r => r.json())
+    ]).then(([geojson, provinceData]) => {
+
+        // Create lookup for branches
+        const provinceBranchMap = {}; // Name -> HasBranches
+        if (provinceData.success && provinceData.data) {
+            provinceData.data.forEach(p => {
+                // p.branch_count > 0 means it has branches
+                // Store using Persian Name as key, as GeoJSON uses Persian Names
+                provinceBranchMap[p.name] = (parseInt(p.branch_count || 0) > 0);
+            });
         }
 
         // Use D3 to project coordinates to a flat plane (Mercator)
@@ -171,9 +407,14 @@ document.addEventListener('DOMContentLoaded', () => {
             // Extrude Shapes to 3D
             const geometry = new THREE.ExtrudeGeometry(shapes, CONFIG.extrusion);
 
+            // Determine Color
+            // If province has active branches, use the classy green
+            const hasBranches = provinceBranchMap[provinceName] === true;
+            const baseColor = hasBranches ? CONFIG.colors.hasBranch : CONFIG.colors.base;
+
             // Material
             const material = new THREE.MeshPhongMaterial({
-                color: CONFIG.colors.base,
+                color: baseColor,
                 specular: 0x111111,
                 shininess: 30,
                 side: THREE.DoubleSide
@@ -182,8 +423,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const mesh = new THREE.Mesh(geometry, material);
             mesh.userData = {
                 name: provinceName,
-                // Add fake address data for demo
-                address: `شعبه مرکزی ${provinceName}<br>خیابان اصلی، پلاک ۱۱۰`
+                address: hasBranches ? 'برای مشاهده شعب کلیک کنید' : 'شعبه فعال وجود ندارد',
+                hasBranches: hasBranches,
+                baseColor: baseColor // Store for reset logic
             };
 
             // Add Border/Edge for better visibility
@@ -199,18 +441,91 @@ document.addEventListener('DOMContentLoaded', () => {
         const center = box.getCenter(new THREE.Vector3());
         mapGroup.position.sub(center); // Move group so center is at 0,0,0
 
-    }, undefined, (err) => {
-        console.error('Error loading GeoJSON:', err);
+        // --- Create Province List Table ---
+        if (provinceData.success && provinceData.data) {
+            const listContainer = document.createElement('div');
+            listContainer.className = 'province-list-container';
+            listContainer.style.width = '100%';
+            listContainer.style.padding = '20px';
+            listContainer.style.boxSizing = 'border-box';
+            listContainer.style.marginTop = 'auto'; // Push to bottom if space
+            listContainer.style.backgroundColor = 'rgba(0,0,0,0.2)';
+
+            // Grid for cards
+            const listGrid = document.createElement('div');
+            listGrid.style.display = 'grid';
+            listGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(140px, 1fr))';
+            listGrid.style.gap = '15px';
+            listGrid.style.direction = 'rtl';
+
+            provinceData.data.forEach(p => {
+                const item = document.createElement('div');
+                item.style.background = 'rgba(255,255,255,0.05)';
+                item.style.borderRadius = '10px';
+                item.style.padding = '15px';
+                item.style.cursor = 'pointer';
+                item.style.transition = 'all 0.3s ease';
+                item.style.border = '1px solid rgba(255,255,255,0.05)';
+                item.style.textAlign = 'center';
+                item.style.display = 'flex';
+                item.style.flexDirection = 'column';
+                item.style.alignItems = 'center';
+                item.style.justifyContent = 'center';
+
+                const name = document.createElement('div');
+                name.textContent = p.name;
+                name.style.fontWeight = 'bold';
+                name.style.color = '#fff';
+                name.style.marginBottom = '5px';
+
+                // Status dot
+                const status = document.createElement('div');
+                const hasBranch = (parseInt(p.branch_count || 0) > 0);
+                status.style.width = '8px';
+                status.style.height = '8px';
+                status.style.borderRadius = '50%';
+                status.style.backgroundColor = hasBranch ? '#00a86b' : '#333';
+                status.style.boxShadow = hasBranch ? '0 0 5px #00a86b' : 'none';
+
+                item.appendChild(name);
+                item.appendChild(status);
+
+                // Hover effect
+                item.onmouseenter = () => {
+                    item.style.background = 'rgba(255,255,255,0.15)';
+                    item.style.transform = 'translateY(-3px)';
+                    item.style.borderColor = hasBranch ? '#00a86b' : '#666';
+                };
+                item.onmouseleave = () => {
+                    item.style.background = 'rgba(255,255,255,0.05)';
+                    item.style.transform = 'translateY(0)';
+                    item.style.borderColor = 'rgba(255,255,255,0.05)';
+                };
+
+                // Click Action
+                item.onclick = () => {
+                    // Find mesh
+                    const mesh = mapGroup.children.find(m => m.userData.name === p.name);
+                    if (mesh) {
+                        selectProvince(mesh);
+                        // Scroll to map top?
+                        container.scrollIntoView({ behavior: 'smooth' });
+                    }
+                };
+
+                listGrid.appendChild(item);
+            });
+
+            listContainer.appendChild(listGrid);
+            container.appendChild(listContainer);
+        }
+
+    }).catch(err => {
+        console.error('Error loading map data:', err);
     });
 
     // --- Interaction (Raycaster) ---
-    const raycaster = new THREE.Raycaster();
-    const mouse = new THREE.Vector2();
-    let hoveredObject = null;
-    let selectedObject = null;
-
-    // Track current camera lookAt target for smooth transitions
-    let currentLookAtTarget = { x: 0, y: 0, z: 0 };
+    // Variables already defined above
 
     const onMouseMove = (event) => {
         // Calculate mouse position in normalized device coordinates (-1 to +1)
@@ -232,230 +547,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const onClick = (event) => {
         if (hoveredObject) {
-            // Handle Selection Visuals
-            if (selectedObject && selectedObject !== hoveredObject) {
-                // Reset previous selection
-                selectedObject.material.color.setHex(CONFIG.colors.base);
-            }
-
-            selectedObject = hoveredObject;
-            selectedObject.material.color.setHex(CONFIG.colors.hover); // Keep it highlighted
-
-            const provinceName = selectedObject.userData.name;
-            const provinceAddress = selectedObject.userData.address;
-
-            // Calculate bounding box of the selected province
-            const box = new THREE.Box3().setFromObject(selectedObject);
-            const center = box.getCenter(new THREE.Vector3());
-            const size = box.getSize(new THREE.Vector3());
-
-            // Calculate appropriate camera distance based on province size
-            const maxDim = Math.max(size.x, size.y, size.z);
-            const fov = camera.fov * (Math.PI / 180);
-            let cameraZ = Math.abs(maxDim / Math.tan(fov / 2)) * 1.5;
-
-            // Clamp camera distance
-            cameraZ = Math.max(150, Math.min(cameraZ, 500));
-
-            // Target camera position
-            const targetPosition = {
-                x: center.x,
-                y: camera.position.y,
-                z: cameraZ
-            };
-
-            // Smooth camera animation
-            const startPosition = {
-                x: camera.position.x,
-                y: camera.position.y,
-                z: camera.position.z
-            };
-
-            const duration = 1000; // 1 second
-            const startTime = Date.now();
-
-            // Use current camera lookAt target as starting point
-            const startLookAt = {
-                x: currentLookAtTarget.x,
-                y: currentLookAtTarget.y,
-                z: currentLookAtTarget.z
-            };
-
-            const animateCamera = () => {
-                const elapsed = Date.now() - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-
-                // Easing function (ease-in-out)
-                const eased = progress < 0.5
-                    ? 2 * progress * progress
-                    : -1 + (4 - 2 * progress) * progress;
-
-                camera.position.x = startPosition.x + (targetPosition.x - startPosition.x) * eased;
-                camera.position.y = startPosition.y + (targetPosition.y - startPosition.y) * eased;
-                camera.position.z = startPosition.z + (targetPosition.z - startPosition.z) * eased;
-
-                // Smoothly interpolate the lookAt target
-                const lookAtX = startLookAt.x + (center.x - startLookAt.x) * eased;
-                const lookAtY = startLookAt.y + (center.y - startLookAt.y) * eased;
-                const lookAtZ = startLookAt.z + (0 - startLookAt.z) * eased;
-
-                camera.lookAt(lookAtX, lookAtY, lookAtZ);
-
-                if (progress < 1) {
-                    requestAnimationFrame(animateCamera);
-                } else {
-                    // Update current lookAt target when animation completes
-                    currentLookAtTarget.x = center.x;
-                    currentLookAtTarget.y = center.y;
-                    currentLookAtTarget.z = 0;
-                }
-            };
-
-            animateCamera();
-
-            // Remove existing notification if any
-            const existingNote = document.getElementById('map-notification');
-            if (existingNote) existingNote.remove();
-
-            // Show a styled notification/alert
-            const notification = document.createElement('div');
-            notification.id = 'map-notification';
-            notification.style.position = 'fixed';
-            notification.style.top = '20px';
-            notification.style.left = '20px';
-            notification.style.transform = 'none';
-            notification.style.backgroundColor = 'rgba(20, 20, 35, 0.95)';
-            notification.style.color = '#fff';
-            notification.style.padding = '30px 40px';
-            notification.style.borderRadius = '16px';
-            notification.style.boxShadow = '0 20px 50px rgba(0,0,0,0.6)';
-            notification.style.border = '1px solid rgba(255, 255, 255, 0.1)';
-            notification.style.zIndex = '10000';
-            notification.style.textAlign = 'center';
-            notification.style.direction = 'rtl';
-            notification.style.minWidth = '320px';
-            notification.style.maxWidth = '90%';
-            notification.style.fontFamily = 'inherit';
-            notification.style.animation = 'fadeIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'; // Bouncy pop in
-            notification.style.backdropFilter = 'blur(10px)';
-
-            notification.innerHTML = `
-                <h3 style="margin: 0 0 10px 0; font-size: 26px; font-weight:700; color: #ff0055;">${provinceName}</h3>
-                <div style="width: 50px; height: 3px; background: #ff0055; margin: 0 auto 20px auto; border-radius: 2px;"></div>
-                <div style="font-size: 16px; line-height: 1.8; margin-bottom: 25px; color: #e0e0e0;">${provinceAddress}</div>
-                <button id="closeNotification" style="background: linear-gradient(45deg, #ff0055, #ff4081); color: white; border: none; padding: 12px 35px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500; font-family: inherit; transition: transform 0.2s; box-shadow: 0 5px 15px rgba(255, 0, 85, 0.3); margin-left: 10px;">متوجه شدم</button>
-                <button id="resetView" style="background: linear-gradient(45deg, #00ffff, #00cccc); color: #000; border: none; padding: 12px 35px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500; font-family: inherit; transition: transform 0.2s; box-shadow: 0 5px 15px rgba(0, 255, 255, 0.3);">بازگشت به نمای کلی</button>
-            `;
-
-            document.body.appendChild(notification);
-
-            // Close button handler
-            const closeBtn = document.getElementById('closeNotification');
-            closeBtn.addEventListener('mouseenter', () => closeBtn.style.transform = 'scale(1.05)');
-            closeBtn.addEventListener('mouseleave', () => closeBtn.style.transform = 'scale(1)');
-
-            // Reset view button handler
-            const resetBtn = document.getElementById('resetView');
-            resetBtn.addEventListener('mouseenter', () => resetBtn.style.transform = 'scale(1.05)');
-            resetBtn.addEventListener('mouseleave', () => resetBtn.style.transform = 'scale(1)');
-
-            resetBtn.addEventListener('click', () => {
-                // Animate camera back to original position
-                const resetDuration = 1000;
-                const resetStartTime = Date.now();
-                const currentPos = {
-                    x: camera.position.x,
-                    y: camera.position.y,
-                    z: camera.position.z
-                };
-
-                // Store current lookAt target (the province center)
-                const currentLookAt = {
-                    x: center.x,
-                    y: center.y,
-                    z: 0
-                };
-
-                const targetLookAt = {
-                    x: 0,
-                    y: 0,
-                    z: 0
-                };
-
-                const resetCamera = () => {
-                    const elapsed = Date.now() - resetStartTime;
-                    const progress = Math.min(elapsed / resetDuration, 1);
-                    const eased = progress < 0.5
-                        ? 2 * progress * progress
-                        : -1 + (4 - 2 * progress) * progress;
-
-                    camera.position.x = currentPos.x + (CONFIG.camera.posX - currentPos.x) * eased;
-                    camera.position.y = currentPos.y + (CONFIG.camera.posY - currentPos.y) * eased;
-                    camera.position.z = currentPos.z + (CONFIG.camera.posZ - currentPos.z) * eased;
-
-                    // Smoothly interpolate the lookAt target
-                    const lookAtX = currentLookAt.x + (targetLookAt.x - currentLookAt.x) * eased;
-                    const lookAtY = currentLookAt.y + (targetLookAt.y - currentLookAt.y) * eased;
-                    const lookAtZ = currentLookAt.z + (targetLookAt.z - currentLookAt.z) * eased;
-
-                    camera.lookAt(lookAtX, lookAtY, lookAtZ);
-
-                    if (progress < 1) {
-                        requestAnimationFrame(resetCamera);
-                    } else {
-                        // Update current lookAt target when reset completes
-                        currentLookAtTarget.x = 0;
-                        currentLookAtTarget.y = 0;
-                        currentLookAtTarget.z = 0;
-                    }
-                };
-
-                resetCamera();
-
-                // Deselect province
-                if (selectedObject) {
-                    selectedObject.material.color.setHex(CONFIG.colors.base);
-                    selectedObject = null;
-                }
-
-                // Close notification
-                notification.style.opacity = '0';
-                notification.style.transform = 'translate(-50%, -50%) scale(0.8)';
-                notification.style.transition = 'all 0.3s ease';
-                setTimeout(() => {
-                    if (notification.parentNode) notification.parentNode.removeChild(notification);
-                }, 300);
-            });
-
-            const closeNotification = () => {
-                notification.style.opacity = '0';
-                notification.style.transform = 'translate(-50%, -50%) scale(0.8)';
-                notification.style.transition = 'all 0.3s ease';
-                setTimeout(() => {
-                    if (notification.parentNode) notification.parentNode.removeChild(notification);
-                }, 300);
-
-                // Optional: clear selection on close? 
-                // Let's keep selection to show what was clicked.
-            };
-
-            closeBtn.addEventListener('click', closeNotification);
-
-            // Click outside to close
-            setTimeout(() => {
-                const closeOnOutside = (e) => {
-                    if (notification && !notification.contains(e.target) && e.target.id !== 'iran-3d-map-canvas') { // Don't close if clicking map again quickly
-                        // Check if notification is still in DOM
-                        if (document.body.contains(notification)) {
-                            closeNotification();
-                        }
-                        document.removeEventListener('click', closeOnOutside);
-                    }
-                };
-                document.addEventListener('click', closeOnOutside);
-            }, 100);
-
-            console.log("Clicked:", provinceName);
+            selectProvince(hoveredObject);
         }
     };
 
@@ -468,7 +560,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (hoveredObject !== object) {
                 // Reset old hovered object if it's NOT the selected one
                 if (hoveredObject && hoveredObject !== selectedObject) {
-                    hoveredObject.material.color.setHex(CONFIG.colors.base);
+                    hoveredObject.material.color.setHex(hoveredObject.userData.baseColor);
                 }
 
                 hoveredObject = object;
@@ -479,7 +571,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Update Tooltip
                 tooltip.innerHTML = `
                     <div style="font-size:16px; font-weight:700; margin-bottom:4px; color:${'#fff'}">${hoveredObject.userData.name}</div>
-                    <div style="font-size:13px; color:#ddd; direction:rtl; text-align:right;">برای جزئیات کلیک کنید</div>
+                    <div style="font-size:13px; color:#ddd; direction:rtl; text-align:right;">${hoveredObject.userData.address}</div>
                 `;
                 tooltip.style.opacity = '1';
                 document.body.style.cursor = 'pointer';
@@ -488,7 +580,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (hoveredObject) {
                 // Reset hovered object logic
                 if (hoveredObject !== selectedObject) {
-                    hoveredObject.material.color.setHex(CONFIG.colors.base);
+                    hoveredObject.material.color.setHex(hoveredObject.userData.baseColor);
                 } else {
                     // If it was selected, ensure it stays selected color (red/magenta)
                     // It likely already is, but good to be safe.
@@ -528,4 +620,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     animate();
-});
+
+});  // Close DOMContentLoaded listener
+

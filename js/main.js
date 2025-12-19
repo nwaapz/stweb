@@ -1215,7 +1215,7 @@
                             }
                         }
                         if (product.is_featured) {
-                            badgesContainer.append('<div class="tag-badge tag-badge--hot">داغ</div>');
+                            badgesContainer.append('<div class="tag-badge tag-badge--hot">ویژه</div>');
                         }
                         
                         // Build rating stars
@@ -2220,6 +2220,82 @@
                     })
                     .catch(e => console.error('Error fetching product rating:', e));
             }
+        }
+    });
+
+    /*
+    // Load factories (brands) section dynamically from CMS
+    */
+    $(function () {
+        const $brandsList = $('#factories-brands-list');
+        
+        if ($brandsList.length) {
+            // Fetch factories from API
+            fetch('backend/api/factories.php')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.data && data.data.length > 0) {
+                        // Clear loading state
+                        $brandsList.empty();
+                        
+                        // Render factories
+                        const factories = data.data.filter(f => f.is_active && f.logo_url); // Only active factories with logos
+                        
+                        if (factories.length === 0) {
+                            $brandsList.html('<li style="text-align: center; padding: 40px; width: 100%;">هیچ کارخانه‌ای یافت نشد</li>');
+                            return;
+                        }
+                        
+                        factories.forEach(function (factory, index) {
+                            // Create factory item
+                            const $item = $('<li>').addClass('block-brands__item');
+                            const $link = $('<a>')
+                                .addClass('block-brands__item-link')
+                                .attr('href', factory.slug ? 'category.html?factory=' + factory.id : '#')
+                                .attr('title', factory.name);
+                            
+                            // Create image - handle both absolute and relative URLs
+                            let logoUrl = factory.logo_url;
+                            if (logoUrl && !logoUrl.startsWith('http') && !logoUrl.startsWith('/')) {
+                                // If relative path doesn't start with /, make it relative to root
+                                logoUrl = '/' + logoUrl;
+                            }
+                            
+                            const $img = $('<img>')
+                                .attr('src', logoUrl || '')
+                                .attr('alt', factory.name)
+                                .css('max-width', '100%')
+                                .css('height', 'auto')
+                                .on('error', function() {
+                                    // Hide image if it fails to load
+                                    $(this).hide();
+                                });
+                            
+                            // Create name span
+                            const $name = $('<span>')
+                                .addClass('block-brands__item-name')
+                                .text(factory.name);
+                            
+                            $link.append($img, $name);
+                            $item.append($link);
+                            $brandsList.append($item);
+                            
+                            // Add divider after each item except the last one
+                            if (index < factories.length - 1) {
+                                const $divider = $('<li>')
+                                    .addClass('block-brands__divider')
+                                    .attr('role', 'presentation');
+                                $brandsList.append($divider);
+                            }
+                        });
+                    } else {
+                        $brandsList.html('<li style="text-align: center; padding: 40px; width: 100%;">هیچ کارخانه‌ای یافت نشد</li>');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading factories for brands section:', error);
+                    $brandsList.html('<li style="text-align: center; padding: 40px; width: 100%;">خطا در بارگذاری کارخانجات</li>');
+                });
         }
     });
 

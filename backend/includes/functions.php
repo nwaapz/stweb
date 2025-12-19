@@ -323,9 +323,9 @@ function hasActiveDiscount($product)
 {
     // Calculate discount_price from discount_percent if it's not set
     if (empty($product['discount_price']) && !empty($product['discount_percent']) && !empty($product['price'])) {
-        $product['discount_price'] = (int)round($product['price'] - ($product['price'] * $product['discount_percent'] / 100));
+        $product['discount_price'] = (int) round($product['price'] - ($product['price'] * $product['discount_percent'] / 100));
     }
-    
+
     // Check if discount_price exists and is greater than 0
     if (empty($product['discount_price']) || $product['discount_price'] <= 0) {
         return false;
@@ -371,5 +371,109 @@ function getFlashMessage()
         return $flash;
     }
     return null;
+}
+
+/**
+ * Get all provinces
+ */
+function getProvinces($filters = [])
+{
+    $conn = getConnection();
+    $sql = "SELECT p.*, (SELECT COUNT(*) FROM branches b WHERE b.province_id = p.id AND b.is_active = 1) as branch_count 
+            FROM provinces p 
+            WHERE 1=1";
+    $params = [];
+
+    if (isset($filters['is_active'])) {
+        $sql .= " AND p.is_active = ?";
+        $params[] = $filters['is_active'];
+    }
+
+    $sql .= " ORDER BY p.name";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute($params);
+    return $stmt->fetchAll();
+}
+
+/**
+ * Get province by ID
+ */
+function getProvinceById($id)
+{
+    $conn = getConnection();
+    $stmt = $conn->prepare("SELECT * FROM provinces WHERE id = ?");
+    $stmt->execute([$id]);
+    return $stmt->fetch();
+}
+
+/**
+ * Get province by slug
+ */
+function getProvinceBySlug($slug)
+{
+    $conn = getConnection();
+    // Allow searching by slug OR Persian name
+    $stmt = $conn->prepare("SELECT * FROM provinces WHERE slug = ? OR name = ?");
+    $stmt->execute([$slug, $slug]);
+    return $stmt->fetch();
+}
+
+/**
+ * Get all branches
+ */
+function getBranches($filters = [])
+{
+    $conn = getConnection();
+    $sql = "SELECT b.*, p.name as province_name 
+            FROM branches b 
+            LEFT JOIN provinces p ON b.province_id = p.id 
+            WHERE 1=1";
+    $params = [];
+
+    if (!empty($filters['province_id'])) {
+        $sql .= " AND b.province_id = ?";
+        $params[] = $filters['province_id'];
+    }
+
+    if (isset($filters['is_active'])) {
+        $sql .= " AND b.is_active = ?";
+        $params[] = $filters['is_active'];
+    }
+
+    $sql .= " ORDER BY p.name, b.sort_order, b.name";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute($params);
+    return $stmt->fetchAll();
+}
+
+/**
+ * Get branch by ID
+ */
+function getBranchById($id)
+{
+    $conn = getConnection();
+    $stmt = $conn->prepare("
+        SELECT b.*, p.name as province_name 
+        FROM branches b 
+        LEFT JOIN provinces p ON b.province_id = p.id 
+        WHERE b.id = ?
+    ");
+    $stmt->execute([$id]);
+    return $stmt->fetch();
+}
+
+/**
+ * Get branches by province
+ */
+function getBranchesByProvince($provinceId)
+{
+    $conn = getConnection();
+    $stmt = $conn->prepare("
+        SELECT * FROM branches 
+        WHERE province_id = ? AND is_active = 1 
+        ORDER BY sort_order, name
+    ");
+    $stmt->execute([$provinceId]);
+    return $stmt->fetchAll();
 }
 ?>
