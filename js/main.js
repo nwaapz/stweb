@@ -1756,6 +1756,16 @@
                             }
 
                             ratingContainer.find('.rating__body').html(starsHtml);
+                            // Update product tags dynamically
+                            const tagsList = $('.product__tags .tags__list');
+                            if (tagsList.length) {
+                                const category = product.category_name || '';
+                                const vehicle = product.vehicle_name || '';
+                                let tagsHtml = '';
+                                if (category) tagsHtml += `<a href="">${category}</a>`;
+                                if (vehicle) tagsHtml += ` <a href="">${vehicle}</a>`;
+                                tagsList.html(tagsHtml);
+                            }
                             ratingContainer.find('.product__rating-label a').text(`${reviews} نظرات`);
                         }
                     })

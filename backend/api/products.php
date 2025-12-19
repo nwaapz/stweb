@@ -46,6 +46,8 @@ try {
         $product['formatted_price'] = formatPrice($product['price']);
         $product['formatted_discount_price'] = $product['discount_price'] ? formatPrice($product['discount_price']) : null;
         $product['image_url'] = $product['image'] ? UPLOAD_URL . $product['image'] : null;
+        $product['rating'] = $product['rating'] ?? 0;
+        $product['reviews'] = $product['reviews'] ?? 0;
 
 
         echo json_encode([
@@ -149,6 +151,8 @@ try {
         $product['formatted_price'] = formatPrice($product['price']);
         $product['formatted_discount_price'] = $product['discount_price'] ? formatPrice($product['discount_price']) : null;
         $product['image_url'] = $product['image'] ? UPLOAD_URL . $product['image'] : null;
+        $product['rating'] = $product['rating'] ?? 0;
+        $product['reviews'] = $product['reviews'] ?? 0;
 
         // Vehicle info is already included from the JOIN in getProducts()
     }
