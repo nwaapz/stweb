@@ -5728,15 +5728,8 @@
 						<div class="section-header__body">
 							<h2 class="section-header__title">تازه‌ها</h2>
 							<div class="section-header__spring"></div>
-							<ul class="section-header__links">
-								<li class="section-header__links-item"><a href=""
-										class="section-header__links-link">کاور چرخ</a></li>
-								<li class="section-header__links-item"><a href=""
-										class="section-header__links-link">تسمه تایم</a></li>
-								<li class="section-header__links-item"><a href="" class="section-header__links-link">پن
-										روغن</a></li>
-								<li class="section-header__links-item"><a href=""
-										class="section-header__links-link">نمایش همه</a></li>
+							<ul class="section-header__links" data-dynamic-category-links>
+								<!-- Category links will be loaded dynamically -->
 							</ul>
 							<div class="section-header__arrows">
 								<div class="arrow section-header__arrow section-header__arrow--prev arrow--prev"><button
@@ -7632,8 +7625,322 @@
 				});
 				}, 500); // Wait 500ms for carousel initialization
 			});
+
+			// Dynamic Category Links for "تازه‌ها" Section
+			$(function() {
+				const categoryLinksContainer = $('[data-dynamic-category-links]');
+				const block = categoryLinksContainer.closest('.block-products-carousel');
+				const owlCarousel = block.find('[data-latest-products-carousel]');
+				const carousel = block.find('.block-products-carousel__carousel');
+				
+				if (categoryLinksContainer.length === 0 || owlCarousel.length === 0) {
+					return;
+				}
+				
+				// Function to render products in carousel (similar to main.js)
+				function renderLatestProducts(products) {
+					if (products.length === 0) {
+						carousel.removeClass('block-products-carousel__carousel--loading');
+						owlCarousel.html('<div style="text-align: center; padding: 40px;">محصول جدیدی یافت نشد</div>');
+						return;
+					}
+
+					// Destroy existing carousel if initialized
+					if (owlCarousel.data('owl.carousel')) {
+						owlCarousel.trigger('destroy.owl.carousel');
+						owlCarousel.removeClass('owl-loaded owl-drag');
+					}
+
+					owlCarousel.empty();
+
+					// Helper function to check RTL
+					function isRTL() {
+						return document.documentElement.dir === 'rtl' || $('html').attr('dir') === 'rtl';
+					}
+
+					// Group products in columns (2 products per column for horizontal layout)
+					for (let i = 0; i < products.length; i += 2) {
+						const column = $('<div class="block-products-carousel__column"></div>');
+						let productsAdded = 0;
+						
+						// Add up to 2 products in this column
+						for (let j = 0; j < 2 && (i + j) < products.length; j++) {
+							const product = products[i + j];
+							
+							// Skip if product data is invalid
+							if (!product || !product.id) {
+								continue;
+							}
+							
+							const productUrl = product.slug ? 'product-full.html?product=' + encodeURIComponent(product.slug) : 'product-full.html?id=' + product.id;
+							const productImage = product.image_url || 'images/products/product-1-245x245.jpg';
+							const productName = (product.name && product.name.trim()) ? product.name.trim() : 'بدون نام';
+							const productPrice = product.formatted_price || '0';
+							const discountPrice = product.formatted_discount_price || null;
+							const productRating = parseFloat(product.rating) || 0;
+							const productReviews = parseInt(product.reviews) || 0;
+							
+							// Calculate number of active stars (0-5)
+							const activeStars = Math.min(5, Math.max(0, Math.round(productRating)));
+							
+							// Build badges container
+							const badgesContainer = $('<div class="product-card__badges"></div>');
+							if (product.has_discount) {
+								badgesContainer.append('<div class="tag-badge tag-badge--sale">حراج</div>');
+							}
+							// Check if product is new (created in last 30 days)
+							if (product.created_at) {
+								try {
+									const createdDate = new Date(product.created_at);
+									const daysDiff = (new Date() - createdDate) / (1000 * 60 * 60 * 24);
+									if (daysDiff <= 30) {
+										badgesContainer.append('<div class="tag-badge tag-badge--new">جدید</div>');
+									}
+								} catch (e) {
+									// Invalid date, skip
+								}
+							}
+							if (product.is_featured) {
+								badgesContainer.append('<div class="tag-badge tag-badge--hot">داغ</div>');
+							}
+							
+							// Build rating stars
+							const ratingBody = $('<div class="rating__body"></div>');
+							for (let star = 1; star <= 5; star++) {
+								const starDiv = $('<div class="rating__star"></div>');
+								if (star <= activeStars) {
+									starDiv.addClass('rating__star--active');
+								}
+								ratingBody.append(starDiv);
+							}
+							
+							// Build price container
+							const pricesContainer = $('<div class="product-card__prices"></div>');
+							if (discountPrice && product.has_discount) {
+								pricesContainer.append($('<div class="product-card__price product-card__price--new"></div>').text(discountPrice));
+								pricesContainer.append($('<div class="product-card__price product-card__price--old"></div>').text(productPrice));
+							} else {
+								pricesContainer.append($('<div class="product-card__price product-card__price--current"></div>').text(productPrice));
+							}
+							
+							// Build product card using jQuery
+							const cell = $('<div class="block-products-carousel__cell"></div>');
+							const productCard = $('<div class="product-card product-card--layout--horizontal"></div>');
+							
+							// Actions
+							const actionsList = $('<div class="product-card__actions-list"></div>');
+							const quickviewBtn = $('<button class="product-card__action product-card__action--quickview" type="button" aria-label="Quick view"></button>');
+							quickviewBtn.html('<svg width="16" height="16"><path d="M14,15h-4v-2h3v-3h2v4C15,14.6,14.6,15,14,15z M13,3h-3V1h4c0.6,0,1,0.4,1,1v4h-2V3z M6,3H3v3H1V2c0-0.6,0.4-1,1-1h4V3z M3,13h3v2H2c-0.6,0-1-0.4-1-1v-4h2V13z"/></svg>');
+							actionsList.append(quickviewBtn);
+							productCard.append(actionsList);
+							
+							// Image
+							const imageContainer = $('<div class="product-card__image"></div>');
+							const imageDiv = $('<div class="image image--type--product"></div>');
+							const imageLink = $('<a href="' + productUrl + '" class="image__body"></a>');
+							const productImg = $('<img class="image__tag">');
+							productImg.attr('src', productImage);
+							productImg.attr('alt', productName);
+							productImg.attr('onerror', "this.src='images/products/product-1-245x245.jpg'");
+							imageLink.append(productImg);
+							imageDiv.append(imageLink);
+							imageContainer.append(imageDiv);
+							productCard.append(imageContainer);
+							
+							// Info
+							const infoContainer = $('<div class="product-card__info"></div>');
+							const nameContainer = $('<div class="product-card__name"></div>');
+							const nameDiv = $('<div></div>');
+							if (badgesContainer.children().length > 0) {
+								nameDiv.append(badgesContainer);
+							}
+							nameDiv.append($('<a href="' + productUrl + '"></a>').text(productName));
+							nameContainer.append(nameDiv);
+							infoContainer.append(nameContainer);
+							
+							// Rating
+							const ratingContainer = $('<div class="product-card__rating"></div>');
+							const ratingStars = $('<div class="rating product-card__rating-stars"></div>');
+							ratingStars.append(ratingBody);
+							ratingContainer.append(ratingStars);
+							ratingContainer.append($('<div class="product-card__rating-label"></div>').text(productRating.toFixed(1) + ' از ' + productReviews + ' نظر'));
+							infoContainer.append(ratingContainer);
+							productCard.append(infoContainer);
+							
+							// Footer
+							const footerContainer = $('<div class="product-card__footer"></div>');
+							footerContainer.append(pricesContainer);
+							productCard.append(footerContainer);
+							
+							cell.append(productCard);
+							column.append(cell);
+							productsAdded++;
+						}
+						
+						// If last column has only 1 product, add empty placeholder cell to maintain height consistency
+						if (productsAdded === 1 && (i + 1) >= products.length) {
+							const emptyCell = $('<div class="block-products-carousel__cell"></div>');
+							// Create empty card structure to maintain layout height - keep visible but empty
+							const emptyCard = $('<div class="product-card product-card--layout--horizontal"></div>');
+							emptyCard.css('opacity', '0');
+							emptyCell.append(emptyCard);
+							column.append(emptyCell);
+						}
+						
+						// Only append column if it has at least one product
+						if (column.children().length > 0 && productsAdded > 0) {
+							owlCarousel.append(column);
+						}
+					}
+
+					// Re-initialize carousel with new content (horizontal layout settings)
+					owlCarousel.owlCarousel({
+						dots: false,
+						margin: 14,
+						loop: products.length > 4,
+						rtl: isRTL(),
+						items: 4,
+						responsive: {
+							1400: { items: 4 },
+							1200: { items: 3 },
+							992: { items: 3 },
+							768: { items: 2 },
+							576: { items: 2 },
+							0: { items: 1 }
+						}
+					});
+
+					carousel.removeClass('block-products-carousel__carousel--loading');
+
+					// Re-bind arrow handlers
+					block.find('.section-header__arrow--prev').off('click').on('click', function () {
+						owlCarousel.trigger('prev.owl.carousel', [500]);
+					});
+					block.find('.section-header__arrow--next').off('click').on('click', function () {
+						owlCarousel.trigger('next.owl.carousel', [500]);
+					});
+
+					// Re-initialize quickview handlers
+					$('.product-card__action--quickview', block).off('click').on('click', function() {
+						if (typeof quickview !== 'undefined' && quickview.clickHandler) {
+							quickview.clickHandler.apply(this, arguments);
+						}
+					});
+				}
+				
+				// Function to load products filtered by category
+				function loadFilteredProducts(categoryId) {
+					// Show loading state
+					carousel.addClass('block-products-carousel__carousel--loading');
+					
+					// Build API URL
+					let apiUrl = 'backend/api/products.php?order_by=created_at&order_dir=DESC&limit=10';
+					if (categoryId && categoryId !== 'all') {
+						apiUrl += '&category=' + encodeURIComponent(categoryId);
+					}
+					
+					// Fetch products
+					fetch(apiUrl)
+						.then(response => response.json())
+						.then(data => {
+							if (data.success && data.data && data.data.length > 0) {
+								renderLatestProducts(data.data);
+							} else {
+								carousel.removeClass('block-products-carousel__carousel--loading');
+								owlCarousel.html('<div style="text-align: center; padding: 40px;">محصول جدیدی یافت نشد</div>');
+							}
+						})
+						.catch(error => {
+							console.error('Error fetching filtered products:', error);
+							carousel.removeClass('block-products-carousel__carousel--loading');
+							owlCarousel.html('<div style="text-align: center; padding: 40px;">خطا در بارگذاری محصولات</div>');
+						});
+				}
+				
+				// Function to populate category links
+				function populateCategoryLinks(linksContainer, categories) {
+					linksContainer.empty();
+					
+					if (!categories || categories.length === 0) {
+						// Fallback: show "نمایش همه" link if no categories
+						const showAllItem = $('<li class="section-header__links-item"></li>');
+						const showAllLink = $('<a href="#" class="section-header__links-link section-header__links-link--active" data-category-id="all"></a>')
+							.text('نمایش همه');
+						showAllItem.append(showAllLink);
+						linksContainer.append(showAllItem);
+						return;
+					}
+					
+					// Limit to first 3 categories to keep it clean, then add "نمایش همه"
+					const limitedCategories = categories.slice(0, 3);
+					
+					limitedCategories.forEach(function(category) {
+						const categoryName = category.name || 'بدون نام';
+						const categoryId = category.id;
+						
+						const linkItem = $('<li class="section-header__links-item"></li>');
+						const link = $('<a href="#" class="section-header__links-link" data-category-id="' + categoryId + '"></a>')
+							.text(categoryName);
+						linkItem.append(link);
+						linksContainer.append(linkItem);
+					});
+					
+					// Add "نمایش همه" (Show All) link at the end
+					const showAllItem = $('<li class="section-header__links-item"></li>');
+					const showAllLink = $('<a href="#" class="section-header__links-link section-header__links-link--active" data-category-id="all"></a>')
+						.text('نمایش همه');
+					showAllItem.append(showAllLink);
+					linksContainer.append(showAllItem);
+					
+					// Initialize click handlers
+					initializeCategoryLinkHandlers(linksContainer);
+				}
+				
+				// Function to initialize category link click handlers
+				function initializeCategoryLinkHandlers(linksContainer) {
+					linksContainer.find('.section-header__links-link').off('click').on('click', function(e) {
+						e.preventDefault();
+						
+						const clickedLink = $(this);
+						const categoryId = clickedLink.data('category-id');
+						
+						// Don't reload if same category is clicked
+						if (clickedLink.hasClass('section-header__links-link--active')) {
+							return;
+						}
+						
+						// Update active state
+						linksContainer.find('.section-header__links-link').removeClass('section-header__links-link--active');
+						clickedLink.addClass('section-header__links-link--active');
+						
+						// Load filtered products
+						loadFilteredProducts(categoryId);
+					});
+				}
+				
+				// Fetch categories and populate links using the cached fetchCategories function
+				fetchCategories().then(function(categories) {
+					populateCategoryLinks(categoryLinksContainer, categories);
+					// Wait a bit for main.js to potentially load initial products, then we can filter
+					// The initial load from main.js is fine, we just need to be ready to filter
+					setTimeout(function() {
+						// If carousel is empty or we want to ensure "all" is loaded, load it
+						// But since main.js already loads "all" products, we don't need to reload
+						// Just make sure the "all" link is active
+					}, 100);
+				}).catch(function(error) {
+					console.error('Error loading categories for links:', error);
+					// Fallback: show "نمایش همه" link on error
+					const showAllItem = $('<li class="section-header__links-item"></li>');
+					const showAllLink = $('<a href="#" class="section-header__links-link section-header__links-link--active" data-category-id="all"></a>')
+						.text('نمایش همه');
+					showAllItem.append(showAllLink);
+					categoryLinksContainer.append(showAllItem);
+					initializeCategoryLinkHandlers(categoryLinksContainer);
+				});
+			});
 		})(jQuery);
-		
+
 		// Force center Select2 dropdown text after initialization
 		$(document).ready(function() {
 			function centerSelect2Text() {
