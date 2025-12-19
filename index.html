@@ -73,6 +73,29 @@
 		.select2-results__option {
 			text-align: center !important;
 		}
+
+		/* Fix horizontal product card layout to prevent footer from overlapping image */
+		.block-products-carousel .product-card--layout--horizontal {
+			display: flex;
+			flex-direction: column;
+		}
+
+		.block-products-carousel .product-card--layout--horizontal .product-card__image {
+			flex-shrink: 0;
+		}
+
+		.block-products-carousel .product-card--layout--horizontal .product-card__info {
+			flex: 1;
+		}
+
+		.block-products-carousel .product-card--layout--horizontal .product-card__footer {
+			display: block;
+			width: 100%;
+			clear: both;
+			margin-top: auto;
+			padding-top: 12px;
+			border-top: 1px solid #ebebeb;
+		}
 	</style>
 
 </head>
