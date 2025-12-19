@@ -7726,19 +7726,25 @@
 
 			// Dynamic Category Buttons for Products Carousel
 			$(function() {
+				const categoryGroups = $('.section-header__groups[data-dynamic-categories]');
+				
+				if (categoryGroups.length === 0) {
+					return;
+				}
+
+				const block = categoryGroups.closest('.block-products-carousel');
+				const owlCarousel = block.find('.owl-carousel');
+				const carousel = block.find('.block-products-carousel__carousel');
+				
+				// Hide static products immediately to prevent flash
+				owlCarousel.css('opacity', '0');
+				carousel.addClass('block-products-carousel__carousel--loading');
+				
+				// Store the initial static products HTML
+				const initialProductsHtml = owlCarousel.html();
+				
 				// Wait for carousel to be initialized
 				setTimeout(function() {
-					const categoryGroups = $('.section-header__groups[data-dynamic-categories]');
-					
-					if (categoryGroups.length === 0) {
-						return;
-					}
-
-					const block = categoryGroups.closest('.block-products-carousel');
-					const owlCarousel = block.find('.owl-carousel');
-					
-					// Store the initial static products HTML
-					const initialProductsHtml = owlCarousel.html();
 
 				// Function to populate category buttons
 				function populateCategoryButtons(groupsContainer, categories) {
@@ -7854,6 +7860,7 @@
 					}
 					
 					owlCarousel.empty();
+					owlCarousel.css('opacity', '0'); // Hide while loading
 
 					products.forEach(function(product) {
 						const productUrl = product.slug ? 'product-full.html?product=' + encodeURIComponent(product.slug) : 'product-full.html?id=' + product.id;
@@ -7951,6 +7958,11 @@
 							quickview.clickHandler.apply(this, arguments);
 						}
 					});
+					
+					// Show carousel after rendering
+					setTimeout(function() {
+						owlCarousel.css('opacity', '1');
+					}, 100);
 				}
 
 				// Load categories and populate buttons, then load featured products
@@ -7962,23 +7974,24 @@
 					}
 					
 					// Load featured products on initial page load
-					const carousel = block.find('.block-products-carousel__carousel');
-					carousel.addClass('block-products-carousel__carousel--loading');
-					
 					fetch('backend/api/products.php?limit=20&featured=1')
 						.then(response => response.json())
 						.then(data => {
 							if (data.success && data.data && data.data.length > 0) {
 								renderProductsInCarousel(data.data, owlCarousel, block);
+								// Show carousel after products are loaded
+								owlCarousel.css('opacity', '1');
 							} else {
-								// If no featured products, keep static products
-								console.log('No featured products found, keeping static products');
+								// If no featured products, show static products
+								console.log('No featured products found, showing static products');
+								owlCarousel.css('opacity', '1');
 							}
 							carousel.removeClass('block-products-carousel__carousel--loading');
 						})
 						.catch(error => {
 							console.error('Error loading featured products:', error);
-							// On error, keep static products
+							// On error, show static products
+							owlCarousel.css('opacity', '1');
 							carousel.removeClass('block-products-carousel__carousel--loading');
 						});
 				}).catch(function(error) {
@@ -7986,19 +7999,20 @@
 					categoryGroups.html('<li class="section-header__groups-item"><button type="button" class="section-header__groups-button section-header__groups-button--active">همه</button></li>');
 					
 					// Still try to load featured products even if categories fail
-					const carousel = block.find('.block-products-carousel__carousel');
-					carousel.addClass('block-products-carousel__carousel--loading');
-					
 					fetch('backend/api/products.php?limit=20&featured=1')
 						.then(response => response.json())
 						.then(data => {
 							if (data.success && data.data && data.data.length > 0) {
 								renderProductsInCarousel(data.data, owlCarousel, block);
+								owlCarousel.css('opacity', '1');
+							} else {
+								owlCarousel.css('opacity', '1');
 							}
 							carousel.removeClass('block-products-carousel__carousel--loading');
 						})
 						.catch(err => {
 							console.error('Error loading featured products:', err);
+							owlCarousel.css('opacity', '1');
 							carousel.removeClass('block-products-carousel__carousel--loading');
 						});
 				});
