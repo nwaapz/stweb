@@ -1721,4 +1721,47 @@
         }
     });
 
+    /*
+    // Dynamic Main Product Rating
+    */
+    $(function () {
+        const ratingContainer = $('.product__rating');
+        if (ratingContainer.length) {
+            // Get product ID or Slug from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const productParam = urlParams.get('product') || urlParams.get('id');
+
+            if (productParam) {
+                let apiEndpoint = 'backend/api/products.php?id=' + encodeURIComponent(productParam);
+                if (isNaN(productParam)) {
+                    apiEndpoint = 'backend/api/products.php?slug=' + encodeURIComponent(productParam);
+                }
+
+                fetch(apiEndpoint)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.data) {
+                            const product = data.data;
+                            const rating = parseFloat(product.rating) || 0;
+                            const reviews = parseInt(product.reviews) || 0;
+
+                            // Helper for stars
+                            let starsHtml = '';
+                            for (let i = 0; i < 5; i++) {
+                                if (i < Math.round(rating)) {
+                                    starsHtml += '<div class="rating__star rating__star--active"></div>';
+                                } else {
+                                    starsHtml += '<div class="rating__star"></div>';
+                                }
+                            }
+
+                            ratingContainer.find('.rating__body').html(starsHtml);
+                            ratingContainer.find('.product__rating-label a').text(`${reviews} نظرات`);
+                        }
+                    })
+                    .catch(e => console.error('Error fetching product rating:', e));
+            }
+        }
+    });
+
 })(jQuery);

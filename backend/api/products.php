@@ -47,6 +47,7 @@ try {
         $product['formatted_discount_price'] = $product['discount_price'] ? formatPrice($product['discount_price']) : null;
         $product['image_url'] = $product['image'] ? UPLOAD_URL . $product['image'] : null;
 
+
         echo json_encode([
             'success' => true,
             'data' => $product
@@ -94,6 +95,7 @@ try {
         $product['formatted_price'] = formatPrice($product['price']);
         $product['formatted_discount_price'] = $product['discount_price'] ? formatPrice($product['discount_price']) : null;
         $product['image_url'] = $product['image'] ? UPLOAD_URL . $product['image'] : null;
+
 
         echo json_encode([
             'success' => true,
@@ -147,6 +149,7 @@ try {
         $product['formatted_price'] = formatPrice($product['price']);
         $product['formatted_discount_price'] = $product['discount_price'] ? formatPrice($product['discount_price']) : null;
         $product['image_url'] = $product['image'] ? UPLOAD_URL . $product['image'] : null;
+
         // Vehicle info is already included from the JOIN in getProducts()
     }
 
