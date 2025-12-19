@@ -96,6 +96,19 @@
 			padding-top: 12px;
 			border-top: 1px solid #ebebeb;
 		}
+
+		/* Ensure proper carousel sizing for "تازه‌ها" section - no fixed widths that cut cards */
+		.block-products-carousel[data-layout="horizontal"] .block-products-carousel__column {
+			width: 100%;
+		}
+
+		.block-products-carousel[data-layout="horizontal"] .block-products-carousel__cell {
+			width: 100%;
+		}
+
+		.block-products-carousel[data-layout="horizontal"] .block-products-carousel__cell .product-card {
+			width: 100%;
+		}
 	</style>
 
 </head>
@@ -7824,12 +7837,12 @@
 						rtl: isRTL(),
 						items: 4,
 						responsive: {
-							1400: { items: 4 },
-							1200: { items: 3 },
-							992: { items: 3 },
-							768: { items: 2 },
-							576: { items: 2 },
-							0: { items: 1 }
+							1400: { items: 4, margin: 14 },
+							1200: { items: 3, margin: 14 },
+							992: { items: 3, margin: 14 },
+							768: { items: 2, margin: 14 },
+							576: { items: 2, margin: 14 },
+							0: { items: 1, margin: 14 }
 						}
 					});
 
