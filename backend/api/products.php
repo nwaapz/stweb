@@ -180,6 +180,12 @@ try {
         $filters['limit'] = (int) $_GET['limit'];
     }
 
+    // Popular products (ordered by views)
+    if (isset($_GET['popular'])) {
+        $filters['order_by'] = 'views';
+        $filters['order_dir'] = 'DESC';
+    }
+
     // Only active products for API (unless debug mode)
     if (!isset($_GET['include_inactive'])) {
         $filters['is_active'] = 1;

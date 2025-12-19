@@ -252,8 +252,26 @@ function getProducts($filters = [])
         $params[] = $filters['category_name'];
     }
 
-    // Order by created_at DESC, fallback to id DESC if created_at is null
-    $sql .= " ORDER BY p.created_at DESC, p.id DESC";
+    // Order by
+    if (!empty($filters['order_by'])) {
+        $orderBy = $filters['order_by'];
+        $orderDir = !empty($filters['order_dir']) ? $filters['order_dir'] : 'DESC';
+        // Validate order_by to prevent SQL injection
+        $allowedOrderBy = ['views', 'created_at', 'price', 'name', 'id'];
+        if (in_array($orderBy, $allowedOrderBy)) {
+            // Handle NULL values in views - put them last
+            if ($orderBy === 'views') {
+                $sql .= " ORDER BY p.views IS NULL, p.views " . $orderDir . ", p.id DESC";
+            } else {
+                $sql .= " ORDER BY p." . $orderBy . " " . $orderDir;
+            }
+        } else {
+            $sql .= " ORDER BY p.created_at DESC, p.id DESC";
+        }
+    } else {
+        // Default: Order by created_at DESC, fallback to id DESC if created_at is null
+        $sql .= " ORDER BY p.created_at DESC, p.id DESC";
+    }
 
     if (!empty($filters['limit'])) {
         $sql .= " LIMIT " . (int) $filters['limit'];
