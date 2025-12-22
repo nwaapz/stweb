@@ -98,9 +98,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Legend ---
     const legend = document.createElement('div');
-    legend.style.position = 'absolute';
-    legend.style.bottom = '30px';
-    legend.style.right = '30px';
+    legend.style.position = 'relative';
+    legend.style.marginTop = '20px';
+    legend.style.marginLeft = 'auto';
+    legend.style.marginRight = 'auto';
+    legend.style.width = 'fit-content';
     legend.style.backgroundColor = 'rgba(20, 20, 35, 0.85)';
     legend.style.backdropFilter = 'blur(5px)';
     legend.style.padding = '15px 20px';
@@ -111,8 +113,15 @@ document.addEventListener('DOMContentLoaded', () => {
     legend.style.fontSize = '14px';
     legend.style.direction = 'rtl';
     legend.style.zIndex = '10';
-    legend.style.pointerEvents = 'none'; // Allow clicks to pass through if needed (though bottom corner is usually safe)
+    legend.style.pointerEvents = 'auto'; // Enable pointer events to catch clicks
     legend.style.boxShadow = '0 5px 20px rgba(0,0,0,0.5)';
+    // Prevent all mouse events on legend from reaching map
+    const stopLegendEvents = (event) => {
+        event.stopPropagation();
+    };
+    legend.addEventListener('click', stopLegendEvents, true);
+    legend.addEventListener('mousedown', stopLegendEvents, true);
+    legend.addEventListener('mouseup', stopLegendEvents, true);
 
     const itemStyle = 'display: flex; align-items: center; margin-bottom: 8px;';
     const circleStyle = (color) => `width: 12px; height: 12px; background-color: ${color}; border-radius: 50%; margin-left: 10px; box-shadow: 0 0 8px ${color}; border: 1px solid rgba(255,255,255,0.2);`;
@@ -127,7 +136,69 @@ document.addEventListener('DOMContentLoaded', () => {
             <span>سایر استان‌ها</span>
         </div>
     `;
-    container.appendChild(legend);
+    // Don't append to container yet - will append to province-list-container later
+
+    // --- Reset Camera Function (Reusable) ---
+    const resetCameraView = () => {
+        const resetDuration = 1000;
+        const resetStartTime = Date.now();
+        const currentPos = { x: camera.position.x, y: camera.position.y, z: camera.position.z };
+        const targetLookAt = { x: 0, y: 0, z: 0 };
+
+        const resetCameraLoop = () => {
+            const elapsed = Date.now() - resetStartTime;
+            const progress = Math.min(elapsed / resetDuration, 1);
+            const eased = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress;
+
+            camera.position.x = currentPos.x + (CONFIG.camera.posX - currentPos.x) * eased;
+            camera.position.y = currentPos.y + (CONFIG.camera.posY - currentPos.y) * eased;
+            camera.position.z = currentPos.z + (CONFIG.camera.posZ - currentPos.z) * eased;
+            camera.lookAt(currentLookAtTarget.x * (1 - eased), currentLookAtTarget.y * (1 - eased), 0);
+
+            if (progress < 1) requestAnimationFrame(resetCameraLoop);
+            else currentLookAtTarget = { x: 0, y: 0, z: 0 };
+        };
+        resetCameraLoop();
+
+        if (selectedObject) {
+            selectedObject.material.color.setHex(selectedObject.userData.baseColor);
+            selectedObject = null;
+        }
+    };
+
+    // --- Reset View Button (Always Visible) ---
+    const resetViewButton = document.createElement('button');
+    resetViewButton.innerHTML = '<i class="bi bi-arrows-angle-contract" style="margin-left: 8px;"></i>بازگشت به نمای کلی';
+    resetViewButton.style.position = 'absolute';
+    resetViewButton.style.top = '20px';
+    resetViewButton.style.right = '20px';
+    resetViewButton.style.zIndex = '1000';
+    resetViewButton.style.background = 'linear-gradient(45deg, #00ffff, #00cccc)';
+    resetViewButton.style.color = '#000';
+    resetViewButton.style.border = 'none';
+    resetViewButton.style.padding = '12px 24px';
+    resetViewButton.style.borderRadius = '8px';
+    resetViewButton.style.cursor = 'pointer';
+    resetViewButton.style.fontSize = '14px';
+    resetViewButton.style.fontWeight = '600';
+    resetViewButton.style.fontFamily = 'inherit';
+    resetViewButton.style.transition = 'all 0.3s ease';
+    resetViewButton.style.boxShadow = '0 5px 15px rgba(0, 255, 255, 0.4)';
+    resetViewButton.style.direction = 'rtl';
+    resetViewButton.style.backdropFilter = 'blur(5px)';
+    resetViewButton.onmouseenter = () => {
+        resetViewButton.style.transform = 'translateY(-2px)';
+        resetViewButton.style.boxShadow = '0 8px 20px rgba(0, 255, 255, 0.6)';
+    };
+    resetViewButton.onmouseleave = () => {
+        resetViewButton.style.transform = 'translateY(0)';
+        resetViewButton.style.boxShadow = '0 5px 15px rgba(0, 255, 255, 0.4)';
+    };
+    resetViewButton.onclick = (event) => {
+        event.stopPropagation();
+        resetCameraView();
+    };
+    container.appendChild(resetViewButton);
 
     // --- Interaction State (Hoisted for Table Access) ---
     const raycaster = new THREE.Raycaster();
@@ -135,6 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let hoveredObject = null;
     let selectedObject = null;
     let currentLookAtTarget = { x: 0, y: 0, z: 0 };
+    let isMouseOverProvinceList = false; // Track if mouse is over province list
 
     // --- Selection Logic ---
     const selectProvince = (object) => {
@@ -227,6 +299,11 @@ document.addEventListener('DOMContentLoaded', () => {
             <div style="font-size: 16px; color: #e0e0e0;">در حال بارگذاری شعب...</div>
         `;
 
+        // Prevent clicks on notification from reaching map
+        notification.onclick = (event) => {
+            event.stopPropagation();
+        };
+
         container.appendChild(notification);
 
         // Fetch Data
@@ -289,31 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             if (resetBtn) resetBtn.onclick = () => {
-                // Reset Camera Logic
-                const resetDuration = 1000;
-                const resetStartTime = Date.now();
-                const currentPos = { x: camera.position.x, y: camera.position.y, z: camera.position.z };
-                const targetLookAt = { x: 0, y: 0, z: 0 };
-
-                const resetCameraLoop = () => {
-                    const elapsed = Date.now() - resetStartTime;
-                    const progress = Math.min(elapsed / resetDuration, 1);
-                    const eased = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress;
-
-                    camera.position.x = currentPos.x + (CONFIG.camera.posX - currentPos.x) * eased;
-                    camera.position.y = currentPos.y + (CONFIG.camera.posY - currentPos.y) * eased;
-                    camera.position.z = currentPos.z + (CONFIG.camera.posZ - currentPos.z) * eased;
-                    camera.lookAt(currentLookAtTarget.x * (1 - eased), currentLookAtTarget.y * (1 - eased), 0); // Simplified lookat reset
-
-                    if (progress < 1) requestAnimationFrame(resetCameraLoop);
-                    else currentLookAtTarget = { x: 0, y: 0, z: 0 };
-                };
-                resetCameraLoop();
-
-                if (selectedObject) {
-                    selectedObject.material.color.setHex(selectedObject.userData.baseColor);
-                    selectedObject = null;
-                }
+                resetCameraView();
                 if (notification.parentNode) notification.remove();
             };
         };
@@ -450,6 +503,30 @@ document.addEventListener('DOMContentLoaded', () => {
             listContainer.style.boxSizing = 'border-box';
             listContainer.style.marginTop = 'auto'; // Push to bottom if space
             listContainer.style.backgroundColor = 'rgba(0,0,0,0.2)';
+            // Prevent clicks on empty areas of container from reaching map
+            // But allow province item clicks to work (they stop propagation themselves)
+            listContainer.addEventListener('click', (event) => {
+                // Only stop if clicking directly on container, not on child elements
+                if (event.target === listContainer) {
+                    event.stopPropagation();
+                }
+            }, false);
+            
+            // Disable map hover when mouse is over province list
+            listContainer.addEventListener('mouseenter', () => {
+                isMouseOverProvinceList = true;
+                // Reset any hovered province on map
+                if (hoveredObject && hoveredObject !== selectedObject) {
+                    hoveredObject.material.color.setHex(hoveredObject.userData.baseColor);
+                }
+                hoveredObject = null;
+                tooltip.style.opacity = '0';
+                document.body.style.cursor = 'default';
+            }, false);
+            
+            listContainer.addEventListener('mouseleave', () => {
+                isMouseOverProvinceList = false;
+            }, false);
 
             // Grid for cards
             const listGrid = document.createElement('div');
@@ -503,13 +580,93 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
 
                 // Click Action
-                item.onclick = () => {
-                    // Find mesh
-                    const mesh = mapGroup.children.find(m => m.userData.name === p.name);
+                item.onclick = (event) => {
+                    event.preventDefault();
+                    event.stopPropagation(); // Prevent click from reaching map
+                    
+                    console.log('Province button clicked:', p.name);
+                    
+                    // Normalize function to help with matching
+                    const normalize = (str) => {
+                        if (!str) return '';
+                        return str.trim()
+                            .toLowerCase()
+                            .replace(/\s+/g, ' ') // Normalize spaces
+                            .replace(/[ی]/g, 'ی') // Normalize ی
+                            .replace(/[ک]/g, 'ک') // Normalize ک
+                            .replace(/[ۀ]/g, 'ه'); // Normalize ه
+                    };
+                    
+                    // Find mesh - try multiple matching strategies
+                    let mesh = null;
+                    
+                    // Strategy 1: Exact match
+                    mesh = mapGroup.children.find(m => 
+                        m.userData && m.userData.name && m.userData.name === p.name
+                    );
+                    
+                    // Strategy 2: Case-insensitive match
+                    if (!mesh) {
+                        mesh = mapGroup.children.find(m => 
+                            m.userData && m.userData.name && p.name && 
+                            normalize(m.userData.name) === normalize(p.name)
+                        );
+                    }
+                    
+                    // Strategy 3: Partial match (contains)
+                    if (!mesh) {
+                        const normalizedSearch = normalize(p.name);
+                        mesh = mapGroup.children.find(m => 
+                            m.userData && m.userData.name && 
+                            normalize(m.userData.name).includes(normalizedSearch) ||
+                            normalizedSearch.includes(normalize(m.userData.name))
+                        );
+                    }
+                    
+                    // Strategy 4: Try matching without common words
+                    if (!mesh) {
+                        const removeCommonWords = (str) => {
+                            return normalize(str)
+                                .replace(/\b(استان|province)\b/g, '')
+                                .trim();
+                        };
+                        const searchNormalized = removeCommonWords(p.name);
+                        mesh = mapGroup.children.find(m => 
+                            m.userData && m.userData.name && 
+                            removeCommonWords(m.userData.name) === searchNormalized
+                        );
+                    }
+                    
                     if (mesh) {
+                        console.log('Mesh found, selecting province:', p.name, '->', mesh.userData.name);
                         selectProvince(mesh);
-                        // Scroll to map top?
-                        container.scrollIntoView({ behavior: 'smooth' });
+                        // Scroll to map top
+                        setTimeout(() => {
+                            container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 100);
+                    } else {
+                        console.warn('Province mesh not found for:', p.name);
+                        const availableProvinces = mapGroup.children
+                            .filter(m => m.userData && m.userData.name)
+                            .map(m => m.userData.name);
+                        console.log('Available provinces:', availableProvinces);
+                        console.log('Searching for:', p.name, 'normalized:', normalize(p.name));
+                        
+                        // Try to find closest match
+                        const searchNormalized = normalize(p.name);
+                        const closestMatch = mapGroup.children.find(m => {
+                            if (!m.userData || !m.userData.name) return false;
+                            const meshNormalized = normalize(m.userData.name);
+                            return meshNormalized.includes(searchNormalized) || 
+                                   searchNormalized.includes(meshNormalized);
+                        });
+                        if (closestMatch) {
+                            console.log('Found closest match:', closestMatch.userData.name, '- trying it...');
+                            selectProvince(closestMatch);
+                            setTimeout(() => {
+                                container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }, 100);
+                        }
                     }
                 };
 
@@ -517,7 +674,11 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             listContainer.appendChild(listGrid);
+            listContainer.appendChild(legend); // Append legend to province-list-container, centered at bottom
             container.appendChild(listContainer);
+        } else {
+            // If no province data, still show legend in container
+            container.appendChild(legend);
         }
 
     }).catch(err => {
@@ -528,6 +689,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // Variables already defined above
 
     const onMouseMove = (event) => {
+        // Don't process map hover if mouse is over province list
+        if (isMouseOverProvinceList) {
+            // Reset any hovered object when mouse leaves map area
+            if (hoveredObject && hoveredObject !== selectedObject) {
+                hoveredObject.material.color.setHex(hoveredObject.userData.baseColor);
+            }
+            hoveredObject = null;
+            tooltip.style.opacity = '0';
+            document.body.style.cursor = 'default';
+            return;
+        }
+
         // Calculate mouse position in normalized device coordinates (-1 to +1)
         const rect = renderer.domElement.getBoundingClientRect();
         mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
