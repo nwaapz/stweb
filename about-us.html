@@ -13,6 +13,23 @@
     font-family: 'Vazirmatn', 'Tahoma', 'Arial', sans-serif;
     font-weight: 600;
 }
+
+/* Hide static content until CMS data loads */
+.about__card-text:not([data-loaded]) {
+    display: none !important;
+}
+.about__card-author:not([data-loaded]) {
+    display: none !important;
+}
+.about__indicators:not([data-loaded]) {
+    display: none !important;
+}
+.block-teammates:not([data-loaded]) {
+    display: none !important;
+}
+.block-reviews:not([data-loaded]) {
+    display: none !important;
+}
 </style>
 
 </head><body><!-- site --><div class="site"><!-- site__mobile-header --><header class="site__mobile-header"><div class="mobile-header"><div class="container"><div class="mobile-header__body"><button class="mobile-header__menu-button" type="button"><svg width="18px" height="14px"><path d="M-0,8L-0,6L18,6L18,8L-0,8ZM-0,-0L18,-0L18,2L-0,2L-0,-0ZM14,14L-0,14L-0,12L14,12L14,14Z"/></svg></button> <a class="mobile-header__logo" href=""><!-- mobile-logo --> <svg width="130" height="20"><path class="mobile-header__logo-part-one" d="M40,19.9c-0.3,0-0.7,0.1-1,0.1h-4.5c-0.8,0-1.5-0.7-1.5-1.5v-17C33,0.7,33.7,0,34.5,0H39c0.3,0,0.7,0,1,0.1
@@ -131,7 +148,7 @@
 
 	c-0.4-0.4-0.4-1,0-1.4l0,0c0.4-0.4,1-0.4,1.4,0L5,3.6l2.4-2.4c0.4-0.4,1-0.4,1.4,0l0,0c0.4,0.4,0.4,1,0,1.4L6.4,5l2.4,2.4
 
-	C9.2,7.8,9.2,8.4,8.8,8.8z"/></svg></button></li><li class="dropcart__divider" role="presentation"></li></ul><div class="dropcart__totals"><table><tr><th>جمع کل</th><td>5877.00</td></tr><tr><th>ارسال</th><td>25.00</td></tr><tr><th>مالیات</th><td>0.00</td></tr><tr><th>مجموع</th><td>5902.00</td></tr></table></div><div class="dropcart__actions"><a href="cart.html" class="btn btn-secondary">مشاهده سبد خرید</a> <a href="checkout.html" class="btn btn-primary">تسویه حساب</a></div></div></div></div></div></div></header><!-- site__header / end --><!-- site__body --><div class="site__body"><div class="about"><div class="about__body"><div class="about__image"><div class="about__image-bg" style="background-image: url('images/about-1903x1903.jpg');"></div><div class="decor about__image-decor decor--type--bottom"><div class="decor__body"><div class="decor__start"></div><div class="decor__end"></div><div class="decor__center"></div></div></div></div><div class="about__card"><div class="about__card-title">درباره ما</div><div class="about__card-text">RedParts یک شرکت بین‌المللی با ۳۰ سال سابقه در فروش قطعات یدکی خودرو، کامیون و موتورسیکلت است. در طول فعالیت خود، موفق به ایجاد یک سرویس منحصر به فرد برای فروش و تحویل قطعات یدکی در سراسر جهان شده‌ایم.</div><div class="about__card-author">حسین عبدالمحمدی, CEO RedParts</div></div><div class="about__indicators"><div class="about__indicators-body"><div class="about__indicators-item"><div class="about__indicators-item-value">350</div><div class="about__indicators-item-title">فروشگاه در سراسر جهان</div></div><div class="about__indicators-item"><div class="about__indicators-item-value">80 000</div><div class="about__indicators-item-title">قطعات اصلی خودرو</div></div><div class="about__indicators-item"><div class="about__indicators-item-value">5 000</div><div class="about__indicators-item-title">مشتریان راضی</div></div></div></div></div></div><div class="block-space block-space--layout--divider-xl"></div><div class="block block-teammates"><div class="container container--max--xl"><div class="block-teammates__title">تیم حرفه‌ای</div><div class="block-teammates__subtitle">با تیم حرفه‌ای ما آشنا شوید.</div><div class="block-teammates__list"><div class="owl-carousel"><div class="block-teammates__item teammate"><div class="teammate__avatar"><img src="images/teammates/teammate1-206x206.jpg" alt=""></div><div class="teammate__info"><div class="teammate__name">Michael Russo</div><div class="teammate__position">مدیر عامل</div></div></div><div class="block-teammates__item teammate"><div class="teammate__avatar"><img src="images/teammates/teammate2-206x206.jpg" alt=""></div><div class="teammate__info"><div class="teammate__name">Samantha Smith</div><div class="teammate__position">مدیر حساب</div></div></div><div class="block-teammates__item teammate"><div class="teammate__avatar"><img src="images/teammates/teammate3-206x206.jpg" alt=""></div><div class="teammate__info"><div class="teammate__name">Anthony Harris</div><div class="teammate__position">مدیر مالی</div></div></div><div class="block-teammates__item teammate"><div class="teammate__avatar"><img src="images/teammates/teammate4-206x206.jpg" alt=""></div><div class="teammate__info"><div class="teammate__name">Katherine Miller</div><div class="teammate__position">مسئول بازاریابی</div></div></div><div class="block-teammates__item teammate"><div class="teammate__avatar"><img src="images/teammates/teammate5-206x206.jpg" alt=""></div><div class="teammate__info"><div class="teammate__name">Boris Gilmore</div><div class="teammate__position">مهندس</div></div></div></div></div></div></div><div class="block-space block-space--layout--divider-xl"></div><div class="block block-reviews"><div class="container"><div class="block-reviews__title">نظرات مشتریان</div><div class="block-reviews__subtitle">در طول فعالیت خود، صدها نظر مثبت<br>از مشتریان دریافت کرده‌ایم.</div><div class="block-reviews__list"><div class="owl-carousel"><div class="block-reviews__item"><div class="block-reviews__item-avatar"><img src="images/testimonials/testimonial-1-190x190.jpg" alt=""></div><div class="block-reviews__item-content"><div class="block-reviews__item-text">خدمات این شرکت بسیار عالی است. کیفیت قطعات در سطح بالایی قرار دارد و تحویل به موقع انجام می‌شود. من از خرید خود بسیار راضی هستم و به دیگران نیز پیشنهاد می‌کنم.</div><div class="block-reviews__item-meta"><div class="block-reviews__item-rating"><div class="rating"><div class="rating__body"><div class="rating__star rating__star--active"></div><div class="rating__star rating__star--active"></div><div class="rating__star rating__star--active"></div><div class="rating__star rating__star--active"></div><div class="rating__star"></div></div></div></div><div class="block-reviews__item-author">Jessica Moore, CEO Meblya</div></div></div></div><div class="block-reviews__item"><div class="block-reviews__item-avatar"><img src="images/testimonials/testimonial-2-190x190.jpg" alt=""></div><div class="block-reviews__item-content"><div class="block-reviews__item-text">تجربه خرید بسیار خوبی داشتم. پشتیبانی مشتریان عالی است و قطعات با کیفیت بالا و قیمت مناسب ارائه می‌شود. حتماً دوباره خرید خواهم کرد.</div><div class="block-reviews__item-meta"><div class="block-reviews__item-rating"><div class="rating"><div class="rating__body"><div class="rating__star rating__star--active"></div><div class="rating__star rating__star--active"></div><div class="rating__star rating__star--active"></div><div class="rating__star rating__star--active"></div><div class="rating__star rating__star--active"></div></div></div></div><div class="block-reviews__item-author">Pete Bridges, Truck driver</div></div></div></div><div class="block-reviews__item"><div class="block-reviews__item-avatar"><img src="images/testimonials/testimonial-3-190x190.jpg" alt=""></div><div class="block-reviews__item-content"><div class="block-reviews__item-text">این شرکت یکی از بهترین فروشگاه‌های آنلاین قطعات خودرو است. تنوع محصولات بالا، قیمت‌های رقابتی و خدمات پس از فروش عالی از ویژگی‌های بارز این مجموعه است.</div><div class="block-reviews__item-meta"><div class="block-reviews__item-rating"><div class="rating"><div class="rating__body"><div class="rating__star rating__star--active"></div><div class="rating__star rating__star--active"></div><div class="rating__star rating__star--active"></div><div class="rating__star rating__star--active"></div><div class="rating__star"></div></div></div></div><div class="block-reviews__item-author">Jeff Kowalski, CEO Stroyka</div></div></div></div></div></div></div></div><div class="block-space block-space--layout--before-footer"></div></div><!-- site__body / end --><!-- site__footer --><footer class="site__footer"><div class="site-footer"><div class="decor site-footer__decor decor--type--bottom"><div class="decor__body"><div class="decor__start"></div><div class="decor__end"></div><div class="decor__center"></div></div></div><div class="site-footer__widgets"><div class="container"><div class="row"><div class="col-12 col-xl-4"><div class="site-footer__widget footer-contacts"><h5 class="footer-contacts__title">تماس با ما</h5><div class="footer-contacts__text">ما آماده پاسخگویی به سوالات و نیازهای شما هستیم. با ما در تماس باشید.</div><address class="footer-contacts__contacts"><dl><dt>شماره تماس</dt><dd>09360590157</dd></dl><dl><dt>آدرس ایمیل</dt><dd>hsn@gmail.com</dd></dl><dl><dt>آدرس ما</dt><dd>715 Fake Street, New York 10021 USA</dd></dl><dl><dt>ساعات کاری</dt><dd>دوشنبه تا شنبه ۱۰:۰۰ شب - ۷:۰۰ شب</dd></dl></address></div></div><div class="col-6 col-md-3 col-xl-2"><div class="site-footer__widget footer-links"><h5 class="footer-links__title">اطلاعات</h5><ul class="footer-links__list"><li class="footer-links__item"><a href="" class="footer-links__link">درباره ما</a></li><li class="footer-links__item"><a href="" class="footer-links__link">اطلاعات ارسال</a></li><li class="footer-links__item"><a href="" class="footer-links__link">سیاست حریم خصوصی</a></li><li class="footer-links__item"><a href="" class="footer-links__link">برندها</a></li><li class="footer-links__item"><a href="" class="footer-links__link">تماس با ما</a></li><li class="footer-links__item"><a href="" class="footer-links__link">بازگشت کالا</a></li><li class="footer-links__item"><a href="" class="footer-links__link">نقشه سایت</a></li></ul></div></div><div class="col-6 col-md-3 col-xl-2"><div class="site-footer__widget footer-links"><h5 class="footer-links__title">حساب کاربری من</h5><ul class="footer-links__list"><li class="footer-links__item"><a href="" class="footer-links__link">موقعیت فروشگاه</a></li><li class="footer-links__item"><a href="" class="footer-links__link">تاریخچه سفارشات</a></li><li class="footer-links__item"><a href="" class="footer-links__link">لیست علاقه‌مندی‌ها</a></li><li class="footer-links__item"><a href="" class="footer-links__link">خبرنامه</a></li><li class="footer-links__item"><a href="" class="footer-links__link">پیشنهادات ویژه</a></li><li class="footer-links__item"><a href="" class="footer-links__link">کارت هدیه</a></li><li class="footer-links__item"><a href="" class="footer-links__link">همکاری</a></li></ul></div></div><div class="col-12 col-md-6 col-xl-4"><div class="site-footer__widget footer-newsletter"><h5 class="footer-newsletter__title">خبرنامه</h5><div class="footer-newsletter__text">آدرس ایمیل خود را در زیر وارد کنید تا در خبرنامه ما عضو شوید و از تخفیف‌ها و پیشنهادات ویژه مطلع شوید.</div><form action="" class="footer-newsletter__form"><label class="sr-only" for="footer-newsletter-address">آدرس ایمیل</label> <input type="text" class="footer-newsletter__form-input" id="footer-newsletter-address" placeholder="آدرس ایمیل..."> <button class="footer-newsletter__form-button">عضویت</button></form><div class="footer-newsletter__text footer-newsletter__text--social">ما را در شبکه‌های اجتماعی دنبال کنید</div><div class="footer-newsletter__social-links social-links"><ul class="social-links__list"><li class="social-links__item social-links__item--facebook"><a href="https://themeforest.net/user/kos9" target="_blank"><i class="fab fa-facebook-f"></i></a></li><li class="social-links__item social-links__item--twitter"><a href="https://themeforest.net/user/kos9" target="_blank"><i class="fab fa-twitter"></i></a></li><li class="social-links__item social-links__item--youtube"><a href="https://themeforest.net/user/kos9" target="_blank"><i class="fab fa-youtube"></i></a></li><li class="social-links__item social-links__item--instagram"><a href="https://themeforest.net/user/kos9" target="_blank"><i class="fab fa-instagram"></i></a></li><li class="social-links__item social-links__item--rss"><a href="https://themeforest.net/user/kos9" target="_blank"><i class="fas fa-rss"></i></a></li></ul></div></div></div></div></div></div><div class="site-footer__bottom"><div class="container"><div class="site-footer__bottom-row"><div class="site-footer__copyright"><!-- copyright --> Powered by HTML — Designed by <a href="https://themeforest.net/user/kos9" target="_blank">Kos</a><!-- copyright / end --></div><div class="site-footer__payments"><img src="images/payments.png" alt=""></div></div></div></div></div></footer><!-- site__footer / end --></div><!-- site / end --><!-- mobile-menu --><div class="mobile-menu"><div class="mobile-menu__backdrop"></div><div class="mobile-menu__body"><button class="mobile-menu__close" type="button"><svg width="12" height="12"><path d="M10.8,10.8L10.8,10.8c-0.4,0.4-1,0.4-1.4,0L6,7.4l-3.4,3.4c-0.4,0.4-1,0.4-1.4,0l0,0c-0.4-0.4-0.4-1,0-1.4L4.6,6L1.2,2.6
+	C9.2,7.8,9.2,8.4,8.8,8.8z"/></svg></button></li><li class="dropcart__divider" role="presentation"></li></ul><div class="dropcart__totals"><table><tr><th>جمع کل</th><td>5877.00</td></tr><tr><th>ارسال</th><td>25.00</td></tr><tr><th>مالیات</th><td>0.00</td></tr><tr><th>مجموع</th><td>5902.00</td></tr></table></div><div class="dropcart__actions"><a href="cart.html" class="btn btn-secondary">مشاهده سبد خرید</a> <a href="checkout.html" class="btn btn-primary">تسویه حساب</a></div></div></div></div></div></div></header><!-- site__header / end --><!-- site__body --><div class="site__body"><div class="about"><div class="about__body"><div class="about__image"><div class="about__image-bg" style="background-image: url('images/about-1903x1903.jpg');"></div><div class="decor about__image-decor decor--type--bottom"><div class="decor__body"><div class="decor__start"></div><div class="decor__end"></div><div class="decor__center"></div></div></div></div><div class="about__card"><div class="about__card-title">درباره ما</div><div class="about__card-text">در حال بارگذاری...</div><div class="about__card-author">-</div></div><div class="about__indicators"><div class="about__indicators-body"><div class="about__indicators-item"><div class="about__indicators-item-value">350</div><div class="about__indicators-item-title">فروشگاه در سراسر جهان</div></div><div class="about__indicators-item"><div class="about__indicators-item-value">80 000</div><div class="about__indicators-item-title">قطعات اصلی خودرو</div></div><div class="about__indicators-item"><div class="about__indicators-item-value">5 000</div><div class="about__indicators-item-title">مشتریان راضی</div></div></div></div></div></div><div class="block-space block-space--layout--divider-xl"></div><div class="block block-teammates"><div class="container container--max--xl"><div class="block-teammates__title">تیم حرفه‌ای</div><div class="block-teammates__subtitle">با تیم حرفه‌ای ما آشنا شوید.</div><div class="block-teammates__list"><div class="owl-carousel"><div class="block-teammates__item teammate"><div class="teammate__avatar"><img src="images/teammates/teammate1-206x206.jpg" alt=""></div><div class="teammate__info"><div class="teammate__name">Michael Russo</div><div class="teammate__position">مدیر عامل</div></div></div><div class="block-teammates__item teammate"><div class="teammate__avatar"><img src="images/teammates/teammate2-206x206.jpg" alt=""></div><div class="teammate__info"><div class="teammate__name">Samantha Smith</div><div class="teammate__position">مدیر حساب</div></div></div><div class="block-teammates__item teammate"><div class="teammate__avatar"><img src="images/teammates/teammate3-206x206.jpg" alt=""></div><div class="teammate__info"><div class="teammate__name">Anthony Harris</div><div class="teammate__position">مدیر مالی</div></div></div><div class="block-teammates__item teammate"><div class="teammate__avatar"><img src="images/teammates/teammate4-206x206.jpg" alt=""></div><div class="teammate__info"><div class="teammate__name">Katherine Miller</div><div class="teammate__position">مسئول بازاریابی</div></div></div><div class="block-teammates__item teammate"><div class="teammate__avatar"><img src="images/teammates/teammate5-206x206.jpg" alt=""></div><div class="teammate__info"><div class="teammate__name">Boris Gilmore</div><div class="teammate__position">مهندس</div></div></div></div></div></div></div><div class="block-space block-space--layout--divider-xl"></div><div class="block block-reviews"><div class="container"><div class="block-reviews__title">نظرات مشتریان</div><div class="block-reviews__subtitle">در طول فعالیت خود، صدها نظر مثبت<br>از مشتریان دریافت کرده‌ایم.</div><div class="block-reviews__list"><div class="owl-carousel"><div class="block-reviews__item"><div class="block-reviews__item-avatar"><img src="images/testimonials/testimonial-1-190x190.jpg" alt=""></div><div class="block-reviews__item-content"><div class="block-reviews__item-text">خدمات این شرکت بسیار عالی است. کیفیت قطعات در سطح بالایی قرار دارد و تحویل به موقع انجام می‌شود. من از خرید خود بسیار راضی هستم و به دیگران نیز پیشنهاد می‌کنم.</div><div class="block-reviews__item-meta"><div class="block-reviews__item-rating"><div class="rating"><div class="rating__body"><div class="rating__star rating__star--active"></div><div class="rating__star rating__star--active"></div><div class="rating__star rating__star--active"></div><div class="rating__star rating__star--active"></div><div class="rating__star"></div></div></div></div><div class="block-reviews__item-author">Jessica Moore, CEO Meblya</div></div></div></div><div class="block-reviews__item"><div class="block-reviews__item-avatar"><img src="images/testimonials/testimonial-2-190x190.jpg" alt=""></div><div class="block-reviews__item-content"><div class="block-reviews__item-text">تجربه خرید بسیار خوبی داشتم. پشتیبانی مشتریان عالی است و قطعات با کیفیت بالا و قیمت مناسب ارائه می‌شود. حتماً دوباره خرید خواهم کرد.</div><div class="block-reviews__item-meta"><div class="block-reviews__item-rating"><div class="rating"><div class="rating__body"><div class="rating__star rating__star--active"></div><div class="rating__star rating__star--active"></div><div class="rating__star rating__star--active"></div><div class="rating__star rating__star--active"></div><div class="rating__star rating__star--active"></div></div></div></div><div class="block-reviews__item-author">Pete Bridges, Truck driver</div></div></div></div><div class="block-reviews__item"><div class="block-reviews__item-avatar"><img src="images/testimonials/testimonial-3-190x190.jpg" alt=""></div><div class="block-reviews__item-content"><div class="block-reviews__item-text">این شرکت یکی از بهترین فروشگاه‌های آنلاین قطعات خودرو است. تنوع محصولات بالا، قیمت‌های رقابتی و خدمات پس از فروش عالی از ویژگی‌های بارز این مجموعه است.</div><div class="block-reviews__item-meta"><div class="block-reviews__item-rating"><div class="rating"><div class="rating__body"><div class="rating__star rating__star--active"></div><div class="rating__star rating__star--active"></div><div class="rating__star rating__star--active"></div><div class="rating__star rating__star--active"></div><div class="rating__star"></div></div></div></div><div class="block-reviews__item-author">Jeff Kowalski, CEO Stroyka</div></div></div></div></div></div></div></div><div class="block-space block-space--layout--before-footer"></div></div><!-- site__body / end --><!-- site__footer --><footer class="site__footer"><div class="site-footer"><div class="decor site-footer__decor decor--type--bottom"><div class="decor__body"><div class="decor__start"></div><div class="decor__end"></div><div class="decor__center"></div></div></div><div class="site-footer__widgets"><div class="container"><div class="row"><div class="col-12 col-xl-4"><div class="site-footer__widget footer-contacts"><h5 class="footer-contacts__title">تماس با ما</h5><div class="footer-contacts__text">ما آماده پاسخگویی به سوالات و نیازهای شما هستیم. با ما در تماس باشید.</div><address class="footer-contacts__contacts"><dl><dt>شماره تماس</dt><dd>09360590157</dd></dl><dl><dt>آدرس ایمیل</dt><dd>hsn@gmail.com</dd></dl><dl><dt>آدرس ما</dt><dd>715 Fake Street, New York 10021 USA</dd></dl><dl><dt>ساعات کاری</dt><dd>دوشنبه تا شنبه ۱۰:۰۰ شب - ۷:۰۰ شب</dd></dl></address></div></div><div class="col-6 col-md-3 col-xl-2"><div class="site-footer__widget footer-links"><h5 class="footer-links__title">اطلاعات</h5><ul class="footer-links__list"><li class="footer-links__item"><a href="" class="footer-links__link">درباره ما</a></li><li class="footer-links__item"><a href="" class="footer-links__link">اطلاعات ارسال</a></li><li class="footer-links__item"><a href="" class="footer-links__link">سیاست حریم خصوصی</a></li><li class="footer-links__item"><a href="" class="footer-links__link">برندها</a></li><li class="footer-links__item"><a href="" class="footer-links__link">تماس با ما</a></li><li class="footer-links__item"><a href="" class="footer-links__link">بازگشت کالا</a></li><li class="footer-links__item"><a href="" class="footer-links__link">نقشه سایت</a></li></ul></div></div><div class="col-6 col-md-3 col-xl-2"><div class="site-footer__widget footer-links"><h5 class="footer-links__title">حساب کاربری من</h5><ul class="footer-links__list"><li class="footer-links__item"><a href="" class="footer-links__link">موقعیت فروشگاه</a></li><li class="footer-links__item"><a href="" class="footer-links__link">تاریخچه سفارشات</a></li><li class="footer-links__item"><a href="" class="footer-links__link">لیست علاقه‌مندی‌ها</a></li><li class="footer-links__item"><a href="" class="footer-links__link">خبرنامه</a></li><li class="footer-links__item"><a href="" class="footer-links__link">پیشنهادات ویژه</a></li><li class="footer-links__item"><a href="" class="footer-links__link">کارت هدیه</a></li><li class="footer-links__item"><a href="" class="footer-links__link">همکاری</a></li></ul></div></div><div class="col-12 col-md-6 col-xl-4"><div class="site-footer__widget footer-newsletter"><h5 class="footer-newsletter__title">خبرنامه</h5><div class="footer-newsletter__text">آدرس ایمیل خود را در زیر وارد کنید تا در خبرنامه ما عضو شوید و از تخفیف‌ها و پیشنهادات ویژه مطلع شوید.</div><form action="" class="footer-newsletter__form"><label class="sr-only" for="footer-newsletter-address">آدرس ایمیل</label> <input type="text" class="footer-newsletter__form-input" id="footer-newsletter-address" placeholder="آدرس ایمیل..."> <button class="footer-newsletter__form-button">عضویت</button></form><div class="footer-newsletter__text footer-newsletter__text--social">ما را در شبکه‌های اجتماعی دنبال کنید</div><div class="footer-newsletter__social-links social-links"><ul class="social-links__list"><li class="social-links__item social-links__item--facebook"><a href="https://themeforest.net/user/kos9" target="_blank"><i class="fab fa-facebook-f"></i></a></li><li class="social-links__item social-links__item--twitter"><a href="https://themeforest.net/user/kos9" target="_blank"><i class="fab fa-twitter"></i></a></li><li class="social-links__item social-links__item--youtube"><a href="https://themeforest.net/user/kos9" target="_blank"><i class="fab fa-youtube"></i></a></li><li class="social-links__item social-links__item--instagram"><a href="https://themeforest.net/user/kos9" target="_blank"><i class="fab fa-instagram"></i></a></li><li class="social-links__item social-links__item--rss"><a href="https://themeforest.net/user/kos9" target="_blank"><i class="fas fa-rss"></i></a></li></ul></div></div></div></div></div></div><div class="site-footer__bottom"><div class="container"><div class="site-footer__bottom-row"><div class="site-footer__copyright"><!-- copyright --> Powered by HTML — Designed by <a href="https://themeforest.net/user/kos9" target="_blank">Kos</a><!-- copyright / end --></div><div class="site-footer__payments"><img src="images/payments.png" alt=""></div></div></div></div></div></footer><!-- site__footer / end --></div><!-- site / end --><!-- mobile-menu --><div class="mobile-menu"><div class="mobile-menu__backdrop"></div><div class="mobile-menu__body"><button class="mobile-menu__close" type="button"><svg width="12" height="12"><path d="M10.8,10.8L10.8,10.8c-0.4,0.4-1,0.4-1.4,0L6,7.4l-3.4,3.4c-0.4,0.4-1,0.4-1.4,0l0,0c-0.4-0.4-0.4-1,0-1.4L4.6,6L1.2,2.6
 
 	c-0.4-0.4-0.4-1,0-1.4l0,0c0.4-0.4,1-0.4,1.4,0L6,4.6l3.4-3.4c0.4-0.4,1-0.4,1.4,0l0,0c0.4,0.4,0.4,1,0,1.4L7.4,6l3.4,3.4
 
@@ -202,6 +219,82 @@
 }
 </style>
 <script>
+// Load about card content dynamically from CMS API
+(function() {
+    function loadAboutCard() {
+        const cardTitle = document.querySelector('.about__card-title');
+        const cardText = document.querySelector('.about__card-text');
+        const cardAuthor = document.querySelector('.about__card-author');
+        const aboutImage = document.querySelector('.about__image-bg');
+        
+        if (!cardTitle || !cardText || !cardAuthor) {
+            console.warn('About card elements not found, will retry...');
+            setTimeout(loadAboutCard, 500);
+            return;
+        }
+        
+        // Fetch about page data from API
+        fetch('/backend/api/about.php')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.about) {
+                    const about = data.about;
+                    
+                    // Update title
+                    if (about.title) {
+                        cardTitle.textContent = about.title;
+                    }
+                    
+                    // Update description/text
+                    if (about.description) {
+                        cardText.textContent = about.description;
+                        cardText.setAttribute('data-loaded', 'true');
+                    }
+                    
+                    // Update author (combine name and title if both exist)
+                    if (about.author_name || about.author_title) {
+                        let authorText = '';
+                        if (about.author_name) {
+                            authorText = about.author_name;
+                        }
+                        if (about.author_title) {
+                            if (authorText) {
+                                authorText += ', ' + about.author_title;
+                            } else {
+                                authorText = about.author_title;
+                            }
+                        }
+                        cardAuthor.textContent = authorText;
+                        cardAuthor.setAttribute('data-loaded', 'true');
+                    }
+                    
+                    // Update background image if feature_image_url exists
+                    if (about.feature_image_url && aboutImage) {
+                        aboutImage.style.backgroundImage = `url('${about.feature_image_url}')`;
+                    }
+                } else {
+                    console.warn('No about page content found in API response');
+                    // Mark as loaded even if no data to prevent infinite hiding
+                    if (cardText) cardText.setAttribute('data-loaded', 'true');
+                    if (cardAuthor) cardAuthor.setAttribute('data-loaded', 'true');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading about card content:', error);
+                // Mark as loaded even on error to prevent infinite hiding
+                if (cardText) cardText.setAttribute('data-loaded', 'true');
+                if (cardAuthor) cardAuthor.setAttribute('data-loaded', 'true');
+            });
+    }
+    
+    // Wait for DOM to be ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadAboutCard);
+    } else {
+        loadAboutCard();
+    }
+})();
+
 // Load team members dynamically from CMS API
 (function() {
     function loadTeamMembers() {
@@ -337,12 +430,26 @@
                             }
                         }, 100);
                     }
+                    
+                    // Mark team section as loaded
+                    if (teamBlock) {
+                        teamBlock.setAttribute('data-loaded', 'true');
+                    }
                 } else {
                     console.warn('No team members found in API response');
+                    // Mark as loaded even if no data to prevent infinite hiding
+                    if (teamBlock) {
+                        teamBlock.setAttribute('data-loaded', 'true');
+                    }
                 }
             })
             .catch(error => {
                 console.error('Error loading team members:', error);
+                // Mark as loaded even on error to prevent infinite hiding
+                const teamBlock = document.querySelector('.block-teammates');
+                if (teamBlock) {
+                    teamBlock.setAttribute('data-loaded', 'true');
+                }
             });
     }
     
@@ -366,6 +473,300 @@
     if (typeof jQuery !== 'undefined') {
         jQuery(document).ready(function() {
             setTimeout(loadTeamMembers, 1000);
+        });
+    }
+})();
+
+// Load about statistics/indicators dynamically from CMS API
+(function() {
+    function loadAboutIndicators() {
+        // Find or create the indicators container
+        let indicatorsContainer = document.querySelector('.about__indicators-body');
+        let indicatorsWrapper = document.querySelector('.about__indicators');
+        
+        // If indicators section doesn't exist, create it
+        if (!indicatorsWrapper) {
+            // Try to find where to insert (after about card or in about body)
+            const aboutCard = document.querySelector('.about__card');
+            const aboutBody = document.querySelector('.about__body');
+            
+            if (aboutCard && aboutCard.parentNode) {
+                indicatorsWrapper = document.createElement('div');
+                indicatorsWrapper.className = 'about__indicators';
+                aboutCard.parentNode.insertBefore(indicatorsWrapper, aboutCard.nextSibling);
+            } else if (aboutBody) {
+                indicatorsWrapper = document.createElement('div');
+                indicatorsWrapper.className = 'about__indicators';
+                aboutBody.appendChild(indicatorsWrapper);
+            }
+        }
+        
+        if (!indicatorsWrapper) {
+            console.warn('About indicators container not found, will retry...');
+            setTimeout(loadAboutIndicators, 500);
+            return;
+        }
+        
+        // Create body container if it doesn't exist
+        if (!indicatorsContainer) {
+            indicatorsContainer = document.createElement('div');
+            indicatorsContainer.className = 'about__indicators-body';
+            indicatorsWrapper.appendChild(indicatorsContainer);
+        }
+        
+        // Fetch statistics from API
+        fetch('/backend/api/about.php')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.statistics && data.statistics.length > 0) {
+                    // Clear existing content
+                    indicatorsContainer.innerHTML = '';
+                    
+                    // Create indicator items from API data
+                    data.statistics.forEach(stat => {
+                        const indicatorItem = document.createElement('div');
+                        indicatorItem.className = 'about__indicators-item';
+                        
+                        indicatorItem.innerHTML = `
+                            <div class="about__indicators-item-value">${escapeHtml(stat.value || '')}</div>
+                            <div class="about__indicators-item-title">${escapeHtml(stat.title || '')}</div>
+                        `;
+                        
+                        indicatorsContainer.appendChild(indicatorItem);
+                    });
+                    
+                    // Mark indicators as loaded
+                    if (indicatorsWrapper) {
+                        indicatorsWrapper.setAttribute('data-loaded', 'true');
+                    }
+                } else {
+                    console.warn('No statistics found in API response');
+                    // Keep existing content if API fails
+                    if (indicatorsWrapper) {
+                        indicatorsWrapper.setAttribute('data-loaded', 'true');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error loading about statistics:', error);
+                // Mark as loaded even on error to prevent infinite hiding
+                const indicatorsWrapper = document.querySelector('.about__indicators');
+                if (indicatorsWrapper) {
+                    indicatorsWrapper.setAttribute('data-loaded', 'true');
+                }
+            });
+    }
+    
+    // Helper function to escape HTML
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // Wait for DOM to be ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadAboutIndicators);
+    } else {
+        loadAboutIndicators();
+    }
+})();
+
+// Load customer reviews/testimonials dynamically from CMS API
+(function() {
+    function loadReviews() {
+        // Find or create the reviews container
+        let reviewsCarousel = document.querySelector('.block-reviews__list .owl-carousel');
+        let reviewsList = document.querySelector('.block-reviews__list');
+        let reviewsBlock = document.querySelector('.block-reviews');
+        
+        // If reviews section doesn't exist, create it
+        if (!reviewsBlock) {
+            // Find where to insert (after team or indicators)
+            const teamBlock = document.querySelector('.block-teammates');
+            const indicatorsBlock = document.querySelector('.about__indicators');
+            const blockSpace = document.querySelector('.block-space');
+            
+            let insertPoint = teamBlock || indicatorsBlock || blockSpace;
+            if (insertPoint && insertPoint.parentNode) {
+                reviewsBlock = document.createElement('div');
+                reviewsBlock.className = 'block block-reviews';
+                reviewsBlock.innerHTML = `
+                    <div class="container">
+                        <div class="block-reviews__title">نظرات مشتریان</div>
+                        <div class="block-reviews__subtitle">در طول فعالیت خود، صدها نظر مثبت<br>از مشتریان دریافت کرده‌ایم.</div>
+                        <div class="block-reviews__list">
+                            <div class="owl-carousel"></div>
+                        </div>
+                    </div>
+                `;
+                insertPoint.parentNode.insertBefore(reviewsBlock, insertPoint.nextSibling);
+                reviewsCarousel = reviewsBlock.querySelector('.owl-carousel');
+                reviewsList = reviewsBlock.querySelector('.block-reviews__list');
+            }
+        } else {
+            if (!reviewsCarousel) {
+                reviewsCarousel = reviewsList ? reviewsList.querySelector('.owl-carousel') : null;
+            }
+            if (!reviewsCarousel && reviewsList) {
+                reviewsCarousel = document.createElement('div');
+                reviewsCarousel.className = 'owl-carousel';
+                reviewsList.appendChild(reviewsCarousel);
+            }
+        }
+        
+        if (!reviewsCarousel) {
+            console.warn('Reviews carousel container not found, will retry...');
+            setTimeout(loadReviews, 500);
+            return;
+        }
+        
+        // Fetch testimonials from API
+        fetch('/backend/api/about.php')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.testimonials && data.testimonials.length > 0) {
+                    // Clear existing static content
+                    const carouselInner = reviewsCarousel.querySelector('.owl-stage') || reviewsCarousel;
+                    if (carouselInner) {
+                        carouselInner.innerHTML = '';
+                    } else {
+                        reviewsCarousel.innerHTML = '';
+                    }
+                    
+                    // Find or create owl-stage container
+                    let owlStage = reviewsCarousel.querySelector('.owl-stage');
+                    if (!owlStage) {
+                        const owlStageOuter = document.createElement('div');
+                        owlStageOuter.className = 'owl-stage-outer';
+                        owlStage = document.createElement('div');
+                        owlStage.className = 'owl-stage';
+                        owlStageOuter.appendChild(owlStage);
+                        reviewsCarousel.appendChild(owlStageOuter);
+                    }
+                    
+                    // Clear existing content
+                    owlStage.innerHTML = '';
+                    
+                    // Create review items from API data
+                    data.testimonials.forEach(testimonial => {
+                        const owlItem = document.createElement('div');
+                        owlItem.className = 'owl-item';
+                        owlItem.style.width = '1350px';
+                        owlItem.style.marginRight = '20px';
+                        
+                        // Generate rating stars HTML
+                        const rating = parseInt(testimonial.rating) || 5;
+                        let starsHtml = '';
+                        for (let i = 1; i <= 5; i++) {
+                            starsHtml += `<div class="rating__star ${i <= rating ? 'rating__star--active' : ''}"></div>`;
+                        }
+                        
+                        const reviewDiv = document.createElement('div');
+                        reviewDiv.className = 'block-reviews__item';
+                        reviewDiv.innerHTML = `
+                            <div class="block-reviews__item-avatar">
+                                <img src="${testimonial.avatar_url || 'images/testimonials/placeholder.jpg'}" 
+                                     alt="${escapeHtml(testimonial.author_name || '')}" 
+                                     onerror="this.src='images/testimonials/placeholder.jpg'">
+                            </div>
+                            <div class="block-reviews__item-content">
+                                <div class="block-reviews__item-text">${escapeHtml(testimonial.text || '')}</div>
+                                <div class="block-reviews__item-meta">
+                                    <div class="block-reviews__item-rating">
+                                        <div class="rating">
+                                            <div class="rating__body">
+                                                ${starsHtml}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="block-reviews__item-author">
+                                        ${escapeHtml(testimonial.author_name || '')}${testimonial.author_title ? ', ' + escapeHtml(testimonial.author_title) : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        
+                        owlItem.appendChild(reviewDiv);
+                        owlStage.appendChild(owlItem);
+                    });
+                    
+                    // Update owl-stage width
+                    const itemCount = data.testimonials.length;
+                    const itemWidth = 1350;
+                    const margin = 20;
+                    const totalWidth = (itemWidth + margin) * itemCount;
+                    owlStage.style.width = totalWidth + 'px';
+                    owlStage.style.transform = 'translate3d(0px, 0px, 0px)';
+                    
+                    // Reinitialize Owl Carousel if it exists and jQuery is available
+                    if (typeof jQuery !== 'undefined' && jQuery.fn.owlCarousel) {
+                        setTimeout(function() {
+                            const $carousel = jQuery('.block-reviews__list .owl-carousel');
+                            if ($carousel.length) {
+                                $carousel.trigger('destroy.owl.carousel').removeClass('owl-carousel owl-loaded');
+                                $carousel.addClass('owl-carousel');
+                                $carousel.owlCarousel({
+                                    items: 1,
+                                    margin: 20,
+                                    loop: data.testimonials.length > 1,
+                                    nav: true,
+                                    dots: true,
+                                    rtl: true,
+                                    autoplay: true,
+                                    autoplayTimeout: 5000,
+                                    autoplayHoverPause: true,
+                                    responsive: {
+                                        0: { items: 1 },
+                                        768: { items: 1 },
+                                        992: { items: 1 }
+                                    }
+                                });
+                            }
+                        }, 100);
+                    }
+                    
+                    // Mark reviews section as loaded
+                    if (reviewsBlock) {
+                        reviewsBlock.setAttribute('data-loaded', 'true');
+                    }
+                } else {
+                    console.warn('No testimonials found in API response');
+                    // Mark as loaded even if no data to prevent infinite hiding
+                    if (reviewsBlock) {
+                        reviewsBlock.setAttribute('data-loaded', 'true');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error loading reviews:', error);
+                // Mark as loaded even on error to prevent infinite hiding
+                if (reviewsBlock) {
+                    reviewsBlock.setAttribute('data-loaded', 'true');
+                }
+            });
+    }
+    
+    // Helper function to escape HTML
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // Wait for DOM and jQuery to be ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(loadReviews, 1000); // Wait for Owl Carousel to initialize
+        });
+    } else {
+        setTimeout(loadReviews, 1000);
+    }
+    
+    // Also try when jQuery is ready
+    if (typeof jQuery !== 'undefined') {
+        jQuery(document).ready(function() {
+            setTimeout(loadReviews, 1000);
         });
     }
 })();
