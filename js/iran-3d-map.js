@@ -135,6 +135,168 @@ document.addEventListener('DOMContentLoaded', () => {
     let hoveredObject = null;
     let selectedObject = null;
     let currentLookAtTarget = { x: 0, y: 0, z: 0 };
+    let currentDotGrid = null; // Store reference to current dot grid
+
+    // --- Dot Grid VFX ---
+    const createDotGrid = (mesh) => {
+        if (!mesh || !mesh.userData.shapes) return null;
+
+        if (!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox();
+        const box = mesh.geometry.boundingBox;
+        const min = box.min;
+        const max = box.max;
+
+        console.log("CreateDotGrid Debug:", { min, max, name: mesh.userData.name });
+
+        const spacing = 2.0; // Gap between dots
+        const positions = [];
+
+        // Pre-calculate shape points to avoid calling getPoints() in the loop
+        const shapeData = mesh.userData.shapes.map(s => ({
+            points: s.getPoints(),
+            holes: s.holes && s.holes.length > 0 ? s.holes.map(h => h.getPoints()) : []
+        }));
+
+        // Helper function for point in polygon (Ray Casting algo)
+        const isPointInPolygon = (p, polygon) => {
+            let isInside = false;
+            for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+                const xi = polygon[i].x, yi = polygon[i].y;
+                const xj = polygon[j].x, yj = polygon[j].y;
+                const intersect = ((yi > p.y) !== (yj > p.y)) &&
+                    (p.x < (xj - xi) * (p.y - yi) / (yj - yi) + xi);
+                if (intersect) isInside = !isInside;
+            }
+            return isInside;
+        };
+
+        // Loop through bounds
+        for (let x = min.x; x <= max.x; x += spacing) {
+            for (let y = min.y; y <= max.y; y += spacing) {
+                const pt = { x: x, y: y };
+                let isInside = false;
+
+                for (const data of shapeData) {
+                    if (isPointInPolygon(pt, data.points)) {
+                        isInside = true;
+                        if (data.holes.length > 0) {
+                            for (const holePts of data.holes) {
+                                if (isPointInPolygon(pt, holePts)) {
+                                    isInside = false;
+                                    break;
+                                }
+                            }
+                        }
+                        if (isInside) break;
+                    }
+                }
+
+                if (isInside) {
+                    // Z slightly above surface
+                    positions.push(x, y, CONFIG.extrusion.depth + 0.2);
+                }
+            }
+        }
+
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+
+        // Add aIsBranch attribute (default 0)
+        const isBranch = new Float32Array(positions.length / 3).fill(0.0);
+        geometry.setAttribute('aIsBranch', new THREE.BufferAttribute(isBranch, 1));
+
+        // Shader for Scanning Effect
+        const vertexShader = `
+            uniform float uTime;
+            uniform float uMin;
+            uniform float uMax;
+            uniform float uSize;
+            attribute float aIsBranch;
+            varying float vOpacity;
+            varying float vIsBranch;
+            
+            void main() {
+                vIsBranch = aIsBranch;
+                vec3 pos = position;
+                
+                // Calculate normalized scan position (0 to 1) based on time
+                float scanPos = uMin + (uMax - uMin) * fract(uTime * 0.5); 
+                
+                // Distance from current scan line
+                float dist = abs(pos.x - scanPos);
+                
+                // Wave width very narrow (single column)
+                float waveWidth = (uMax - uMin) * 0.02; 
+                
+                // Gaussian-ish falloff for visibility
+                float alpha = exp(- (dist * dist) / (2.0 * waveWidth * waveWidth));
+                
+                // Visibility Logic
+                vOpacity = alpha;
+                if (vOpacity < 0.1) vOpacity = 0.0;
+                
+                // Scale Logic for Branches
+                float scale = 1.0;
+                if (aIsBranch > 0.5) {
+                    // Make pulse visible regardless of wave scanning (optional, but requested "pulsing dot")
+                    // But user said "when moving column reaches... it scales"
+                    
+                    // Wider trigger for scaling
+                    float scaleWidth = (uMax - uMin) * 0.15; 
+                    if (dist < scaleWidth) {
+                        float scaleAlpha = 1.0 - (dist / scaleWidth);
+                        scaleAlpha = clamp(scaleAlpha, 0.0, 1.0);
+                        scale += 3.0 * sin(scaleAlpha * 3.14159);
+                        
+                        // Ensure it's visible during pulse even if slightly outside narrow beam
+                        if (vOpacity < 0.5) vOpacity = 0.5 * scaleAlpha; 
+                    }
+                }
+                
+                gl_PointSize = uSize * scale;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+            }
+        `;
+
+        const fragmentShader = `
+            uniform vec3 uColor;
+            varying float vOpacity;
+            varying float vIsBranch;
+            
+            void main() {
+                // Circular particle
+                vec2 coord = gl_PointCoord - vec2(0.5);
+                if(length(coord) > 0.5) discard;
+                
+                vec3 finalColor = uColor;
+                if (vIsBranch > 0.5) {
+                    finalColor = vec3(0.0, 1.0, 0.0); // GREEN
+                }
+                
+                gl_FragColor = vec4(finalColor, vOpacity);
+            }
+        `;
+
+        const material = new THREE.ShaderMaterial({
+            uniforms: {
+                uTime: { value: 0 },
+                uMin: { value: min.x },
+                uMax: { value: max.x },
+                uSize: { value: 3.5 * window.devicePixelRatio }, // Adjust size for density
+                uColor: { value: new THREE.Color(0x000000) }
+            },
+            vertexShader: vertexShader,
+            fragmentShader: fragmentShader,
+            transparent: true,
+            depthTest: false // Ensure always visible
+        });
+
+        const dots = new THREE.Points(geometry, material);
+        dots.renderOrder = 999;
+        dots.raycast = () => { };
+        return dots;
+    };
+
 
     // --- Selection Logic ---
     const selectProvince = (object) => {
@@ -146,11 +308,30 @@ document.addEventListener('DOMContentLoaded', () => {
             selectedObject.material.color.setHex(selectedObject.userData.baseColor);
         }
 
+        if (currentDotGrid) {
+            if (selectedObject) selectedObject.remove(currentDotGrid); // Remove from parent mesh
+            currentDotGrid.geometry.dispose();
+            currentDotGrid.material.dispose();
+            currentDotGrid = null;
+        }
+
         selectedObject = object;
         selectedObject.material.color.setHex(CONFIG.colors.hover); // Keep it highlighted
 
         const provinceName = selectedObject.userData.name;
-        // const provinceAddress = selectedObject.userData.address; // Not used in notification logic currently? check below
+
+        // Visual FX: Delayed slightly to allow camera animation to start smoothly
+        setTimeout(() => {
+            try {
+                // Create and add dot grid
+                currentDotGrid = createDotGrid(selectedObject);
+                if (currentDotGrid) {
+                    selectedObject.add(currentDotGrid); // Add to mesh, not scene
+                }
+            } catch (err) {
+                console.error("VFX Error:", err);
+            }
+        }, 50);
 
         // Calculate bounding box
         const box = new THREE.Box3().setFromObject(selectedObject);
@@ -233,6 +414,50 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch(`backend/api/branches.php?province_slug=${encodeURIComponent(provinceName)}`)
             .then(response => response.json())
             .then(data => {
+                // Update specific dots to be branches if we have count
+                if (data.success && data.count > 0) {
+                    console.log(`Setting up ${data.count} branch dots for ${provinceName}`);
+
+                    // Helper to update attributes
+                    const updateAttributes = () => {
+                        if (!currentDotGrid) return; // Should not happen if timing is right, but safe guard
+
+                        const attr = currentDotGrid.geometry.attributes.aIsBranch;
+                        if (attr) {
+                            const count = attr.count;
+                            const array = attr.array;
+
+                            // Reset
+                            array.fill(0);
+
+                            // Pick random unique indices
+                            const indices = new Set();
+                            let attempts = 0;
+                            // Limit max dots to animate to avoid clutter if many branches
+                            const dotsToAnimate = Math.min(data.count, 20);
+
+                            while (indices.size < data.count && attempts < count * 2) {
+                                indices.add(Math.floor(Math.random() * count));
+                                attempts++;
+                            }
+
+                            indices.forEach(idx => {
+                                array[idx] = 1.0;
+                            });
+                            attr.needsUpdate = true;
+                            console.log("Updated aIsBranch attribute");
+                        }
+                    };
+
+                    if (currentDotGrid) {
+                        updateAttributes();
+                    } else {
+                        // Wait for it? usually createDotGrid is 50ms, fetch > 50ms.
+                        // But if fetch is instant (cache), wait a bit.
+                        setTimeout(updateAttributes, 100);
+                    }
+                }
+
                 if (data.success && data.count > 0) {
                     let branchesHTML = '';
                     data.data.forEach((branch, index) => {
@@ -310,10 +535,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
                 resetCameraLoop();
 
+                if (currentDotGrid) {
+                    if (currentDotGrid.parent) currentDotGrid.parent.remove(currentDotGrid);
+                    currentDotGrid.geometry.dispose();
+                    currentDotGrid.material.dispose();
+                    currentDotGrid = null;
+                }
+
                 if (selectedObject) {
                     selectedObject.material.color.setHex(selectedObject.userData.baseColor);
                     selectedObject = null;
                 }
+
                 if (notification.parentNode) notification.remove();
             };
         };
@@ -425,7 +658,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 name: provinceName,
                 address: hasBranches ? 'برای مشاهده شعب کلیک کنید' : 'شعبه فعال وجود ندارد',
                 hasBranches: hasBranches,
-                baseColor: baseColor // Store for reset logic
+                baseColor: baseColor, // Store for reset logic
+                shapes: shapes // Store shapes for dot grid generation
             };
 
             // Add Border/Edge for better visibility
@@ -615,6 +849,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Subtle tilting animation on Y-axis (left-right)
         time += 0.005;
         mapGroup.rotation.y = Math.sin(time) * 0.1; // Oscillates between -0.1 and +0.1 radians
+
+        // Update Dot Grid Animation
+        if (currentDotGrid && currentDotGrid.material.uniforms) {
+            currentDotGrid.material.uniforms.uTime.value = time;
+        }
 
         renderer.render(scene, camera);
     };
