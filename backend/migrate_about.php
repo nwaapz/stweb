@@ -87,7 +87,7 @@ try {
     if ($stmt->fetchColumn() == 0) {
         $conn->exec("
             INSERT INTO about_statistics (value, title, sort_order) VALUES
-            ('350', 'فروشگاه در سراسر جهان', 1),
+            ('350', 'در سراسر ایران', 1),
             ('80 000', 'قطعات اصلی خودرو', 2),
             ('5 000', 'مشتریان راضی', 3)
         ");
