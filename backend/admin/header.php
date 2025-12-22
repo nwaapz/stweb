@@ -269,6 +269,11 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
                         <i class="bi bi-building"></i> شعب
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= $currentPage === 'about' ? 'active' : '' ?>" href="about.php">
+                        <i class="bi bi-info-circle"></i> صفحه درباره ما
+                    </a>
+                </li>
                 <li class="nav-item mt-4">
                     <a class="nav-link text-danger" href="logout.php">
                         <i class="bi bi-box-arrow-right"></i> خروج

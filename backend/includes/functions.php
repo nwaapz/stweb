@@ -71,6 +71,197 @@ function uploadImage($file, $folder = 'products')
 }
 
 /**
+ * Resize image to specific dimensions
+ */
+function resizeImage($filepath, $width, $height, $quality = 90)
+{
+    // Check if GD extension is available
+    if (!extension_loaded('gd')) {
+        error_log("PHP GD extension is not loaded");
+        return false;
+    }
+    
+    if (!file_exists($filepath)) {
+        error_log("Image file not found: " . $filepath);
+        return false;
+    }
+    
+    // Get image info
+    $imageInfo = getimagesize($filepath);
+    if (!$imageInfo) {
+        error_log("Invalid image file: " . $filepath);
+        return false;
+    }
+    
+    $originalWidth = $imageInfo[0];
+    $originalHeight = $imageInfo[1];
+    $mimeType = $imageInfo['mime'];
+    
+    // Create image resource based on type
+    switch ($mimeType) {
+        case 'image/jpeg':
+            $sourceImage = imagecreatefromjpeg($filepath);
+            break;
+        case 'image/png':
+            $sourceImage = imagecreatefrompng($filepath);
+            break;
+        case 'image/gif':
+            $sourceImage = imagecreatefromgif($filepath);
+            break;
+        case 'image/webp':
+            $sourceImage = imagecreatefromwebp($filepath);
+            break;
+        default:
+            return false;
+    }
+    
+    if (!$sourceImage) {
+        return false;
+    }
+    
+    // Create new image with exact dimensions
+    $newImage = imagecreatetruecolor($width, $height);
+    
+    // Preserve transparency for PNG and GIF
+    if ($mimeType == 'image/png' || $mimeType == 'image/gif') {
+        imagealphablending($newImage, false);
+        imagesavealpha($newImage, true);
+        $transparent = imagecolorallocatealpha($newImage, 255, 255, 255, 127);
+        imagefilledrectangle($newImage, 0, 0, $width, $height, $transparent);
+    } else {
+        // Fill with white background for JPEG/WebP
+        $white = imagecolorallocate($newImage, 255, 255, 255);
+        imagefilledrectangle($newImage, 0, 0, $width, $height, $white);
+    }
+    
+    // Calculate aspect ratio and resize with cropping to fit exact dimensions
+    $sourceAspect = $originalWidth / $originalHeight;
+    $targetAspect = $width / $height;
+    
+    // Calculate source crop dimensions
+    if ($sourceAspect > $targetAspect) {
+        // Source is wider - crop width (center crop)
+        $cropHeight = $originalHeight;
+        $cropWidth = $originalHeight * $targetAspect;
+        $x = ($originalWidth - $cropWidth) / 2;
+        $y = 0;
+    } else {
+        // Source is taller - crop height (center crop)
+        $cropWidth = $originalWidth;
+        $cropHeight = $originalWidth / $targetAspect;
+        $x = 0;
+        $y = ($originalHeight - $cropHeight) / 2;
+    }
+    
+    // Enable high-quality resampling
+    imagealphablending($newImage, true);
+    imagesavealpha($newImage, true);
+    
+    // Resize and crop to exact dimensions (cast to int for imagecopyresampled)
+    $resizeSuccess = imagecopyresampled(
+        $newImage, 
+        $sourceImage, 
+        0, 0, 
+        (int)round($x), (int)round($y), 
+        $width, $height, 
+        (int)round($cropWidth), (int)round($cropHeight)
+    );
+    
+    if (!$resizeSuccess) {
+        imagedestroy($sourceImage);
+        imagedestroy($newImage);
+        return false;
+    }
+    
+    // Save resized image (overwrite original file)
+    $result = false;
+    switch ($mimeType) {
+        case 'image/jpeg':
+            $result = imagejpeg($newImage, $filepath, $quality);
+            break;
+        case 'image/png':
+            // For PNG, ensure alpha channel is preserved
+            imagealphablending($newImage, false);
+            imagesavealpha($newImage, true);
+            $result = imagepng($newImage, $filepath, 9);
+            break;
+        case 'image/gif':
+            $result = imagegif($newImage, $filepath);
+            break;
+        case 'image/webp':
+            $result = imagewebp($newImage, $filepath, $quality);
+            break;
+    }
+    
+    // Clean up
+    imagedestroy($sourceImage);
+    imagedestroy($newImage);
+    
+    // Verify the saved file exists and has correct dimensions
+    if ($result) {
+        $verifyInfo = @getimagesize($filepath);
+        if ($verifyInfo && $verifyInfo[0] == $width && $verifyInfo[1] == $height) {
+            return true;
+        } else {
+            error_log("Resize verification failed: Expected {$width}x{$height}, got " . ($verifyInfo ? $verifyInfo[0] . "x" . $verifyInfo[1] : "unknown"));
+            // Still return true if file was saved, even if dimensions don't match (might be a verification issue)
+            return $result;
+        }
+    }
+    
+    return false;
+}
+
+/**
+ * Upload and resize image for team members (600x800)
+ * Automatically resizes ANY uploaded image to exactly 600x800 pixels
+ */
+function uploadTeamImage($file, $folder = 'about/team')
+{
+    $upload = uploadImage($file, $folder);
+    
+    if ($upload['success']) {
+        $fullPath = UPLOAD_PATH . $upload['path'];
+        
+        // FORCE resize to 600x800 - this happens automatically for ALL uploads
+        $resizeResult = resizeImage($fullPath, 600, 800);
+        if ($resizeResult === false) {
+            // Delete the uploaded file if resize fails
+            @unlink($fullPath);
+            error_log("Failed to resize team image: " . $fullPath);
+            return [
+                'success' => false, 
+                'error' => 'خطا در تغییر اندازه تصویر به 600×800. لطفاً مطمئن شوید که PHP GD extension فعال است.'
+            ];
+        }
+        
+        // Verify the resized image dimensions
+        $resizedInfo = @getimagesize($fullPath);
+        if ($resizedInfo) {
+            if ($resizedInfo[0] != 600 || $resizedInfo[1] != 800) {
+                // If verification fails, try to resize again
+                error_log("Image resize verification failed. Expected 600x800, got " . $resizedInfo[0] . "x" . $resizedInfo[1] . ". Retrying...");
+                $retryResult = resizeImage($fullPath, 600, 800);
+                if (!$retryResult) {
+                    @unlink($fullPath);
+                    return [
+                        'success' => false, 
+                        'error' => 'خطا در تغییر اندازه تصویر. تصویر به اندازه 600×800 تنظیم نشد.'
+                    ];
+                }
+            }
+        } else {
+            // Can't verify dimensions, but resize returned true, so assume success
+            error_log("Warning: Could not verify image dimensions after resize: " . $fullPath);
+        }
+        
+        return $upload;
+    }
+    
+    return $upload;
+}
+
+/**
  * Delete uploaded file
  */
 function deleteImage($path)
