@@ -565,10 +565,65 @@ function getFlashMessage()
 }
 
 /**
+ * Ensure branches and provinces tables exist
+ */
+function ensureBranchesTablesExist()
+{
+    $conn = getConnection();
+    
+    try {
+        // Check if provinces table exists
+        $stmt = $conn->query("SHOW TABLES LIKE 'provinces'");
+        if ($stmt->rowCount() == 0) {
+            $conn->exec("
+                CREATE TABLE IF NOT EXISTS `provinces` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `name` VARCHAR(255) NOT NULL,
+                    `name_en` VARCHAR(255),
+                    `slug` VARCHAR(255) NOT NULL UNIQUE,
+                    `description` TEXT,
+                    `is_active` TINYINT(1) DEFAULT 1,
+                    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
+            ");
+        }
+        
+        // Check if branches table exists
+        $stmt = $conn->query("SHOW TABLES LIKE 'branches'");
+        if ($stmt->rowCount() == 0) {
+            $conn->exec("
+                CREATE TABLE IF NOT EXISTS `branches` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `province_id` INT NOT NULL,
+                    `name` VARCHAR(255) NOT NULL,
+                    `address` TEXT NOT NULL,
+                    `phone` VARCHAR(50),
+                    `email` VARCHAR(255),
+                    `latitude` DECIMAL(10, 8),
+                    `longitude` DECIMAL(11, 8),
+                    `sort_order` INT DEFAULT 0,
+                    `is_active` TINYINT(1) DEFAULT 1,
+                    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    FOREIGN KEY (`province_id`) REFERENCES `provinces`(`id`) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
+            ");
+        }
+    } catch (PDOException $e) {
+        // If there's an error creating tables, log it but don't fail
+        error_log("Error ensuring branches tables exist: " . $e->getMessage());
+    }
+}
+
+/**
  * Get all provinces
  */
 function getProvinces($filters = [])
 {
+    // Ensure tables exist before querying
+    ensureBranchesTablesExist();
+    
     $conn = getConnection();
     $sql = "SELECT p.*, (SELECT COUNT(*) FROM branches b WHERE b.province_id = p.id AND b.is_active = 1) as branch_count 
             FROM provinces p 
@@ -591,6 +646,9 @@ function getProvinces($filters = [])
  */
 function getProvinceById($id)
 {
+    // Ensure tables exist before querying
+    ensureBranchesTablesExist();
+    
     $conn = getConnection();
     $stmt = $conn->prepare("SELECT * FROM provinces WHERE id = ?");
     $stmt->execute([$id]);
@@ -602,6 +660,9 @@ function getProvinceById($id)
  */
 function getProvinceBySlug($slug)
 {
+    // Ensure tables exist before querying
+    ensureBranchesTablesExist();
+    
     $conn = getConnection();
     // Allow searching by slug OR Persian name
     $stmt = $conn->prepare("SELECT * FROM provinces WHERE slug = ? OR name = ?");
@@ -610,10 +671,94 @@ function getProvinceBySlug($slug)
 }
 
 /**
+ * Populate Iran provinces (31 provinces)
+ * @return array ['success' => bool, 'message' => string, 'added' => int]
+ */
+function populateIranProvinces()
+{
+    // Ensure tables exist
+    ensureBranchesTablesExist();
+    
+    $conn = getConnection();
+    
+    // List of 31 provinces of Iran: [Persian name, English name, slug]
+    $provinces = [
+        ['تهران', 'Tehran', 'tehran'],
+        ['قم', 'Qom', 'qom'],
+        ['مرکزی', 'Markazi', 'markazi'],
+        ['قزوین', 'Qazvin', 'qazvin'],
+        ['گیلان', 'Gilan', 'gilan'],
+        ['اردبیل', 'Ardabil', 'ardabil'],
+        ['زنجان', 'Zanjan', 'zanjan'],
+        ['آذربایجان شرقی', 'East Azerbaijan', 'east-azerbaijan'],
+        ['آذربایجان غربی', 'West Azerbaijan', 'west-azerbaijan'],
+        ['کردستان', 'Kurdistan', 'kurdistan'],
+        ['همدان', 'Hamadan', 'hamadan'],
+        ['کرمانشاه', 'Kermanshah', 'kermanshah'],
+        ['ایلام', 'Ilam', 'ilam'],
+        ['لرستان', 'Lorestan', 'lorestan'],
+        ['خوزستان', 'Khuzestan', 'khuzestan'],
+        ['چهارمحال و بختیاری', 'Chaharmahal and Bakhtiari', 'chaharmahal-bakhtiari'],
+        ['کهگیلویه و بویراحمد', 'Kohgiluyeh and Boyer-Ahmad', 'kohgiluyeh-boyer-ahmad'],
+        ['بوشهر', 'Bushehr', 'bushehr'],
+        ['فارس', 'Fars', 'fars'],
+        ['هرمزگان', 'Hormozgan', 'hormozgan'],
+        ['سیستان و بلوچستان', 'Sistan and Baluchestan', 'sistan-baluchestan'],
+        ['کرمان', 'Kerman', 'kerman'],
+        ['یزد', 'Yazd', 'yazd'],
+        ['اصفهان', 'Isfahan', 'isfahan'],
+        ['سمنان', 'Semnan', 'semnan'],
+        ['مازندران', 'Mazandaran', 'mazandaran'],
+        ['گلستان', 'Golestan', 'golestan'],
+        ['خراسان شمالی', 'North Khorasan', 'north-khorasan'],
+        ['خراسان رضوی', 'Razavi Khorasan', 'razavi-khorasan'],
+        ['خراسان جنوبی', 'South Khorasan', 'south-khorasan'],
+        ['البرز', 'Alborz', 'alborz']
+    ];
+    
+    $added = 0;
+    $skipped = 0;
+    
+    try {
+        $stmt = $conn->prepare("INSERT INTO provinces (name, name_en, slug, is_active) VALUES (?, ?, ?, 1)");
+        
+        foreach ($provinces as $province) {
+            // Check if province already exists
+            $checkStmt = $conn->prepare("SELECT COUNT(*) FROM provinces WHERE slug = ?");
+            $checkStmt->execute([$province[2]]);
+            
+            if ($checkStmt->fetchColumn() == 0) {
+                $stmt->execute($province);
+                $added++;
+            } else {
+                $skipped++;
+            }
+        }
+        
+        return [
+            'success' => true,
+            'message' => "استان‌های ایران با موفقیت اضافه شدند. $added استان جدید اضافه شد" . ($skipped > 0 ? " و $skipped استان از قبل وجود داشت" : ""),
+            'added' => $added,
+            'skipped' => $skipped
+        ];
+    } catch (PDOException $e) {
+        return [
+            'success' => false,
+            'message' => 'خطا در افزودن استان‌ها: ' . $e->getMessage(),
+            'added' => $added,
+            'skipped' => $skipped
+        ];
+    }
+}
+
+/**
  * Get all branches
  */
 function getBranches($filters = [])
 {
+    // Ensure tables exist before querying
+    ensureBranchesTablesExist();
+    
     $conn = getConnection();
     $sql = "SELECT b.*, p.name as province_name 
             FROM branches b 
@@ -642,6 +787,9 @@ function getBranches($filters = [])
  */
 function getBranchById($id)
 {
+    // Ensure tables exist before querying
+    ensureBranchesTablesExist();
+    
     $conn = getConnection();
     $stmt = $conn->prepare("
         SELECT b.*, p.name as province_name 
@@ -658,6 +806,9 @@ function getBranchById($id)
  */
 function getBranchesByProvince($provinceId)
 {
+    // Ensure tables exist before querying
+    ensureBranchesTablesExist();
+    
     $conn = getConnection();
     $stmt = $conn->prepare("
         SELECT * FROM branches 

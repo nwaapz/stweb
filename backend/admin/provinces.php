@@ -15,6 +15,19 @@ $id = $_GET['id'] ?? $_POST['id'] ?? null;
 $error = '';
 $success = '';
 
+// Handle populate Iran provinces action
+if ($action === 'populate') {
+    $result = populateIranProvinces();
+    if ($result['success']) {
+        setFlashMessage('success', $result['message']);
+    } else {
+        setFlashMessage('error', $result['message']);
+    }
+    ob_end_clean();
+    header('Location: provinces.php');
+    exit;
+}
+
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = sanitize($_POST['name'] ?? '');
@@ -113,9 +126,15 @@ $flash = getFlashMessage();
         <?= ($action === 'add' || $action === 'edit') ? ($action === 'edit' ? 'ویرایش استان' : 'افزودن استان') : 'استان‌ها' ?>
     </h1>
     <?php if ($action === 'list'): ?>
-    <a href="?action=add" class="btn btn-primary">
-        <i class="bi bi-plus-circle"></i> افزودن استان
-    </a>
+    <div class="d-flex gap-2">
+        <a href="?action=add" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> افزودن استان
+        </a>
+        <a href="?action=populate" class="btn btn-success" 
+           onclick="return confirm('آیا می‌خواهید 31 استان ایران را به صورت خودکار اضافه کنید؟')">
+            <i class="bi bi-download"></i> افزودن استان‌های ایران
+        </a>
+    </div>
     <?php else: ?>
     <a href="provinces.php" class="btn btn-secondary">
         <i class="bi bi-arrow-right"></i> بازگشت به لیست

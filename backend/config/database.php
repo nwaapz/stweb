@@ -186,6 +186,39 @@ function setupDatabase() {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
         ");
         
+        // Create provinces table
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `provinces` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `name` VARCHAR(255) NOT NULL,
+                `name_en` VARCHAR(255),
+                `slug` VARCHAR(255) NOT NULL UNIQUE,
+                `description` TEXT,
+                `is_active` TINYINT(1) DEFAULT 1,
+                `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
+        ");
+        
+        // Create branches table
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `branches` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `province_id` INT NOT NULL,
+                `name` VARCHAR(255) NOT NULL,
+                `address` TEXT NOT NULL,
+                `phone` VARCHAR(50),
+                `email` VARCHAR(255),
+                `latitude` DECIMAL(10, 8),
+                `longitude` DECIMAL(11, 8),
+                `sort_order` INT DEFAULT 0,
+                `is_active` TINYINT(1) DEFAULT 1,
+                `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (`province_id`) REFERENCES `provinces`(`id`) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
+        ");
+        
         // Add vehicle_id column to products table if it doesn't exist (for existing databases)
         try {
             $pdo->exec("ALTER TABLE `products` ADD COLUMN `vehicle_id` INT DEFAULT NULL AFTER `category_id`");

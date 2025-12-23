@@ -553,20 +553,45 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- Load Data & Build Map ---
-    // Fetch both GeoJSON AND Active Provinces data
+    // Fetch both GeoJSON AND Provinces with branches from CMS database
     Promise.all([
         fetch(CONFIG.jsonPath).then(r => r.json()),
-        fetch('backend/api/provinces.php?is_active=1').then(r => r.json())
+        // Fetch provinces from CMS - they include branch_count
+        fetch('backend/api/provinces.php?include_inactive=1').then(r => {
+            if (!r.ok) {
+                throw new Error(`HTTP error! status: ${r.status}`);
+            }
+            return r.json();
+        }).catch(err => {
+            console.error('Error fetching provinces from CMS:', err);
+            return { success: false, data: [] };
+        })
     ]).then(([geojson, provinceData]) => {
 
-        // Create lookup for branches
-        const provinceBranchMap = {}; // Name -> HasBranches
-        if (provinceData.success && provinceData.data) {
+        // Create lookup for provinces that have branches in CMS database
+        const provinceHasBranchesMap = {}; // Name -> Has Branches
+        if (provinceData.success && provinceData.data && Array.isArray(provinceData.data)) {
             provinceData.data.forEach(p => {
-                // p.branch_count > 0 means it has branches
-                // Store using Persian Name as key, as GeoJSON uses Persian Names
-                provinceBranchMap[p.name] = (parseInt(p.branch_count || 0) > 0);
+                // Check if province has branches (branch_count > 0)
+                const hasBranches = parseInt(p.branch_count || 0) > 0;
+                
+                // Only mark provinces that have branches
+                if (hasBranches && p.name) {
+                    provinceHasBranchesMap[p.name] = true;
+                    // Also store by English name if available for better matching
+                    if (p.name_en) {
+                        provinceHasBranchesMap[p.name_en] = true;
+                    }
+                    // Also store by slug for additional matching
+                    if (p.slug) {
+                        provinceHasBranchesMap[p.slug] = true;
+                    }
+                }
             });
+            const provincesWithBranches = Object.keys(provinceHasBranchesMap);
+            console.log(`Found ${provincesWithBranches.length} provinces with branches in CMS:`, provincesWithBranches);
+        } else {
+            console.warn('No provinces data received from CMS:', provinceData);
         }
 
         // Use D3 to project coordinates to a flat plane (Mercator)
@@ -581,6 +606,7 @@ document.addEventListener('DOMContentLoaded', () => {
         geojson.features.forEach(feature => {
             // Use Persian name (name property) instead of English (name:en)
             const provinceName = feature.properties.name || feature.properties['name:en'] || feature.name || "Unknown";
+            const provinceNameEn = feature.properties['name:en'] || feature.properties.name_en || null;
             const coordinates = feature.geometry.coordinates;
             const type = feature.geometry.type;
 
@@ -641,9 +667,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const geometry = new THREE.ExtrudeGeometry(shapes, CONFIG.extrusion);
 
             // Determine Color
-            // If province has active branches, use the classy green
-            const hasBranches = provinceBranchMap[provinceName] === true;
+            // If province has branches in CMS database, use the classy green
+            // Check both Persian and English names for better matching
+            const hasBranches = provinceHasBranchesMap[provinceName] === true || 
+                               (provinceNameEn && provinceHasBranchesMap[provinceNameEn] === true);
             const baseColor = hasBranches ? CONFIG.colors.hasBranch : CONFIG.colors.base;
+            
+            // Debug log for provinces with branches
+            if (hasBranches) {
+                console.log(`Province "${provinceName}" has branches in CMS - coloring green`);
+            }
 
             // Material
             const material = new THREE.MeshPhongMaterial({
@@ -657,7 +690,7 @@ document.addEventListener('DOMContentLoaded', () => {
             mesh.userData = {
                 name: provinceName,
                 address: hasBranches ? 'برای مشاهده شعب کلیک کنید' : 'شعبه فعال وجود ندارد',
-                hasBranches: hasBranches,
+                hasBranches: hasBranches, // True if province has branches in CMS
                 baseColor: baseColor, // Store for reset logic
                 shapes: shapes // Store shapes for dot grid generation
             };
@@ -712,14 +745,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 name.style.color = '#fff';
                 name.style.marginBottom = '5px';
 
-                // Status dot
+                // Status dot - green if province exists in database (all in this list exist)
                 const status = document.createElement('div');
-                const hasBranch = (parseInt(p.branch_count || 0) > 0);
+                const existsInDB = true; // All provinces in this list exist in DB
                 status.style.width = '8px';
                 status.style.height = '8px';
                 status.style.borderRadius = '50%';
-                status.style.backgroundColor = hasBranch ? '#00a86b' : '#333';
-                status.style.boxShadow = hasBranch ? '0 0 5px #00a86b' : 'none';
+                status.style.backgroundColor = existsInDB ? '#00a86b' : '#333';
+                status.style.boxShadow = existsInDB ? '0 0 5px #00a86b' : 'none';
 
                 item.appendChild(name);
                 item.appendChild(status);
@@ -728,7 +761,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 item.onmouseenter = () => {
                     item.style.background = 'rgba(255,255,255,0.15)';
                     item.style.transform = 'translateY(-3px)';
-                    item.style.borderColor = hasBranch ? '#00a86b' : '#666';
+                    item.style.borderColor = '#00a86b'; // All exist in DB, so always green
                 };
                 item.onmouseleave = () => {
                     item.style.background = 'rgba(255,255,255,0.05)';
