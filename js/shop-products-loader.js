@@ -41,6 +41,11 @@
         ProductLoader.$sortSelect = ProductLoader.$container.find('#view-option-sort');
         ProductLoader.$limitSelect = ProductLoader.$container.find('#view-option-limit');
         ProductLoader.$layoutSwitcher = ProductLoader.$container.find('.layout-switcher');
+        
+        // Show pagination initially (will be updated after products load)
+        if (ProductLoader.$pagination.length) {
+            ProductLoader.$pagination.show();
+        }
 
         // Get initial values from URL params
         const urlParams = new URLSearchParams(window.location.search);
@@ -119,7 +124,7 @@
     function initLimitSelect() {
         if (!ProductLoader.$limitSelect.length) return;
 
-        const limitOptions = [12, 16, 24, 32, 48];
+        const limitOptions = [4, 12, 16, 24, 32, 48];
         ProductLoader.$limitSelect.empty();
         limitOptions.forEach(limit => {
             const selected = limit === ProductLoader.limit ? 'selected' : '';
@@ -423,12 +428,34 @@
         if (!ProductLoader.$pagination.length) return;
 
         const totalPages = Math.ceil(ProductLoader.totalProducts / ProductLoader.limit);
+        // Always show pagination, even if there's only 1 page
+        ProductLoader.$pagination.show();
+        
         if (totalPages <= 1) {
-            ProductLoader.$pagination.hide();
+            // If only 1 page, just show page 1 as active
+            const $paginationList = ProductLoader.$pagination.find('.pagination');
+            $paginationList.empty();
+            $paginationList.append(`
+                <li class="page-item disabled">
+                    <a class="page-link page-link--with-arrow" href="#" aria-label="Previous">
+                        <span class="page-link__arrow page-link__arrow--left" aria-hidden="true">
+                            <svg width="7" height="11"><path d="M6.7,0.3L6.7,0.3c-0.4-0.4-0.9-0.4-1.3,0L0,5.5l5.4,5.2c0.4,0.4,0.9,0.3,1.3,0l0,0c0.4-0.4,0.4-1,0-1.3l-4-3.9l4-3.9C7.1,1.2,7.1,0.6,6.7,0.3z"></path></svg>
+                        </span>
+                    </a>
+                </li>
+                <li class="page-item active" aria-current="page">
+                    <span class="page-link">1 <span class="sr-only">(current)</span></span>
+                </li>
+                <li class="page-item disabled">
+                    <a class="page-link page-link--with-arrow" href="#" aria-label="Next">
+                        <span class="page-link__arrow page-link__arrow--right" aria-hidden="true">
+                            <svg width="7" height="11"><path d="M0.3,10.7L0.3,10.7c0.4,0.4,0.9,0.4,1.3,0L7,5.5L1.6,0.3C1.2-0.1,0.7,0,0.3,0.3l0,0c-0.4,0.4-0.4,1,0,1.3l4,3.9l-4,3.9C-0.1,9.8-0.1,10.4,0.3,10.7z"></path></svg>
+                        </span>
+                    </a>
+                </li>
+            `);
             return;
         }
-
-        ProductLoader.$pagination.show();
         const $paginationList = ProductLoader.$pagination.find('.pagination');
         $paginationList.empty();
 
