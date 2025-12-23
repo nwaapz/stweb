@@ -331,8 +331,78 @@
 					<div class="header__navbar-menu">
 						<div class="main-menu">
 							<ul class="main-menu__list">
-								<li class="main-menu__item">
-									<a href="index.html" class="main-menu__link">خانه</a>
+								<li class="main-menu__item main-menu__item--submenu--menu main-menu__item--has-submenu">
+									<a href="index.html" class="main-menu__link">خانه <svg width="7px" height="5px">
+											<path
+												d="M0.280,0.282 C0.645,-0.084 1.238,-0.077 1.596,0.297 L3.504,2.310 L5.413,0.297 C5.770,-0.077 6.363,-0.084 6.728,0.282 C7.080,0.634 7.088,1.203 6.746,1.565 L3.504,5.007 L0.262,1.565 C-0.080,1.203 -0.072,0.634 0.280,0.282 Z" />
+										</svg></a>
+									<div class="main-menu__submenu">
+										<ul class="menu">
+											<li class="menu__item"><a href="index.html" class="menu__link">خانه One</a>
+											</li>
+											<li class="menu__item"><a href="index2.html" class="menu__link">خانه Two</a>
+											</li>
+											<li class="menu__item menu__item--has-submenu"><a
+													href="header-spaceship-variant-one.html" class="menu__link">Header
+													Spaceship <span class="menu__arrow"><svg width="6px" height="9px">
+															<path
+																d="M0.3,7.4l3-2.9l-3-2.9c-0.4-0.3-0.4-0.9,0-1.3l0,0c0.4-0.3,0.9-0.4,1.3,0L6,4.5L1.6,8.7c-0.4,0.4-0.9,0.4-1.3,0l0,0C-0.1,8.4-0.1,7.8,0.3,7.4z" />
+														</svg></span></a>
+												<div class="menu__submenu">
+													<ul class="menu">
+														<li class="menu__item"><a
+																href="header-spaceship-variant-one.html"
+																class="menu__link">نسخه یک</a></li>
+														<li class="menu__item"><a
+																href="header-spaceship-variant-two.html"
+																class="menu__link">نسخه دو</a></li>
+														<li class="menu__item"><a
+																href="header-spaceship-variant-three.html"
+																class="menu__link">نسخه سه</a></li>
+													</ul>
+												</div>
+											</li>
+											<li class="menu__item menu__item--has-submenu"><a
+													href="header-classic-variant-one.html" class="menu__link">Header
+													Classic <span class="menu__arrow"><svg width="6px" height="9px">
+															<path
+																d="M0.3,7.4l3-2.9l-3-2.9c-0.4-0.3-0.4-0.9,0-1.3l0,0c0.4-0.3,0.9-0.4,1.3,0L6,4.5L1.6,8.7c-0.4,0.4-0.9,0.4-1.3,0l0,0C-0.1,8.4-0.1,7.8,0.3,7.4z" />
+														</svg></span></a>
+												<div class="menu__submenu">
+													<ul class="menu">
+														<li class="menu__item"><a href="header-classic-variant-one.html"
+																class="menu__link">نسخه یک</a></li>
+														<li class="menu__item"><a href="header-classic-variant-two.html"
+																class="menu__link">نسخه دو</a></li>
+														<li class="menu__item"><a
+																href="header-classic-variant-three.html"
+																class="menu__link">نسخه سه</a></li>
+														<li class="menu__item"><a
+																href="header-classic-variant-four.html"
+																class="menu__link">نسخه چهار</a></li>
+														<li class="menu__item"><a
+																href="header-classic-variant-five.html"
+																class="menu__link">نسخه پنج</a></li>
+													</ul>
+												</div>
+											</li>
+											<li class="menu__item menu__item--has-submenu"><a
+													href="mobile-header-variant-one.html" class="menu__link">Mobile
+													Header <span class="menu__arrow"><svg width="6px" height="9px">
+															<path
+																d="M0.3,7.4l3-2.9l-3-2.9c-0.4-0.3-0.4-0.9,0-1.3l0,0c0.4-0.3,0.9-0.4,1.3,0L6,4.5L1.6,8.7c-0.4,0.4-0.9,0.4-1.3,0l0,0C-0.1,8.4-0.1,7.8,0.3,7.4z" />
+														</svg></span></a>
+												<div class="menu__submenu">
+													<ul class="menu">
+														<li class="menu__item"><a href="mobile-header-variant-one.html"
+																class="menu__link">نسخه یک</a></li>
+														<li class="menu__item"><a href="mobile-header-variant-two.html"
+																class="menu__link">نسخه دو</a></li>
+													</ul>
+												</div>
+											</li>
+										</ul>
+									</div>
 								</li>
 								<li class="main-menu__item main-menu__item--submenu--menu main-menu__item--has-submenu">
 									<a href="shop-grid-4-columns-sidebar.html" class="main-menu__link">فروشگاه <svg
@@ -5048,11 +5118,151 @@
 						</div>
 					</div>
 					<div class="block-posts-carousel__carousel">
-						<div class="owl-carousel" id="blog-posts-carousel">
-							<!-- Blog posts will be loaded dynamically from CMS -->
-							<div class="block-posts-carousel__loading" style="text-align: center; padding: 40px; width: 100%;">
-								<div class="spinner-border" role="status">
-									<span class="sr-only">در حال بارگذاری اخبار...</span>
+						<div class="owl-carousel">
+							<div class="block-posts-carousel__item">
+								<div class="post-card">
+									<div class="post-card__image"><a href="post-full-width.html"><img
+												src="images/posts/post-1-730x485.jpg" alt=""></a></div>
+									<div class="post-card__content">
+										<div class="post-card__category"><a
+												href="blog-classic-right-sidebar.html">پیشنهادات ویژه</a></div>
+										<div class="post-card__title">
+											<h2><a href="post-full-width.html">فلسفه‌ای که موضوعاتی مانند نیکی را بررسی
+													می‌کند</a></h2>
+										</div>
+										<div class="post-card__date">توسط <a href="">جسیکا مور</a> در ۱۹ اکتبر ۲۰۱۹
+										</div>
+										<div class="post-card__excerpt">
+											<div class="typography">لورم ایپسوم متن ساختگی با تولید سادگی نامفهوم از
+												صنعت چاپ و با استفاده از طراحان گرافیک است. چاپگرها و متون بلکه روزنامه
+												و مجله در ستون و سطرآنچنان که لازم است و برای شرایط فعلی تکنولوژی مورد
+												نیاز و کاربردهای متنوع با هدف بهبود ابزارهای کاربردی می باشد.</div>
+										</div>
+										<div class="post-card__more"><a href="post-full-width.html"
+												class="btn btn-secondary btn-sm">ادامه مطلب</a></div>
+									</div>
+								</div>
+							</div>
+							<div class="block-posts-carousel__item">
+								<div class="post-card">
+									<div class="post-card__image"><a href="post-full-width.html"><img
+												src="images/posts/post-2-730x485.jpg" alt=""></a></div>
+									<div class="post-card__content">
+										<div class="post-card__category"><a href="blog-classic-right-sidebar.html">آخرین
+												اخبار</a></div>
+										<div class="post-card__title">
+											<h2><a href="post-full-width.html">منطق مطالعه استدلال و استدلال بخش ۲</a>
+											</h2>
+										</div>
+										<div class="post-card__date">توسط <a href="">جسیکا مور</a> در ۵ سپتامبر
+											۲۰۱۹</div>
+										<div class="post-card__excerpt">
+											<div class="typography">لورم ایپسوم متن ساختگی با تولید سادگی نامفهوم از
+												صنعت چاپ و با استفاده از طراحان گرافیک است. چاپگرها و متون بلکه روزنامه
+												و مجله در ستون و سطرآنچنان که لازم است و برای شرایط فعلی تکنولوژی مورد
+												نیاز و کاربردهای متنوع با هدف بهبود ابزارهای کاربردی می باشد.</div>
+										</div>
+										<div class="post-card__more"><a href="post-full-width.html"
+												class="btn btn-secondary btn-sm">ادامه مطلب</a></div>
+									</div>
+								</div>
+							</div>
+							<div class="block-posts-carousel__item">
+								<div class="post-card">
+									<div class="post-card__image"><a href="post-full-width.html"><img
+												src="images/posts/post-3-730x485.jpg" alt=""></a></div>
+									<div class="post-card__content">
+										<div class="post-card__category"><a
+												href="blog-classic-right-sidebar.html">محصولات
+												جدید</a></div>
+										<div class="post-card__title">
+											<h2><a href="post-full-width.html">برخی از فیلسوفان در یک یا چند دوره تاریخی
+													تخصص دارند</a></h2>
+										</div>
+										<div class="post-card__date">توسط <a href="">جسیکا مور</a> در ۱۲ اوت ۲۰۱۹
+										</div>
+										<div class="post-card__excerpt">
+											<div class="typography">لورم ایپسوم متن ساختگی با تولید سادگی نامفهوم از
+												صنعت چاپ و با استفاده از طراحان گرافیک است. چاپگرها و متون بلکه روزنامه
+												و مجله در ستون و سطرآنچنان که لازم است و برای شرایط فعلی تکنولوژی مورد
+												نیاز و کاربردهای متنوع با هدف بهبود ابزارهای کاربردی می باشد.</div>
+										</div>
+										<div class="post-card__more"><a href="post-full-width.html"
+												class="btn btn-secondary btn-sm">ادامه مطلب</a></div>
+									</div>
+								</div>
+							</div>
+							<div class="block-posts-carousel__item">
+								<div class="post-card">
+									<div class="post-card__image"><a href="post-full-width.html"><img
+												src="images/posts/post-4-730x485.jpg" alt=""></a></div>
+									<div class="post-card__content">
+										<div class="post-card__category"><a
+												href="blog-classic-right-sidebar.html">پیشنهادات ویژه</a></div>
+										<div class="post-card__title">
+											<h2><a href="post-full-width.html">انواع دیگر رویکردهای آکادمیک و غیر
+													آکادمیک مورد بررسی قرار گرفته است</a></h2>
+										</div>
+										<div class="post-card__date">توسط <a href="">جسیکا مور</a> در ۳۰ جولای ۲۰۱۹
+										</div>
+										<div class="post-card__excerpt">
+											<div class="typography">لورم ایپسوم متن ساختگی با تولید سادگی نامفهوم از
+												صنعت چاپ و با استفاده از طراحان گرافیک است. چاپگرها و متون بلکه روزنامه
+												و مجله در ستون و سطرآنچنان که لازم است و برای شرایط فعلی تکنولوژی مورد
+												نیاز و کاربردهای متنوع با هدف بهبود ابزارهای کاربردی می باشد.</div>
+										</div>
+										<div class="post-card__more"><a href="post-full-width.html"
+												class="btn btn-secondary btn-sm">ادامه مطلب</a></div>
+									</div>
+								</div>
+							</div>
+							<div class="block-posts-carousel__item">
+								<div class="post-card">
+									<div class="post-card__image"><a href="post-full-width.html"><img
+												src="images/posts/post-5-730x485.jpg" alt=""></a></div>
+									<div class="post-card__content">
+										<div class="post-card__category"><a
+												href="blog-classic-right-sidebar.html">محصولات
+												جدید</a></div>
+										<div class="post-card__title">
+											<h2><a href="post-full-width.html">آلمان اولین کشوری بود که فلسفه را حرفه‌ای
+													کرد</a></h2>
+										</div>
+										<div class="post-card__date">توسط <a href="">جسیکا مور</a> در ۱۲ ژوئن ۲۰۱۹
+										</div>
+										<div class="post-card__excerpt">
+											<div class="typography">لورم ایپسوم متن ساختگی با تولید سادگی نامفهوم از
+												صنعت چاپ و با استفاده از طراحان گرافیک است. چاپگرها و متون بلکه روزنامه
+												و مجله در ستون و سطرآنچنان که لازم است و برای شرایط فعلی تکنولوژی مورد
+												نیاز و کاربردهای متنوع با هدف بهبود ابزارهای کاربردی می باشد.</div>
+										</div>
+										<div class="post-card__more"><a href="post-full-width.html"
+												class="btn btn-secondary btn-sm">ادامه مطلب</a></div>
+									</div>
+								</div>
+							</div>
+							<div class="block-posts-carousel__item">
+								<div class="post-card">
+									<div class="post-card__image"><a href="post-full-width.html"><img
+												src="images/posts/post-6-730x485.jpg" alt=""></a></div>
+									<div class="post-card__content">
+										<div class="post-card__category"><a
+												href="blog-classic-right-sidebar.html">پیشنهادات ویژه</a></div>
+										<div class="post-card__title">
+											<h2><a href="post-full-width.html">منطق مطالعه استدلال و استدلال بخش ۱</a>
+											</h2>
+										</div>
+										<div class="post-card__date">توسط <a href="">جسیکا مور</a> در ۲۱ مه ۲۰۱۹
+										</div>
+										<div class="post-card__excerpt">
+											<div class="typography">لورم ایپسوم متن ساختگی با تولید سادگی نامفهوم از
+												صنعت چاپ و با استفاده از طراحان گرافیک است. چاپگرها و متون بلکه روزنامه
+												و مجله در ستون و سطرآنچنان که لازم است و برای شرایط فعلی تکنولوژی مورد
+												نیاز و کاربردهای متنوع با هدف بهبود ابزارهای کاربردی می باشد.</div>
+										</div>
+										<div class="post-card__more"><a href="post-full-width.html"
+												class="btn btn-secondary btn-sm">ادامه مطلب</a></div>
+									</div>
 								</div>
 							</div>
 						</div>
@@ -6529,172 +6739,6 @@
 			$(document).on('select2:open', function () {
 				centerSelect2Text();
 			});
-		});
-
-		// Load Blog Posts Dynamically
-		$(document).ready(function () {
-			const blogCarousel = $('#blog-posts-carousel');
-			const blogCarouselContainer = blogCarousel.closest('.block-posts-carousel__carousel');
-			
-			if (blogCarousel.length === 0) {
-				return;
-			}
-
-			// Function to format date in Persian format
-			function formatPersianDate(dateString) {
-				if (!dateString) return '';
-				
-				const date = new Date(dateString);
-				const persianMonths = [
-					'ژانویه', 'فوریه', 'مارس', 'آوریل', 'مه', 'ژوئن',
-					'جولای', 'اوت', 'سپتامبر', 'اکتبر', 'نوامبر', 'دسامبر'
-				];
-				
-				const day = date.getDate();
-				const month = persianMonths[date.getMonth()];
-				const year = date.getFullYear();
-				
-				return `${day} ${month} ${year}`;
-			}
-
-			// Function to render blog posts in carousel
-			function renderBlogPosts(posts) {
-				if (!posts || posts.length === 0) {
-					blogCarousel.html('<div style="text-align: center; padding: 40px;">هیچ خبری یافت نشد</div>');
-					return;
-				}
-
-				// Destroy existing carousel if initialized
-				if (blogCarousel.data('owl.carousel')) {
-					blogCarousel.trigger('destroy.owl.carousel');
-					blogCarousel.removeClass('owl-loaded owl-drag');
-				}
-
-				blogCarousel.empty();
-
-				posts.forEach(function (post) {
-					const postUrl = post.slug ? 'post-full-width.html?slug=' + encodeURIComponent(post.slug) : 'post-full-width.html?id=' + post.id;
-					const postImage = post.featured_image || 'images/posts/post-1-730x485.jpg';
-					const postTitle = post.title || 'بدون عنوان';
-					const postExcerpt = post.excerpt || '';
-					const authorName = post.author_name || 'نامشخص';
-					const postDate = formatPersianDate(post.published_at || post.created_at);
-					
-					// Default category - you can customize this based on your needs
-					const postCategory = 'آخرین اخبار';
-
-					const postItem = $('<div class="block-posts-carousel__item"></div>');
-					const postCard = $('<div class="post-card"></div>');
-					
-					// Post image
-					const postImageDiv = $('<div class="post-card__image"></div>');
-					const imageLink = $('<a href="' + postUrl + '"></a>');
-					const image = $('<img src="' + postImage + '" alt="' + postTitle + '">');
-					imageLink.append(image);
-					postImageDiv.append(imageLink);
-					
-					// Post content
-					const postContent = $('<div class="post-card__content"></div>');
-					
-					// Category
-					const categoryDiv = $('<div class="post-card__category"></div>');
-					const categoryLink = $('<a href="blog-classic-right-sidebar.html"></a>').text(postCategory);
-					categoryDiv.append(categoryLink);
-					
-					// Title
-					const titleDiv = $('<div class="post-card__title"></div>');
-					const titleH2 = $('<h2></h2>');
-					const titleLink = $('<a href="' + postUrl + '"></a>').text(postTitle);
-					titleH2.append(titleLink);
-					titleDiv.append(titleH2);
-					
-					// Date
-					const dateDiv = $('<div class="post-card__date"></div>');
-					dateDiv.html('توسط <a href="">' + authorName + '</a> در ' + postDate);
-					
-					// Excerpt
-					const excerptDiv = $('<div class="post-card__excerpt"></div>');
-					const typographyDiv = $('<div class="typography"></div>').text(postExcerpt);
-					excerptDiv.append(typographyDiv);
-					
-					// Read more button
-					const moreDiv = $('<div class="post-card__more"></div>');
-					const moreLink = $('<a href="' + postUrl + '" class="btn btn-secondary btn-sm"></a>').text('ادامه مطلب');
-					moreDiv.append(moreLink);
-					
-					// Assemble post card
-					postContent.append(categoryDiv);
-					postContent.append(titleDiv);
-					postContent.append(dateDiv);
-					postContent.append(excerptDiv);
-					postContent.append(moreDiv);
-					
-					postCard.append(postImageDiv);
-					postCard.append(postContent);
-					postItem.append(postCard);
-					
-					blogCarousel.append(postItem);
-				});
-
-				// Initialize or refresh Owl Carousel
-				setTimeout(function () {
-					if (typeof $.fn.owlCarousel !== 'undefined') {
-						// Check if carousel is already initialized
-						if (!blogCarousel.data('owl.carousel')) {
-							blogCarousel.owlCarousel({
-								items: 3,
-								margin: 20,
-								nav: false,
-								dots: false,
-								loop: true,
-								rtl: true,
-								responsive: {
-									0: { items: 1 },
-									576: { items: 2 },
-									768: { items: 2 },
-									992: { items: 3 }
-								}
-							});
-						} else {
-							blogCarousel.trigger('refresh.owl.carousel');
-						}
-					}
-					
-					// Connect navigation arrows
-					const block = blogCarousel.closest('.block-posts-carousel');
-					const prevArrow = block.find('.arrow--prev');
-					const nextArrow = block.find('.arrow--next');
-					
-					if (prevArrow.length && blogCarousel.data('owl.carousel')) {
-						prevArrow.off('click').on('click', function () {
-							blogCarousel.trigger('prev.owl.carousel');
-						});
-					}
-					
-					if (nextArrow.length && blogCarousel.data('owl.carousel')) {
-						nextArrow.off('click').on('click', function () {
-							blogCarousel.trigger('next.owl.carousel');
-						});
-					}
-				}, 100);
-			}
-
-			// Fetch blog posts from API
-			fetch('backend/api/blog.php?limit=6&order_by=created_at&order_dir=DESC')
-				.then(response => response.json())
-				.then(data => {
-					if (data.success && data.data && data.data.length > 0) {
-						renderBlogPosts(data.data);
-					} else {
-						blogCarousel.html('<div style="text-align: center; padding: 40px;">هیچ خبری یافت نشد</div>');
-					}
-					blogCarouselContainer.removeClass('block-posts-carousel__carousel--loading');
-				})
-				.catch(error => {
-					console.error('Error loading blog posts:', error);
-					blogCarousel.html('<div style="text-align: center; padding: 40px;">خطا در بارگذاری اخبار</div>');
-					blogCarouselContainer.removeClass('block-posts-carousel__carousel--loading');
-				});
 		});
 	</script>
 
