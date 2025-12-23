@@ -1595,52 +1595,12 @@
 														<div class="filter__body" data-collapse-content>
 															<div class="filter__container">
 																<div class="filter-vehicle">
-																	<ul class="filter-vehicle__list">
-																		<li class="filter-vehicle__item"><label
-																				class="filter-vehicle__item-label"><span
-																					class="filter-list__input input-radio"><span
-																						class="input-radio__body"><input
-																							class="input-radio__input"
-																							name="filter_vehicle"
-																							type="radio"> <span
-																							class="input-radio__circle"></span>
-																					</span></span><span
-																					class="filter-vehicle__item-title">All
-																					Parts </span><span
-																					class="filter-vehicle__item-counter">57</span></label>
-																		</li>
-																		<li class="filter-vehicle__item"><label
-																				class="filter-vehicle__item-label"><span
-																					class="filter-list__input input-radio"><span
-																						class="input-radio__body"><input
-																							class="input-radio__input"
-																							name="filter_vehicle"
-																							type="radio"
-																							checked="checked"> <span
-																							class="input-radio__circle"></span>
-																					</span></span><span
-																					class="filter-vehicle__item-title">2011
-																					Ford Focus S </span><span
-																					class="filter-vehicle__item-counter">12</span></label>
-																		</li>
-																		<li class="filter-vehicle__item"><label
-																				class="filter-vehicle__item-label"><span
-																					class="filter-list__input input-radio"><span
-																						class="input-radio__body"><input
-																							class="input-radio__input"
-																							name="filter_vehicle"
-																							type="radio"> <span
-																							class="input-radio__circle"></span>
-																					</span></span><span
-																					class="filter-vehicle__item-title">2015
-																					Audi A3 </span><span
-																					class="filter-vehicle__item-counter">51</span></label>
+																	<ul class="filter-vehicle__list" id="filter-vehicle-list">
+																		<!-- Vehicles will be loaded dynamically from API -->
+																		<li style="text-align: center; padding: 20px; color: #999;">
+																			<span>در حال بارگذاری وسایل نقلیه...</span>
 																		</li>
 																	</ul>
-																	<div class="filter-vehicle__button"><button
-																			type="button"
-																			class="btn btn-xs btn-secondary">Add وسیله
-																			نقلیه</button></div>
 																</div>
 															</div>
 														</div>
@@ -2943,6 +2903,131 @@
 		// Initialize on document ready
 		$(document).ready(function() {
 			loadCategoryFilters();
+		});
+
+	})(jQuery);
+	</script>
+	<script>
+	/**
+	 * Dynamic Vehicle Filter Loader
+	 * بارگذاری پویای فیلتر وسایل نقلیه
+	 */
+	(function($) {
+		'use strict';
+
+		// Function to fetch vehicles from API
+		function loadVehicleFilters() {
+			const $vehiclesList = $('#filter-vehicle-list');
+			
+			if (!$vehiclesList.length) {
+				return; // Vehicle filter not found on this page
+			}
+
+			// Show loading state
+			$vehiclesList.html('<li style="text-align: center; padding: 20px; color: #999;"><span>در حال بارگذاری وسایل نقلیه...</span></li>');
+
+			// Get current vehicle filter from URL
+			const urlParams = new URLSearchParams(window.location.search);
+			const currentVehicleId = urlParams.get('vehicle');
+
+			// Fetch vehicles
+			fetch('backend/api/vehicles.php')
+				.then(response => response.json())
+				.then(data => {
+					if (data.success && data.data && data.data.length > 0) {
+						renderVehicles($vehiclesList, data.data, currentVehicleId);
+					} else {
+						$vehiclesList.html('<li style="text-align: center; padding: 20px; color: #999;"><span>وسیله نقلیه‌ای یافت نشد</span></li>');
+					}
+				})
+				.catch(error => {
+					console.error('Error loading vehicles:', error);
+					$vehiclesList.html('<li style="text-align: center; padding: 20px; color: #d32f2f;"><span>خطا در بارگذاری وسایل نقلیه</span></li>');
+				});
+		}
+
+		// Function to render vehicles
+		function renderVehicles($container, vehicles, currentVehicleId) {
+			$container.empty();
+
+			// Calculate total product count for "All Parts" option
+			let totalProducts = 0;
+			vehicles.forEach(vehicle => {
+				totalProducts += parseInt(vehicle.product_count || 0);
+			});
+
+			// Add "All Parts" option
+			const isAllSelected = !currentVehicleId;
+			const $allItem = $('<li></li>').addClass('filter-vehicle__item');
+			const $allLabel = $('<label></label>').addClass('filter-vehicle__item-label');
+			
+			$allLabel.append(`
+				<span class="filter-list__input input-radio">
+					<span class="input-radio__body">
+						<input class="input-radio__input" name="filter_vehicle" type="radio" value="all" ${isAllSelected ? 'checked="checked"' : ''}>
+						<span class="input-radio__circle"></span>
+					</span>
+				</span>
+			`);
+			
+			$allLabel.append($('<span></span>').addClass('filter-vehicle__item-title').text('همه قطعات'));
+			$allLabel.append($('<span></span>').addClass('filter-vehicle__item-counter').text(totalProducts));
+			
+			$allItem.append($allLabel);
+			$container.append($allItem);
+
+			// Add event listener for "All Parts" radio
+			$allLabel.find('input[type="radio"]').on('change', function() {
+				if ($(this).is(':checked')) {
+					// Remove vehicle filter from URL
+					const url = new URL(window.location);
+					url.searchParams.delete('vehicle');
+					window.location.href = url.toString();
+				}
+			});
+
+			// Add each vehicle
+			vehicles.forEach(vehicle => {
+				const isCurrent = currentVehicleId && parseInt(currentVehicleId) === parseInt(vehicle.id);
+				const vehicleName = vehicle.description || vehicle.details || 
+					(vehicle.year && vehicle.make && vehicle.model ? 
+						`${vehicle.year} ${vehicle.make} ${vehicle.model}` : 
+						vehicle.name || 'بدون نام');
+				const productCount = vehicle.product_count || 0;
+
+				const $item = $('<li></li>').addClass('filter-vehicle__item');
+				const $label = $('<label></label>').addClass('filter-vehicle__item-label');
+				
+				$label.append(`
+					<span class="filter-list__input input-radio">
+						<span class="input-radio__body">
+							<input class="input-radio__input" name="filter_vehicle" type="radio" value="${vehicle.id}" ${isCurrent ? 'checked="checked"' : ''}>
+							<span class="input-radio__circle"></span>
+						</span>
+					</span>
+				`);
+				
+				$label.append($('<span></span>').addClass('filter-vehicle__item-title').text(vehicleName));
+				$label.append($('<span></span>').addClass('filter-vehicle__item-counter').text(productCount));
+				
+				$item.append($label);
+				$container.append($item);
+
+				// Add event listener for vehicle radio
+				$label.find('input[type="radio"]').on('change', function() {
+					if ($(this).is(':checked')) {
+						// Update URL with vehicle filter
+						const url = new URL(window.location);
+						url.searchParams.set('vehicle', vehicle.id);
+						window.location.href = url.toString();
+					}
+				});
+			});
+		}
+
+		// Initialize on document ready
+		$(document).ready(function() {
+			loadVehicleFilters();
 		});
 
 	})(jQuery);
