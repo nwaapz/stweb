@@ -180,6 +180,19 @@ try {
         $filters['limit'] = (int) $_GET['limit'];
     }
 
+    if (isset($_GET['offset'])) {
+        $filters['offset'] = (int) $_GET['offset'];
+    }
+
+    // Order by
+    if (isset($_GET['order_by'])) {
+        $filters['order_by'] = $_GET['order_by'];
+    }
+
+    if (isset($_GET['order_dir'])) {
+        $filters['order_dir'] = $_GET['order_dir'];
+    }
+
     // Popular products (ordered by views)
     if (isset($_GET['popular'])) {
         $filters['order_by'] = 'views';
@@ -191,6 +204,9 @@ try {
         $filters['is_active'] = 1;
     }
 
+    // Get total count before applying limit/offset
+    $totalCount = getProductsCount($filters);
+    
     $products = getProducts($filters);
 
     // Format products
@@ -240,6 +256,7 @@ try {
     echo json_encode([
         'success' => true,
         'count' => count($products),
+        'total' => $totalCount,
         'data' => $products
     ], JSON_UNESCAPED_UNICODE);
 

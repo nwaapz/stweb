@@ -465,12 +465,70 @@ function getProducts($filters = [])
     }
 
     if (!empty($filters['limit'])) {
-        $sql .= " LIMIT " . (int) $filters['limit'];
+        $limit = (int) $filters['limit'];
+        $offset = !empty($filters['offset']) ? (int) $filters['offset'] : 0;
+        $sql .= " LIMIT {$offset}, {$limit}";
     }
 
     $stmt = $conn->prepare($sql);
     $stmt->execute($params);
     return $stmt->fetchAll();
+}
+
+/**
+ * Get total count of products (for pagination)
+ */
+function getProductsCount($filters = [])
+{
+    $conn = getConnection();
+    $sql = "SELECT COUNT(*) as total 
+            FROM products p 
+            LEFT JOIN categories c ON p.category_id = c.id 
+            LEFT JOIN vehicles v ON p.vehicle_id = v.id 
+            WHERE 1=1";
+    $params = [];
+
+    if (!empty($filters['category_id'])) {
+        $sql .= " AND p.category_id = ?";
+        $params[] = $filters['category_id'];
+    }
+
+    if (!empty($filters['vehicle_id'])) {
+        $sql .= " AND p.vehicle_id = ?";
+        $params[] = $filters['vehicle_id'];
+    }
+
+    if (isset($filters['is_active'])) {
+        $sql .= " AND p.is_active = ?";
+        $params[] = $filters['is_active'];
+    }
+
+    if (!empty($filters['is_featured'])) {
+        $sql .= " AND p.is_featured = 1";
+    }
+
+    if (!empty($filters['has_discount'])) {
+        $sql .= " AND p.discount_price IS NOT NULL 
+                  AND (p.discount_end IS NULL OR p.discount_end >= NOW())
+                  AND (p.discount_start IS NULL OR p.discount_start <= NOW())";
+    }
+
+    if (!empty($filters['search'])) {
+        $sql .= " AND (p.name LIKE ? OR p.description LIKE ?)";
+        $search = '%' . $filters['search'] . '%';
+        $params[] = $search;
+        $params[] = $search;
+    }
+
+    if (!empty($filters['category_name'])) {
+        $sql .= " AND c.name = ?";
+        $params[] = $filters['category_name'];
+    }
+
+    $stmt = $conn->prepare($sql);
+    $stmt->execute($params);
+    $result = $stmt->fetch();
+    return $result ? (int)$result['total'] : 0;
 }
 
 /**
@@ -544,6 +602,129 @@ function getEffectivePrice($product)
         return $product['discount_price'];
     }
     return $product['price'];
+}
+
+/**
+ * Ensure blog_posts table exists
+ */
+function ensureBlogTableExists()
+{
+    try {
+        $conn = getConnection();
+        $stmt = $conn->query("SHOW TABLES LIKE 'blog_posts'");
+        if ($stmt->rowCount() == 0) {
+            $conn->exec("
+                CREATE TABLE IF NOT EXISTS `blog_posts` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `title` VARCHAR(255) NOT NULL,
+                    `slug` VARCHAR(255) NOT NULL UNIQUE,
+                    `content` TEXT NOT NULL,
+                    `excerpt` TEXT,
+                    `featured_image` VARCHAR(500),
+                    `author_id` INT DEFAULT NULL,
+                    `is_published` TINYINT(1) DEFAULT 0,
+                    `published_at` DATETIME DEFAULT NULL,
+                    `views` INT DEFAULT 0,
+                    `meta_title` VARCHAR(255),
+                    `meta_description` TEXT,
+                    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    FOREIGN KEY (`author_id`) REFERENCES `admin_users`(`id`) ON DELETE SET NULL
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
+            ");
+        }
+    } catch (PDOException $e) {
+        // If there's an error creating tables, log it but don't fail
+        error_log("Error ensuring blog_posts table exists: " . $e->getMessage());
+    }
+}
+
+/**
+ * Get all blog posts
+ */
+function getBlogPosts($filters = [])
+{
+    // Ensure table exists before querying
+    ensureBlogTableExists();
+    
+    $conn = getConnection();
+    $sql = "SELECT bp.*, au.name as author_name 
+            FROM blog_posts bp 
+            LEFT JOIN admin_users au ON bp.author_id = au.id 
+            WHERE 1=1";
+    $params = [];
+
+    if (isset($filters['is_published'])) {
+        $sql .= " AND bp.is_published = ?";
+        $params[] = $filters['is_published'];
+    }
+
+    if (!empty($filters['search'])) {
+        $sql .= " AND (bp.title LIKE ? OR bp.content LIKE ? OR bp.excerpt LIKE ?)";
+        $search = '%' . $filters['search'] . '%';
+        $params[] = $search;
+        $params[] = $search;
+        $params[] = $search;
+    }
+
+    if (!empty($filters['author_id'])) {
+        $sql .= " AND bp.author_id = ?";
+        $params[] = $filters['author_id'];
+    }
+
+    // Order by
+    $orderBy = $filters['order_by'] ?? 'created_at';
+    $orderDir = $filters['order_dir'] ?? 'DESC';
+    $sql .= " ORDER BY bp.{$orderBy} {$orderDir}";
+
+    // Limit
+    if (!empty($filters['limit'])) {
+        $limit = (int)$filters['limit'];
+        $offset = !empty($filters['offset']) ? (int)$filters['offset'] : 0;
+        $sql .= " LIMIT {$offset}, {$limit}";
+    }
+
+    $stmt = $conn->prepare($sql);
+    $stmt->execute($params);
+    return $stmt->fetchAll();
+}
+
+/**
+ * Get blog post by ID
+ */
+function getBlogPostById($id)
+{
+    // Ensure table exists before querying
+    ensureBlogTableExists();
+    
+    $conn = getConnection();
+    $stmt = $conn->prepare("
+        SELECT bp.*, au.name as author_name 
+        FROM blog_posts bp 
+        LEFT JOIN admin_users au ON bp.author_id = au.id 
+        WHERE bp.id = ?
+    ");
+    $stmt->execute([$id]);
+    return $stmt->fetch();
+}
+
+/**
+ * Get blog post by slug
+ */
+function getBlogPostBySlug($slug)
+{
+    // Ensure table exists before querying
+    ensureBlogTableExists();
+    
+    $conn = getConnection();
+    $stmt = $conn->prepare("
+        SELECT bp.*, au.name as author_name 
+        FROM blog_posts bp 
+        LEFT JOIN admin_users au ON bp.author_id = au.id 
+        WHERE bp.slug = ? AND bp.is_published = 1
+    ");
+    $stmt->execute([$slug]);
+    return $stmt->fetch();
 }
 
 /**

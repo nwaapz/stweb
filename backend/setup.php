@@ -139,6 +139,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || isset($_GET['auto'])) {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
         ");
         
+        // Create blog_posts table
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `blog_posts` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `title` VARCHAR(255) NOT NULL,
+                `slug` VARCHAR(255) NOT NULL UNIQUE,
+                `content` TEXT NOT NULL,
+                `excerpt` TEXT,
+                `featured_image` VARCHAR(500),
+                `author_id` INT DEFAULT NULL,
+                `is_published` TINYINT(1) DEFAULT 0,
+                `published_at` DATETIME DEFAULT NULL,
+                `views` INT DEFAULT 0,
+                `meta_title` VARCHAR(255),
+                `meta_description` TEXT,
+                `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (`author_id`) REFERENCES `admin_users`(`id`) ON DELETE SET NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
+        ");
+        
         // Add default settings
         $pdo->exec("INSERT IGNORE INTO `settings` (`setting_key`, `setting_value`) VALUES ('site_name', 'استارتک')");
         $pdo->exec("INSERT IGNORE INTO `settings` (`setting_key`, `setting_value`) VALUES ('currency', 'تومان')");
