@@ -129,8 +129,8 @@
         if (hasDiscount) {
             badges += '<div class="tag-badge tag-badge--sale">حراج</div>';
         }
-        if (product.is_hot) {
-            badges += '<div class="tag-badge tag-badge--hot">داغ</div>';
+        if (product.is_featured || product.is_hot) {
+            badges += '<div class="tag-badge tag-badge--hot">ویژه</div>';
         }
 
         return `
