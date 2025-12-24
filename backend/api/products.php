@@ -11,6 +11,8 @@
  * GET /api/products.php?featured=1         - Get featured products
  * GET /api/products.php?discounted=1       - Get discounted products
  * GET /api/products.php?search=keyword     - Search products
+ * GET /api/products.php?price_min=500      - Minimum price filter
+ * GET /api/products.php?price_max=1000     - Maximum price filter
  * GET /api/products.php?limit=10           - Limit results
  */
 
@@ -174,6 +176,14 @@ try {
 
     if (isset($_GET['search'])) {
         $filters['search'] = $_GET['search'];
+    }
+
+    if (isset($_GET['price_min'])) {
+        $filters['price_min'] = (float) $_GET['price_min'];
+    }
+
+    if (isset($_GET['price_max'])) {
+        $filters['price_max'] = (float) $_GET['price_max'];
     }
 
     if (isset($_GET['limit'])) {

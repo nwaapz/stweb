@@ -70,6 +70,12 @@
         if (urlParams.get('discounted')) {
             ProductLoader.filters.has_discount = true;
         }
+        if (urlParams.get('price_min')) {
+            ProductLoader.filters.price_min = parseFloat(urlParams.get('price_min'));
+        }
+        if (urlParams.get('price_max')) {
+            ProductLoader.filters.price_max = parseFloat(urlParams.get('price_max'));
+        }
 
         // Initialize UI elements
         initSortSelect();
@@ -214,6 +220,12 @@
         }
         if (ProductLoader.filters.has_discount) {
             params.append('discounted', '1');
+        }
+        if (ProductLoader.filters.price_min) {
+            params.append('price_min', ProductLoader.filters.price_min);
+        }
+        if (ProductLoader.filters.price_max) {
+            params.append('price_max', ProductLoader.filters.price_max);
         }
 
         // Add sorting
@@ -551,7 +563,7 @@
         
         // Add existing URL params
         const urlParams = new URLSearchParams(window.location.search);
-        ['category', 'vehicle', 'search', 'featured', 'discounted'].forEach(key => {
+        ['category', 'vehicle', 'search', 'featured', 'discounted', 'price_min', 'price_max'].forEach(key => {
             if (urlParams.get(key)) params.append(key, urlParams.get(key));
         });
 

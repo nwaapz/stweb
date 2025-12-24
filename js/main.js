@@ -65,19 +65,34 @@
     */
     $(function () {
         $('.filter-price').each(function (i, element) {
-            const min = $(element).data('min');
-            const max = $(element).data('max');
-            const from = $(element).data('from');
-            const to = $(element).data('to');
+            const min = parseFloat($(element).data('min'));
+            const max = parseFloat($(element).data('max'));
+            const from = parseFloat($(element).data('from'));
+            const to = parseFloat($(element).data('to'));
             const slider = element.querySelector('.filter-price__slider');
+
+            // Destroy existing slider if it exists
+            if (slider.noUiSlider) {
+                slider.noUiSlider.destroy();
+            }
 
             noUiSlider.create(slider, {
                 start: [from, to],
                 connect: true,
-                direction: isRTL() ? 'rtl' : 'ltr',
+                direction: 'ltr',
+                behaviour: 'tap-drag',
+                step: 1,
                 range: {
                     'min': min,
                     'max': max
+                },
+                format: {
+                    to: function (value) {
+                        return Math.round(value);
+                    },
+                    from: function (value) {
+                        return Number(value);
+                    }
                 }
             });
 
@@ -87,7 +102,9 @@
             ];
 
             slider.noUiSlider.on('update', function (values, handle) {
-                titleValues[handle].innerHTML = values[handle];
+                // Format value as integer (remove decimals)
+                const formattedValue = Math.round(parseFloat(values[handle]));
+                titleValues[handle].innerHTML = formattedValue.toLocaleString('fa-IR');
             });
         });
     });
@@ -1148,14 +1165,14 @@
         });
 
         // Load latest products dynamically for "تازه‌ها" section
-        $('.block-products-carousel[data-layout="horizontal"] .owl-carousel[data-latest-products-carousel]').each(function() {
+        $('.block-products-carousel[data-layout="horizontal"] .owl-carousel[data-latest-products-carousel]').each(function () {
             const owlCarousel = $(this);
             const block = owlCarousel.closest('.block-products-carousel');
             const carousel = block.find('.block-products-carousel__carousel');
-            
+
             // Show loading state
             carousel.addClass('block-products-carousel__carousel--loading');
-            
+
             // Function to render latest products
             function renderLatestProducts(products) {
                 if (products.length === 0) {
@@ -1176,16 +1193,16 @@
                 for (let i = 0; i < products.length; i += 2) {
                     const column = $('<div class="block-products-carousel__column"></div>');
                     let productsAdded = 0;
-                    
+
                     // Add up to 2 products in this column
                     for (let j = 0; j < 2 && (i + j) < products.length; j++) {
                         const product = products[i + j];
-                        
+
                         // Skip if product data is invalid
                         if (!product || !product.id) {
                             continue;
                         }
-                        
+
                         const productUrl = product.slug ? 'product-full.html?product=' + encodeURIComponent(product.slug) : 'product-full.html?id=' + product.id;
                         const productImage = product.image_url || 'images/products/product-1-245x245.jpg';
                         const productName = (product.name && product.name.trim()) ? product.name.trim() : 'بدون نام';
@@ -1193,10 +1210,10 @@
                         const discountPrice = product.formatted_discount_price || null;
                         const productRating = parseFloat(product.rating) || 0;
                         const productReviews = parseInt(product.reviews) || 0;
-                        
+
                         // Calculate number of active stars (0-5)
                         const activeStars = Math.min(5, Math.max(0, Math.round(productRating)));
-                        
+
                         // Build badges container
                         const badgesContainer = $('<div class="product-card__badges"></div>');
                         if (product.has_discount) {
@@ -1217,7 +1234,7 @@
                         if (product.is_featured) {
                             badgesContainer.append('<div class="tag-badge tag-badge--hot">ویژه</div>');
                         }
-                        
+
                         // Build rating stars
                         const ratingBody = $('<div class="rating__body"></div>');
                         for (let star = 1; star <= 5; star++) {
@@ -1227,7 +1244,7 @@
                             }
                             ratingBody.append(starDiv);
                         }
-                        
+
                         // Build price container
                         const pricesContainer = $('<div class="product-card__prices"></div>');
                         if (discountPrice && product.has_discount) {
@@ -1236,18 +1253,18 @@
                         } else {
                             pricesContainer.append($('<div class="product-card__price product-card__price--current"></div>').text(productPrice));
                         }
-                        
+
                         // Build product card using jQuery
                         const cell = $('<div class="block-products-carousel__cell"></div>');
                         const productCard = $('<div class="product-card product-card--layout--horizontal"></div>');
-                        
+
                         // Actions
                         const actionsList = $('<div class="product-card__actions-list"></div>');
                         const quickviewBtn = $('<button class="product-card__action product-card__action--quickview" type="button" aria-label="Quick view"></button>');
                         quickviewBtn.html('<svg width="16" height="16"><path d="M14,15h-4v-2h3v-3h2v4C15,14.6,14.6,15,14,15z M13,3h-3V1h4c0.6,0,1,0.4,1,1v4h-2V3z M6,3H3v3H1V2c0-0.6,0.4-1,1-1h4V3z M3,13h3v2H2c-0.6,0-1-0.4-1-1v-4h2V13z"/></svg>');
                         actionsList.append(quickviewBtn);
                         productCard.append(actionsList);
-                        
+
                         // Image
                         const imageContainer = $('<div class="product-card__image"></div>');
                         const imageDiv = $('<div class="image image--type--product"></div>');
@@ -1260,7 +1277,7 @@
                         imageDiv.append(imageLink);
                         imageContainer.append(imageDiv);
                         productCard.append(imageContainer);
-                        
+
                         // Info
                         const infoContainer = $('<div class="product-card__info"></div>');
                         const nameContainer = $('<div class="product-card__name"></div>');
@@ -1271,7 +1288,7 @@
                         nameDiv.append($('<a href="' + productUrl + '"></a>').text(productName));
                         nameContainer.append(nameDiv);
                         infoContainer.append(nameContainer);
-                        
+
                         // Rating
                         const ratingContainer = $('<div class="product-card__rating"></div>');
                         const ratingStars = $('<div class="rating product-card__rating-stars"></div>');
@@ -1280,17 +1297,17 @@
                         ratingContainer.append($('<div class="product-card__rating-label"></div>').text(productRating.toFixed(1) + ' از ' + productReviews + ' نظر'));
                         infoContainer.append(ratingContainer);
                         productCard.append(infoContainer);
-                        
+
                         // Footer
                         const footerContainer = $('<div class="product-card__footer"></div>');
                         footerContainer.append(pricesContainer);
                         productCard.append(footerContainer);
-                        
+
                         cell.append(productCard);
                         column.append(cell);
                         productsAdded++;
                     }
-                    
+
                     // If last column has only 1 product, add empty placeholder cell to maintain height consistency
                     if (productsAdded === 1 && (i + 1) >= products.length) {
                         const emptyCell = $('<div class="block-products-carousel__cell"></div>');
@@ -1300,7 +1317,7 @@
                         emptyCell.append(emptyCard);
                         column.append(emptyCell);
                     }
-                    
+
                     // Only append column if it has at least one product
                     if (column.children().length > 0 && productsAdded > 0) {
                         owlCarousel.append(column);
@@ -1335,7 +1352,7 @@
                 });
 
                 // Re-initialize quickview handlers
-                $('.product-card__action--quickview', block).off('click').on('click', function() {
+                $('.product-card__action--quickview', block).off('click').on('click', function () {
                     if (typeof quickview !== 'undefined' && quickview.clickHandler) {
                         quickview.clickHandler.apply(this, arguments);
                     }
@@ -1344,7 +1361,7 @@
 
             // Fetch latest products from API (ordered by created_at DESC)
             const apiUrl = 'backend/api/products.php?order_by=created_at&order_dir=DESC&limit=10';
-            
+
             fetch(apiUrl)
                 .then(response => response.json())
                 .then(data => {
@@ -1601,7 +1618,7 @@
             // Function to render discounted products in sale carousel
             function renderSaleProducts(products) {
                 // Filter to only show products with active discounts
-                const discountedProducts = products.filter(function(product) {
+                const discountedProducts = products.filter(function (product) {
                     return product.has_discount && product.formatted_discount_price;
                 });
 
@@ -1619,7 +1636,7 @@
                 owlCarousel.empty();
                 owlCarousel.css('opacity', '0'); // Hide while loading
 
-                discountedProducts.forEach(function(product) {
+                discountedProducts.forEach(function (product) {
                     const productUrl = product.slug ? 'product-full.html?product=' + encodeURIComponent(product.slug) : 'product-full.html?id=' + product.id;
                     const productImage = product.image_url || 'images/products/product-1-245x245.jpg';
                     const productName = product.name || 'بدون نام';
@@ -1714,7 +1731,7 @@
                 });
 
                 // Re-initialize quickview handlers
-                $('.product-card__action--quickview', block).off('click').on('click', function() {
+                $('.product-card__action--quickview', block).off('click').on('click', function () {
                     if (typeof quickview !== 'undefined' && quickview.clickHandler) {
                         quickview.clickHandler.apply(this, arguments);
                     }
@@ -1723,7 +1740,7 @@
 
             // Fetch discounted products from API
             const apiUrl = 'backend/api/products.php?discounted=1&limit=20';
-            
+
             fetch(apiUrl)
                 .then(response => response.json())
                 .then(data => {
@@ -1839,25 +1856,25 @@
                 url: 'backend/api/factories.php',
                 method: 'GET',
                 dataType: 'json',
-                success: function(response) {
+                success: function (response) {
                     if (response.success && response.data) {
                         // Clear existing options except the default
                         $makeSelect.find('option:not([value="none"])').remove();
-                        
+
                         // Add factories to dropdown
-                        response.data.forEach(function(factory) {
+                        response.data.forEach(function (factory) {
                             $makeSelect.append($('<option>', {
                                 value: factory.id,
                                 text: factory.name
                             }));
                         });
-                        
+
                         // Enable the make select
                         $makeSelect.prop('disabled', false);
                         $makeSelect.trigger('change.select2');
                     }
                 },
-                error: function(xhr, status, error) {
+                error: function (xhr, status, error) {
                     console.error('Error loading factories:', error);
                 }
             });
@@ -1877,25 +1894,25 @@
                 method: 'GET',
                 data: { factory_id: factoryId },
                 dataType: 'json',
-                success: function(response) {
+                success: function (response) {
                     if (response.success && response.data) {
                         // Clear existing options except the default
                         $modelSelect.find('option:not([value="none"])').remove();
-                        
+
                         // Add vehicles to dropdown
-                        response.data.forEach(function(vehicle) {
+                        response.data.forEach(function (vehicle) {
                             $modelSelect.append($('<option>', {
                                 value: vehicle.id,
                                 text: vehicle.name || (vehicle.make + ' ' + vehicle.model)
                             }));
                         });
-                        
+
                         // Enable the model select
                         $modelSelect.prop('disabled', false);
                         $modelSelect.trigger('change.select2');
                     }
                 },
-                error: function(xhr, status, error) {
+                error: function (xhr, status, error) {
                     console.error('Error loading vehicles:', error);
                     $modelSelect.prop('disabled', true);
                 }
@@ -1909,22 +1926,22 @@
         });
 
         // Handle form submission
-        $blockFinderForm.on('submit', function(e) {
+        $blockFinderForm.on('submit', function (e) {
             e.preventDefault();
-            
+
             const makeId = $makeSelect.val();
             const modelId = $modelSelect.val();
-            
+
             if (makeId === 'none' || modelId === 'none') {
                 alert('لطفاً برند و مدل را انتخاب کنید');
                 return false;
             }
-            
+
             // Redirect to search/category page with selected vehicle
             // You can customize this URL based on your routing structure
             const searchUrl = 'category.html?make=' + makeId + '&model=' + modelId;
             window.location.href = searchUrl;
-            
+
             return false;
         });
 
@@ -2228,7 +2245,7 @@
     */
     $(function () {
         const $brandsList = $('#factories-brands-list');
-        
+
         if ($brandsList.length) {
             // Fetch factories from API
             fetch('backend/api/factories.php')
@@ -2237,15 +2254,15 @@
                     if (data.success && data.data && data.data.length > 0) {
                         // Clear loading state
                         $brandsList.empty();
-                        
+
                         // Render factories
                         const factories = data.data.filter(f => f.is_active && f.logo_url); // Only active factories with logos
-                        
+
                         if (factories.length === 0) {
                             $brandsList.html('<li style="text-align: center; padding: 40px; width: 100%;">هیچ کارخانه‌ای یافت نشد</li>');
                             return;
                         }
-                        
+
                         factories.forEach(function (factory, index) {
                             // Create factory item
                             const $item = $('<li>').addClass('block-brands__item');
@@ -2253,33 +2270,33 @@
                                 .addClass('block-brands__item-link')
                                 .attr('href', factory.slug ? 'category.html?factory=' + factory.id : '#')
                                 .attr('title', factory.name);
-                            
+
                             // Create image - handle both absolute and relative URLs
                             let logoUrl = factory.logo_url;
                             if (logoUrl && !logoUrl.startsWith('http') && !logoUrl.startsWith('/')) {
                                 // If relative path doesn't start with /, make it relative to root
                                 logoUrl = '/' + logoUrl;
                             }
-                            
+
                             const $img = $('<img>')
                                 .attr('src', logoUrl || '')
                                 .attr('alt', factory.name)
                                 .css('max-width', '100%')
                                 .css('height', 'auto')
-                                .on('error', function() {
+                                .on('error', function () {
                                     // Hide image if it fails to load
                                     $(this).hide();
                                 });
-                            
+
                             // Create name span
                             const $name = $('<span>')
                                 .addClass('block-brands__item-name')
                                 .text(factory.name);
-                            
+
                             $link.append($img, $name);
                             $item.append($link);
                             $brandsList.append($item);
-                            
+
                             // Add divider after each item except the last one
                             if (index < factories.length - 1) {
                                 const $divider = $('<li>')

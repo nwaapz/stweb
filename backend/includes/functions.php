@@ -443,6 +443,25 @@ function getProducts($filters = [])
         $params[] = $filters['category_name'];
     }
 
+    // Price filtering - check effective price (discount_price if active, otherwise price)
+    if (isset($filters['price_min']) || isset($filters['price_max'])) {
+        $priceConditions = [];
+        
+        if (isset($filters['price_min'])) {
+            $priceConditions[] = "(CASE WHEN (p.discount_price IS NOT NULL AND p.discount_price > 0 AND (p.discount_end IS NULL OR p.discount_end >= NOW()) AND (p.discount_start IS NULL OR p.discount_start <= NOW())) THEN p.discount_price ELSE p.price END) >= ?";
+            $params[] = $filters['price_min'];
+        }
+        
+        if (isset($filters['price_max'])) {
+            $priceConditions[] = "(CASE WHEN (p.discount_price IS NOT NULL AND p.discount_price > 0 AND (p.discount_end IS NULL OR p.discount_end >= NOW()) AND (p.discount_start IS NULL OR p.discount_start <= NOW())) THEN p.discount_price ELSE p.price END) <= ?";
+            $params[] = $filters['price_max'];
+        }
+        
+        if (!empty($priceConditions)) {
+            $sql .= " AND (" . implode(" AND ", $priceConditions) . ")";
+        }
+    }
+
     // Order by
     if (!empty($filters['order_by'])) {
         $orderBy = $filters['order_by'];
@@ -523,6 +542,25 @@ function getProductsCount($filters = [])
     if (!empty($filters['category_name'])) {
         $sql .= " AND c.name = ?";
         $params[] = $filters['category_name'];
+    }
+
+    // Price filtering - check effective price (discount_price if active, otherwise price)
+    if (isset($filters['price_min']) || isset($filters['price_max'])) {
+        $priceConditions = [];
+        
+        if (isset($filters['price_min'])) {
+            $priceConditions[] = "(CASE WHEN (p.discount_price IS NOT NULL AND p.discount_price > 0 AND (p.discount_end IS NULL OR p.discount_end >= NOW()) AND (p.discount_start IS NULL OR p.discount_start <= NOW())) THEN p.discount_price ELSE p.price END) >= ?";
+            $params[] = $filters['price_min'];
+        }
+        
+        if (isset($filters['price_max'])) {
+            $priceConditions[] = "(CASE WHEN (p.discount_price IS NOT NULL AND p.discount_price > 0 AND (p.discount_end IS NULL OR p.discount_end >= NOW()) AND (p.discount_start IS NULL OR p.discount_start <= NOW())) THEN p.discount_price ELSE p.price END) <= ?";
+            $params[] = $filters['price_max'];
+        }
+        
+        if (!empty($priceConditions)) {
+            $sql .= " AND (" . implode(" AND ", $priceConditions) . ")";
+        }
     }
 
     $stmt = $conn->prepare($sql);
