@@ -13,6 +13,43 @@
     font-family: 'Vazirmatn', 'Tahoma', 'Arial', sans-serif;
     font-weight: 600;
 }
+/* Ensure banner starts right under header with no gap */
+header.site__header,
+.site__header,
+.site__header .header,
+.header {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+}
+.site__body {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+.site__body > .about__image {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    display: block !important;
+    position: relative;
+    line-height: 0;
+    vertical-align: top;
+}
+.site__body > .about__image:first-child {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    border-top: none !important;
+}
+.about__image-bg {
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block;
+}
+/* Remove any spacing from block-header that might push content down */
+.block-header {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
 .widget-posts__image img {
     width: 70px !important;
     height: 70px !important;
@@ -24,6 +61,252 @@
     height: 70px;
     flex-shrink: 0;
     overflow: hidden;
+}
+/* Feature Banner Header Styles - Modern Design */
+.feature-banner-header {
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+}
+.feature-banner-header__image {
+    position: relative;
+    width: 100%;
+    height: 350px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+}
+.feature-banner-header__image-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: 0;
+    opacity: 0.3;
+}
+.feature-banner-header__black-frame {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+.feature-banner-header__wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    z-index: 2;
+    gap: 0;
+}
+.feature-banner-header__decor {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
+}
+@media (max-width: 768px) {
+    .feature-banner-header__image {
+        height: 250px;
+    }
+}
+.feature-banner-header__item {
+    position: relative;
+    height: 100%;
+    cursor: pointer;
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    flex-shrink: 0;
+    filter: brightness(0.7) saturate(0.8);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+.feature-banner-header__item:last-child {
+    border-right: none;
+}
+.feature-banner-header__item:not(.feature-banner-header__item--focused) {
+    width: 12%;
+    opacity: 0.5;
+    filter: brightness(0.6) saturate(0.7);
+}
+.feature-banner-header__item--focused {
+    width: 64%;
+    opacity: 1;
+    z-index: 3;
+    filter: brightness(1.1) saturate(1.2);
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
+}
+.feature-banner-header__item:hover:not(.feature-banner-header__item--focused) {
+    opacity: 0.8;
+    filter: brightness(0.8) saturate(0.9);
+}
+.feature-banner-header__link {
+    display: block;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    text-decoration: none;
+    color: #fff;
+    overflow: hidden;
+}
+.feature-banner-header__item-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+.feature-banner-header__item-image::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.05) 50%, rgba(0, 0, 0, 0.3) 100%);
+    z-index: 1;
+    transition: opacity 0.6s ease;
+}
+.feature-banner-header__item--focused .feature-banner-header__item-image::before {
+    opacity: 0.15;
+}
+.feature-banner-header__item-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 1s cubic-bezier(0.4, 0, 0.2, 1), filter 0.8s ease;
+    transform: scale(1.1);
+    filter: contrast(1.05);
+}
+.feature-banner-header__item--focused .feature-banner-header__item-image img {
+    transform: scale(1.15);
+    filter: contrast(1.15) brightness(1.05);
+}
+.feature-banner-header__item:not(.feature-banner-header__item--focused) .feature-banner-header__item-image::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.4) 100%);
+    z-index: 2;
+    transition: opacity 0.6s ease;
+}
+.feature-banner-header__item--focused .feature-banner-header__item-image::after {
+    opacity: 0;
+}
+.feature-banner-header__content {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 30px 40px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.6) 50%, rgba(0, 0, 0, 0) 100%);
+    z-index: 3;
+    transform: translateY(100%);
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(8px);
+}
+.feature-banner-header__item--focused .feature-banner-header__content {
+    transform: translateY(0);
+}
+.feature-banner-header__title {
+    font-size: 36px;
+    font-weight: 700;
+    margin: 0 0 15px 0;
+    color: #fff;
+    text-shadow: 0 4px 12px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 255, 255, 0.1);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    letter-spacing: 0.5px;
+    line-height: 1.2;
+}
+.feature-banner-header__item:not(.feature-banner-header__item--focused) .feature-banner-header__title {
+    font-size: 14px;
+    margin: 0;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+.feature-banner-header__description {
+    font-size: 18px;
+    margin: 0;
+    color: rgba(255, 255, 255, 0.95);
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+    opacity: 0;
+    transition: opacity 0.5s ease 0.3s;
+    line-height: 1.5;
+    font-weight: 300;
+}
+.feature-banner-header__item--focused .feature-banner-header__description {
+    opacity: 1;
+}
+.feature-banner-header__item:not(.feature-banner-header__item--focused) .feature-banner-header__description {
+    display: none;
+}
+/* Modern glow effect on focused item */
+.feature-banner-header__item--focused::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    z-index: -1;
+    border-radius: 2px;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+}
+.feature-banner-header__item--focused::before {
+    opacity: 1;
+}
+@media (max-width: 768px) {
+    .feature-banner-header__image {
+        height: 250px;
+    }
+    .feature-banner-header__content {
+        padding: 20px 25px;
+    }
+    .feature-banner-header__title {
+        font-size: 28px;
+    }
+    .feature-banner-header__item:not(.feature-banner-header__item--focused) .feature-banner-header__title {
+        font-size: 12px;
+    }
+    .feature-banner-header__description {
+        font-size: 14px;
+    }
+}
+@media (max-width: 576px) {
+    .feature-banner-header__image {
+        height: 200px;
+    }
+    .feature-banner-header__content {
+        padding: 15px 20px;
+    }
+    .feature-banner-header__title {
+        font-size: 22px;
+    }
+    .feature-banner-header__item:not(.feature-banner-header__item--focused) .feature-banner-header__title {
+        font-size: 11px;
+    }
+    .feature-banner-header__description {
+        font-size: 12px;
+    }
 }
 </style>
 
@@ -143,13 +426,13 @@
 
 	c-0.4-0.4-0.4-1,0-1.4l0,0c0.4-0.4,1-0.4,1.4,0L5,3.6l2.4-2.4c0.4-0.4,1-0.4,1.4,0l0,0c0.4,0.4,0.4,1,0,1.4L6.4,5l2.4,2.4
 
-	C9.2,7.8,9.2,8.4,8.8,8.8z"/></svg></button></li><li class="dropcart__divider" role="presentation"></li></ul><div class="dropcart__totals"><table><tr><th>جمع کل</th><td>5877.00</td></tr><tr><th>ارسال</th><td>25.00</td></tr><tr><th>مالیات</th><td>0.00</td></tr><tr><th>مجموع</th><td>5902.00</td></tr></table></div><div class="dropcart__actions"><a href="cart.html" class="btn btn-secondary">مشاهده سبد خرید</a> <a href="checkout.html" class="btn btn-primary">تسویه حساب</a></div></div></div></div></div></div></header><!-- site__header / end --><!-- site__body --><div class="site__body"><div class="block-header block-header--has-breadcrumb block-header--has-title"><div class="container"><div class="block-header__body"><nav class="breadcrumb block-header__breadcrumb" aria-label="breadcrumb"><ol class="breadcrumb__list"><li class="breadcrumb__spaceship-safe-area" role="presentation"></li><li class="breadcrumb__item breadcrumb__item--parent breadcrumb__item--first"><a href="index.html" class="breadcrumb__item-link">خانه</a></li><li class="breadcrumb__item breadcrumb__item--current breadcrumb__item--last" aria-current="page"><span class="breadcrumb__item-link">وبلاگ</span></li><li class="breadcrumb__title-safe-area" role="presentation"></li></ol></nav><h1 class="block-header__title">اخبار و مقالات</h1></div></div></div><div class="block blog-view blog-view--layout--classic"><div class="container"><div class="blog-view__body"><div class="blog-view__item blog-view__item-posts"><div class="block posts-view"><div class="posts-view__list posts-list posts-list--layout--classic"><div class="posts-list__body"><!-- Blog posts will be loaded dynamically from CMS --></div></div><div class="posts-view__pagination"><ul class="pagination"><li class="page-item disabled"><a class="page-link page-link--with-arrow" href="" aria-label="Previous"><span class="page-link__arrow page-link__arrow--left" aria-hidden="true"><svg width="7" height="11"><path d="M6.7,0.3L6.7,0.3c-0.4-0.4-0.9-0.4-1.3,0L0,5.5l5.4,5.2c0.4,0.4,0.9,0.3,1.3,0l0,0c0.4-0.4,0.4-1,0-1.3l-4-3.9l4-3.9C7.1,1.2,7.1,0.6,6.7,0.3z"/></svg></span></a></li><li class="page-item"><a class="page-link" href="#">1</a></li><li class="page-item active" aria-current="page"><span class="page-link">2 <span class="sr-only">(current)</span></span></li><li class="page-item"><a class="page-link" href="#">3</a></li><li class="page-item"><a class="page-link" href="#">4</a></li><li class="page-item page-item--dots"><div class="pagination__dots"></div></li><li class="page-item"><a class="page-link" href="#">9</a></li><li class="page-item"><a class="page-link page-link--with-arrow" href="" aria-label="Next"><span class="page-link__arrow page-link__arrow--right" aria-hidden="true"><svg width="7" height="11"><path d="M0.3,10.7L0.3,10.7c0.4,0.4,0.9,0.4,1.3,0L7,5.5L1.6,0.3C1.2-0.1,0.7,0,0.3,0.3l0,0c-0.4,0.4-0.4,1,0,1.3l4,3.9l-4,3.9
+	C9.2,7.8,9.2,8.4,8.8,8.8z"/></svg></button></li><li class="dropcart__divider" role="presentation"></li></ul><div class="dropcart__totals"><table><tr><th>جمع کل</th><td>5877.00</td></tr><tr><th>ارسال</th><td>25.00</td></tr><tr><th>مالیات</th><td>0.00</td></tr><tr><th>مجموع</th><td>5902.00</td></tr></table></div><div class="dropcart__actions"><a href="cart.html" class="btn btn-secondary">مشاهده سبد خرید</a> <a href="checkout.html" class="btn btn-primary">تسویه حساب</a></div></div></div></div></div></div></header><!-- site__header / end --><!-- site__body --><div class="site__body"><div class="about__image"><div class="about__image-bg" style="background-image: url('images/about-1903x1903.jpg');"></div><div class="decor about__image-decor decor--type--bottom"><div class="decor__body"><div class="decor__start"></div><div class="decor__end"></div><div class="decor__center"></div></div></div></div><div class="block-header block-header--has-breadcrumb block-header--has-title"><div class="container"><div class="block-header__body"><nav class="breadcrumb block-header__breadcrumb" aria-label="breadcrumb"><ol class="breadcrumb__list"><li class="breadcrumb__spaceship-safe-area" role="presentation"></li><li class="breadcrumb__item breadcrumb__item--parent breadcrumb__item--first"><a href="index.html" class="breadcrumb__item-link">خانه</a></li><li class="breadcrumb__item breadcrumb__item--current breadcrumb__item--last" aria-current="page"><span class="breadcrumb__item-link">وبلاگ</span></li><li class="breadcrumb__title-safe-area" role="presentation"></li></ol></nav><!-- Feature Banner Header --><div class="feature-banner-header"><div class="feature-banner-header__image"><div class="feature-banner-header__image-bg" style="background-image: url('images/posts/post-1-730x485.jpg');"></div><div class="feature-banner-header__black-frame"><div class="feature-banner-header__wrapper"><div class="feature-banner-header__item" data-index="0"><a href="blog-classic-right-sidebar.html?category=latest" class="feature-banner-header__link"><div class="feature-banner-header__item-image"><img src="images/posts/post-1-730x485.jpg" alt="آخرین اخبار"></div><div class="feature-banner-header__content"><h3 class="feature-banner-header__title">آخرین اخبار</h3><p class="feature-banner-header__description">جدیدترین مقالات و اخبار را بخوانید</p></div></a></div><div class="feature-banner-header__item" data-index="1"><a href="blog-classic-right-sidebar.html?category=special" class="feature-banner-header__link"><div class="feature-banner-header__item-image"><img src="images/posts/post-2-730x485.jpg" alt="پیشنهادات ویژه"></div><div class="feature-banner-header__content"><h3 class="feature-banner-header__title">پیشنهادات ویژه</h3><p class="feature-banner-header__description">مطالب ویژه و پیشنهادی برای شما</p></div></a></div><div class="feature-banner-header__item" data-index="2"><a href="blog-classic-right-sidebar.html?category=new" class="feature-banner-header__link"><div class="feature-banner-header__item-image"><img src="images/posts/post-3-730x485.jpg" alt="محصولات جدید"></div><div class="feature-banner-header__content"><h3 class="feature-banner-header__title">محصولات جدید</h3><p class="feature-banner-header__description">آخرین محصولات و معرفی‌های جدید</p></div></a></div><div class="feature-banner-header__item" data-index="3"><a href="blog-classic-right-sidebar.html?category=reviews" class="feature-banner-header__link"><div class="feature-banner-header__item-image"><img src="images/posts/post-4-730x485.jpg" alt="نظرات کاربران"></div><div class="feature-banner-header__content"><h3 class="feature-banner-header__title">نظرات کاربران</h3><p class="feature-banner-header__description">نظرات و تجربیات کاربران ما</p></div></a></div></div></div><div class="decor feature-banner-header__decor decor--type--bottom"><div class="decor__body"><div class="decor__start"></div><div class="decor__end"></div><div class="decor__center"></div></div></div></div></div><!-- Feature Banner Header / end --><h1 class="block-header__title">اخبار و مقالات</h1></div></div></div><div class="block blog-view blog-view--layout--classic"><div class="container"><div class="blog-view__body"><div class="blog-view__item blog-view__item-posts"><div class="block posts-view"><div class="posts-view__list posts-list posts-list--layout--classic"><div class="posts-list__body"><!-- Blog posts will be loaded dynamically from CMS --></div></div><div class="posts-view__pagination"><ul class="pagination"><li class="page-item disabled"><a class="page-link page-link--with-arrow" href="" aria-label="Previous"><span class="page-link__arrow page-link__arrow--left" aria-hidden="true"><svg width="7" height="11"><path d="M6.7,0.3L6.7,0.3c-0.4-0.4-0.9-0.4-1.3,0L0,5.5l5.4,5.2c0.4,0.4,0.9,0.3,1.3,0l0,0c0.4-0.4,0.4-1,0-1.3l-4-3.9l4-3.9C7.1,1.2,7.1,0.6,6.7,0.3z"/></svg></span></a></li><li class="page-item"><a class="page-link" href="#">1</a></li><li class="page-item active" aria-current="page"><span class="page-link">2 <span class="sr-only">(current)</span></span></li><li class="page-item"><a class="page-link" href="#">3</a></li><li class="page-item"><a class="page-link" href="#">4</a></li><li class="page-item page-item--dots"><div class="pagination__dots"></div></li><li class="page-item"><a class="page-link" href="#">9</a></li><li class="page-item"><a class="page-link page-link--with-arrow" href="" aria-label="Next"><span class="page-link__arrow page-link__arrow--right" aria-hidden="true"><svg width="7" height="11"><path d="M0.3,10.7L0.3,10.7c0.4,0.4,0.9,0.4,1.3,0L7,5.5L1.6,0.3C1.2-0.1,0.7,0,0.3,0.3l0,0c-0.4,0.4-0.4,1,0,1.3l4,3.9l-4,3.9
 
 	C-0.1,9.8-0.1,10.4,0.3,10.7z"/></svg></span></a></li></ul></div></div></div><div class="blog-view__item blog-view__item-sidebar"><div class="card widget widget-search"><form action="" class="widget-search__form"><input class="widget-search__input" type="search" placeholder="جستجوی وبلاگ..."> <button class="widget-search__button"><svg width="20" height="20"><path d="M19.2,17.8c0,0-0.2,0.5-0.5,0.8c-0.4,0.4-0.9,0.6-0.9,0.6s-0.9,0.7-2.8-1.6c-1.1-1.4-2.2-2.8-3.1-3.9C10.9,14.5,9.5,15,8,15
 
 	c-3.9,0-7-3.1-7-7s3.1-7,7-7s7,3.1,7,7c0,1.5-0.5,2.9-1.3,4c1.1,0.8,2.5,2,4,3.1C20,16.8,19.2,17.8,19.2,17.8z M8,3C5.2,3,3,5.2,3,8
 
-	c0,2.8,2.2,5,5,5c2.8,0,5-2.2,5-5C13,5.2,10.8,3,8,3z"/></svg></button><div class="widget-search__field"></div></form></div><div class="card widget widget-about-us"><div class="widget__header"><h4>درباره وبلاگ</h4></div><div class="widget-about-us__body"><div class="widget-about-us__text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed tincidunt, erat in malesuada aliquam, est erat faucibus purus, eget viverra nulla sem vitae neque. Quisque id sodales libero.</div><div class="widget-about-us__social-links social-links"><ul class="social-links__list"><li class="social-links__item social-links__item--rss"><a href="https://themeforest.net/user/kos9" target="_blank"><i class="widget-social__icon fas fa-rss"></i></a></li><li class="social-links__item social-links__item--youtube"><a href="https://themeforest.net/user/kos9" target="_blank"><i class="widget-social__icon fab fa-youtube"></i></a></li><li class="social-links__item social-links__item--facebook"><a href="https://themeforest.net/user/kos9" target="_blank"><i class="widget-social__icon fab fa-facebook-f"></i></a></li><li class="social-links__item social-links__item--twitter"><a href="https://themeforest.net/user/kos9" target="_blank"><i class="widget-social__icon fab fa-twitter"></i></a></li><li class="social-links__item social-links__item--instagram"><a href="https://themeforest.net/user/kos9" target="_blank"><i class="widget-social__icon fab fa-instagram"></i></a></li></ul></div></div></div><div class="card widget widget-categories"><div class="widget__header"><h4>دسته‌بندی‌ها</h4></div><ul class="widget-categories__list widget-categories__list--root" data-collapse data-collapse-opened-class="widget-categories__item--open"><li class="widget-categories__item" data-collapse-item><a href="" class="widget-categories__link">آخرین اخبار</a></li><li class="widget-categories__item" data-collapse-item><a href="" class="widget-categories__link">پیشنهادات ویژه </a><button class="widget-categories__expander" type="button" data-collapse-trigger></button><div class="widget-categories__container" data-collapse-content><ul class="widget-categories__list widget-categories__list--child"><li class="widget-categories__item"><a href="" class="widget-categories__link">فروش بهاره</a></li><li class="widget-categories__item"><a href="" class="widget-categories__link">فروش تابستانه</a></li><li class="widget-categories__item"><a href="" class="widget-categories__link">فروش پاییزه</a></li><li class="widget-categories__item"><a href="" class="widget-categories__link">فروش کریسمس</a></li><li class="widget-categories__item"><a href="" class="widget-categories__link">سایر فروش‌ها</a></li></ul></div></li><li class="widget-categories__item" data-collapse-item><a href="" class="widget-categories__link">محصولات جدید</a></li><li class="widget-categories__item" data-collapse-item><a href="" class="widget-categories__link">نظرات</a></li><li class="widget-categories__item" data-collapse-item><a href="" class="widget-categories__link">چرخ و لاستیک</a></li><li class="widget-categories__item" data-collapse-item><a href="" class="widget-categories__link">موتور و سیستم انتقال قدرت</a></li><li class="widget-categories__item" data-collapse-item><a href="" class="widget-categories__link">گیربکس</a></li><li class="widget-categories__item" data-collapse-item><a href="" class="widget-categories__link">عملکرد</a></li></ul></div><div class="card widget widget-posts"><div class="widget__header"><h4>آخرین پست‌ها</h4></div><ul class="widget-posts__list"><li class="widget-posts__item"><div class="widget-posts__image"><a href=""><img src="images/posts/post-1-70x70.jpg" alt=""></a></div><div class="widget-posts__info"><div class="widget-posts__name"><a href="">Philosophy That آدرس‌ها Topics Such As Goodness</a></div><div class="widget-posts__date">October 19, 2019</div></div></li><li class="widget-posts__item"><div class="widget-posts__image"><a href=""><img src="images/posts/post-2-70x70.jpg" alt=""></a></div><div class="widget-posts__info"><div class="widget-posts__name"><a href="">Logic Is The Study Of Reasoning And Argument Part 2</a></div><div class="widget-posts__date">September 5, 2019</div></div></li><li class="widget-posts__item"><div class="widget-posts__image"><a href=""><img src="images/posts/post-3-70x70.jpg" alt=""></a></div><div class="widget-posts__info"><div class="widget-posts__name"><a href="">Some Philosophers Specialize In One Or More Historical Periods</a></div><div class="widget-posts__date">August 12, 2019</div></div></li><li class="widget-posts__item"><div class="widget-posts__image"><a href=""><img src="images/posts/post-4-70x70.jpg" alt=""></a></div><div class="widget-posts__info"><div class="widget-posts__name"><a href="">A Variety Of Other Academic And Non-Academic Approaches Have Been Explored</a></div><div class="widget-posts__date">Jule 30, 2019</div></div></li></ul></div><div class="widget widget-newsletter"><div class="widget-newsletter__title"><h4>خبرنامه</h4></div><div class="widget-newsletter__form"><form action=""><div class="widget-newsletter__text">آدرس ایمیل خود را در زیر وارد کنید تا در خبرنامه ما عضو شوید و از آخرین اخبار، تخفیف‌ها و پیشنهادات ویژه مطلع شوید.</div><input type="text" class="widget-newsletter__email" placeholder="آدرس ایمیل..."> <button type="button" class="widget-newsletter__button">عضویت</button></form></div></div><div class="card widget widget-comments"><div class="widget__header"><h4>آخرین نظرات</h4></div><div class="widget-comments__body"><ul class="widget-comments__list"><li class="widget-comments__item"><div class="widget-comments__author"><a href="">Emma Williams</a></div><div class="widget-comments__content">در یک معنا کلی، فلسفه با خرد، فرهنگ فکری و جستجوی دانش مرتبط است...</div><div class="widget-comments__meta"><div class="widget-comments__date">۳ دقیقه پیش</div><div class="widget-comments__name">در <a href="" title="راهنمای کامل نگهداری خودرو">راهنمای کامل نگهداری خودرو</a></div></div></li><li class="widget-comments__item"><div class="widget-comments__author"><a href="">Airic Ford</a></div><div class="widget-comments__content">در یک معنا کلی، فلسفه با خرد، فرهنگ فکری و جستجوی دانش مرتبط است...</div><div class="widget-comments__meta"><div class="widget-comments__date">۲۵ دقیقه پیش</div><div class="widget-comments__name">در <a href="" title="نکات مهم در تعویض روغن موتور">نکات مهم در تعویض روغن موتور</a></div></div></li><li class="widget-comments__item"><div class="widget-comments__author"><a href="">Loyd Walker</a></div><div class="widget-comments__content">در یک معنا کلی، فلسفه با خرد، فرهنگ فکری و جستجوی دانش مرتبط است...</div><div class="widget-comments__meta"><div class="widget-comments__date">۲ ساعت پیش</div><div class="widget-comments__name">در <a href="" title="بهترین قطعات یدکی برای خودروی شما">بهترین قطعات یدکی برای خودروی شما</a></div></div></li></ul></div></div><div class="card widget-tags widget"><div class="widget__header"><h4>ابر برچسب‌ها</h4></div><div class="widget-tags__body tags"><div class="tags__list"><a href="">تبلیغات</a> <a href="">ابزار برقی</a> <a href="">محصولات جدید</a> <a href="">پیچ‌گوشتی</a> <a href="">آچار</a> <a href="">نصب</a> <a href="">الکترود</a> <a href="">اره زنجیری</a> <a href="">فشارسنج</a> <a href="">میخ</a> <a href="">تفنگ بادی</a> <a href="">دیسک برش</a></div></div></div></div></div></div></div><div class="block-space block-space--layout--before-footer"></div></div><!-- site__body / end --><!-- site__footer --><footer class="site__footer"><div class="site-footer"><div class="decor site-footer__decor decor--type--bottom"><div class="decor__body"><div class="decor__start"></div><div class="decor__end"></div><div class="decor__center"></div></div></div><div class="site-footer__widgets"><div class="container"><div class="row"><div class="col-12 col-xl-4"><div class="site-footer__widget footer-contacts"><h5 class="footer-contacts__title">تماس با ما</h5><div class="footer-contacts__text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer in feugiat lorem.</div><address class="footer-contacts__contacts"><dl><dt>Phone Number</dt><dd>09360590157</dd></dl><dl><dt>Email Address</dt><dd>hsn@gmail.com</dd></dl><dl><dt>Our Location</dt><dd>715 Fake Street, New York 10021 USA</dd></dl><dl><dt>Working Hours</dt><dd>Mon-Sat 10:00pm - 7:00pm</dd></dl></address></div></div><div class="col-6 col-md-3 col-xl-2"><div class="site-footer__widget footer-links"><h5 class="footer-links__title">Information</h5><ul class="footer-links__list"><li class="footer-links__item"><a href="" class="footer-links__link">درباره ما</a></li><li class="footer-links__item"><a href="" class="footer-links__link">Delivery Information</a></li><li class="footer-links__item"><a href="" class="footer-links__link">Privacy Policy</a></li><li class="footer-links__item"><a href="" class="footer-links__link">Brands</a></li><li class="footer-links__item"><a href="" class="footer-links__link">تماس با ما</a></li><li class="footer-links__item"><a href="" class="footer-links__link">Returns</a></li><li class="footer-links__item"><a href="" class="footer-links__link">Site Map</a></li></ul></div></div><div class="col-6 col-md-3 col-xl-2"><div class="site-footer__widget footer-links"><h5 class="footer-links__title">حساب کاربری من</h5><ul class="footer-links__list"><li class="footer-links__item"><a href="" class="footer-links__link">Store Location</a></li><li class="footer-links__item"><a href="" class="footer-links__link">تاریخچه سفارشات</a></li><li class="footer-links__item"><a href="" class="footer-links__link">Wish List</a></li><li class="footer-links__item"><a href="" class="footer-links__link">Newsletter</a></li><li class="footer-links__item"><a href="" class="footer-links__link">Specials</a></li><li class="footer-links__item"><a href="" class="footer-links__link">Gift Certificates</a></li><li class="footer-links__item"><a href="" class="footer-links__link">Affiliate</a></li></ul></div></div><div class="col-12 col-md-6 col-xl-4"><div class="site-footer__widget footer-newsletter"><h5 class="footer-newsletter__title">Newsletter</h5><div class="footer-newsletter__text">Enter your email address below to subscribe to our newsletter and keep up to date with discounts and special offers.</div><form action="" class="footer-newsletter__form"><label class="sr-only" for="footer-newsletter-address">Email Address</label> <input type="text" class="footer-newsletter__form-input" id="footer-newsletter-address" placeholder="Email Address..."> <button class="footer-newsletter__form-button">Subscribe</button></form><div class="footer-newsletter__text footer-newsletter__text--social">Follow us on social networks</div><div class="footer-newsletter__social-links social-links"><ul class="social-links__list"><li class="social-links__item social-links__item--facebook"><a href="https://themeforest.net/user/kos9" target="_blank"><i class="fab fa-facebook-f"></i></a></li><li class="social-links__item social-links__item--twitter"><a href="https://themeforest.net/user/kos9" target="_blank"><i class="fab fa-twitter"></i></a></li><li class="social-links__item social-links__item--youtube"><a href="https://themeforest.net/user/kos9" target="_blank"><i class="fab fa-youtube"></i></a></li><li class="social-links__item social-links__item--instagram"><a href="https://themeforest.net/user/kos9" target="_blank"><i class="fab fa-instagram"></i></a></li><li class="social-links__item social-links__item--rss"><a href="https://themeforest.net/user/kos9" target="_blank"><i class="fas fa-rss"></i></a></li></ul></div></div></div></div></div></div><div class="site-footer__bottom"><div class="container"><div class="site-footer__bottom-row"><div class="site-footer__copyright"><!-- copyright --> Powered by HTML — Designed by <a href="https://themeforest.net/user/kos9" target="_blank">Kos</a><!-- copyright / end --></div><div class="site-footer__payments"><img src="images/payments.png" alt=""></div></div></div></div></div></footer><!-- site__footer / end --></div><!-- site / end --><!-- mobile-menu --><div class="mobile-menu"><div class="mobile-menu__backdrop"></div><div class="mobile-menu__body"><button class="mobile-menu__close" type="button"><svg width="12" height="12"><path d="M10.8,10.8L10.8,10.8c-0.4,0.4-1,0.4-1.4,0L6,7.4l-3.4,3.4c-0.4,0.4-1,0.4-1.4,0l0,0c-0.4-0.4-0.4-1,0-1.4L4.6,6L1.2,2.6
+	c0,2.8,2.2,5,5,5c2.8,0,5-2.2,5-5C13,5.2,10.8,3,8,3z"/></svg></button><div class="widget-search__field"></div></form></div><div class="card widget widget-about-us"><div class="widget__header"><h4>درباره وبلاگ</h4></div><div class="widget-about-us__body"><div class="widget-about-us__text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed tincidunt, erat in malesuada aliquam, est erat faucibus purus, eget viverra nulla sem vitae neque. Quisque id sodales libero.</div><div class="widget-about-us__social-links social-links"><ul class="social-links__list"><li class="social-links__item social-links__item--rss"><a href="https://themeforest.net/user/kos9" target="_blank"><i class="widget-social__icon fas fa-rss"></i></a></li><li class="social-links__item social-links__item--youtube"><a href="https://themeforest.net/user/kos9" target="_blank"><i class="widget-social__icon fab fa-youtube"></i></a></li><li class="social-links__item social-links__item--facebook"><a href="https://themeforest.net/user/kos9" target="_blank"><i class="widget-social__icon fab fa-facebook-f"></i></a></li><li class="social-links__item social-links__item--twitter"><a href="https://themeforest.net/user/kos9" target="_blank"><i class="widget-social__icon fab fa-twitter"></i></a></li><li class="social-links__item social-links__item--instagram"><a href="https://themeforest.net/user/kos9" target="_blank"><i class="widget-social__icon fab fa-instagram"></i></a></li></ul></div></div></div><div class="card widget widget-categories"><div class="widget__header"><h4>دسته‌بندی‌ها</h4></div><ul class="widget-categories__list widget-categories__list--root" data-collapse data-collapse-opened-class="widget-categories__item--open"><li class="widget-categories__item" data-collapse-item><a href="" class="widget-categories__link">آخرین اخبار</a></li><li class="widget-categories__item" data-collapse-item><a href="" class="widget-categories__link">پیشنهادات ویژه </a><button class="widget-categories__expander" type="button" data-collapse-trigger></button><div class="widget-categories__container" data-collapse-content><ul class="widget-categories__list widget-categories__list--child"><li class="widget-categories__item"><a href="" class="widget-categories__link">فروش بهاره</a></li><li class="widget-categories__item"><a href="" class="widget-categories__link">فروش تابستانه</a></li><li class="widget-categories__item"><a href="" class="widget-categories__link">فروش پاییزه</a></li><li class="widget-categories__item"><a href="" class="widget-categories__link">فروش کریسمس</a></li><li class="widget-categories__item"><a href="" class="widget-categories__link">سایر فروش‌ها</a></li></ul></div></li><li class="widget-categories__item" data-collapse-item><a href="" class="widget-categories__link">محصولات جدید</a></li><li class="widget-categories__item" data-collapse-item><a href="" class="widget-categories__link">نظرات</a></li><li class="widget-categories__item" data-collapse-item><a href="" class="widget-categories__link">موتور و سیستم انتقال قدرت</a></li><li class="widget-categories__item" data-collapse-item><a href="" class="widget-categories__link">گیربکس</a></li><li class="widget-categories__item" data-collapse-item><a href="" class="widget-categories__link">عملکرد</a></li></ul></div><div class="card widget widget-posts"><div class="widget__header"><h4>آخرین پست‌ها</h4></div><ul class="widget-posts__list"><li class="widget-posts__item"><div class="widget-posts__image"><a href=""><img src="images/posts/post-1-70x70.jpg" alt=""></a></div><div class="widget-posts__info"><div class="widget-posts__name"><a href="">Philosophy That آدرس‌ها Topics Such As Goodness</a></div><div class="widget-posts__date">October 19, 2019</div></div></li><li class="widget-posts__item"><div class="widget-posts__image"><a href=""><img src="images/posts/post-2-70x70.jpg" alt=""></a></div><div class="widget-posts__info"><div class="widget-posts__name"><a href="">Logic Is The Study Of Reasoning And Argument Part 2</a></div><div class="widget-posts__date">September 5, 2019</div></div></li><li class="widget-posts__item"><div class="widget-posts__image"><a href=""><img src="images/posts/post-3-70x70.jpg" alt=""></a></div><div class="widget-posts__info"><div class="widget-posts__name"><a href="">Some Philosophers Specialize In One Or More Historical Periods</a></div><div class="widget-posts__date">August 12, 2019</div></div></li><li class="widget-posts__item"><div class="widget-posts__image"><a href=""><img src="images/posts/post-4-70x70.jpg" alt=""></a></div><div class="widget-posts__info"><div class="widget-posts__name"><a href="">A Variety Of Other Academic And Non-Academic Approaches Have Been Explored</a></div><div class="widget-posts__date">Jule 30, 2019</div></div></li></ul></div><div class="widget widget-newsletter"><div class="widget-newsletter__title"><h4>خبرنامه</h4></div><div class="widget-newsletter__form"><form action=""><div class="widget-newsletter__text">آدرس ایمیل خود را در زیر وارد کنید تا در خبرنامه ما عضو شوید و از آخرین اخبار، تخفیف‌ها و پیشنهادات ویژه مطلع شوید.</div><input type="text" class="widget-newsletter__email" placeholder="آدرس ایمیل..."> <button type="button" class="widget-newsletter__button">عضویت</button></form></div></div><div class="card widget widget-comments"><div class="widget__header"><h4>آخرین نظرات</h4></div><div class="widget-comments__body"><ul class="widget-comments__list"><li class="widget-comments__item"><div class="widget-comments__author"><a href="">Emma Williams</a></div><div class="widget-comments__content">در یک معنا کلی، فلسفه با خرد، فرهنگ فکری و جستجوی دانش مرتبط است...</div><div class="widget-comments__meta"><div class="widget-comments__date">۳ دقیقه پیش</div><div class="widget-comments__name">در <a href="" title="راهنمای کامل نگهداری خودرو">راهنمای کامل نگهداری خودرو</a></div></div></li><li class="widget-comments__item"><div class="widget-comments__author"><a href="">Airic Ford</a></div><div class="widget-comments__content">در یک معنا کلی، فلسفه با خرد، فرهنگ فکری و جستجوی دانش مرتبط است...</div><div class="widget-comments__meta"><div class="widget-comments__date">۲۵ دقیقه پیش</div><div class="widget-comments__name">در <a href="" title="نکات مهم در تعویض روغن موتور">نکات مهم در تعویض روغن موتور</a></div></div></li><li class="widget-comments__item"><div class="widget-comments__author"><a href="">Loyd Walker</a></div><div class="widget-comments__content">در یک معنا کلی، فلسفه با خرد، فرهنگ فکری و جستجوی دانش مرتبط است...</div><div class="widget-comments__meta"><div class="widget-comments__date">۲ ساعت پیش</div><div class="widget-comments__name">در <a href="" title="بهترین قطعات یدکی برای خودروی شما">بهترین قطعات یدکی برای خودروی شما</a></div></div></li></ul></div></div><div class="card widget-tags widget"><div class="widget__header"><h4>ابر برچسب‌ها</h4></div><div class="widget-tags__body tags"><div class="tags__list"><a href="">تبلیغات</a> <a href="">ابزار برقی</a> <a href="">محصولات جدید</a> <a href="">پیچ‌گوشتی</a> <a href="">آچار</a> <a href="">نصب</a> <a href="">الکترود</a> <a href="">اره زنجیری</a> <a href="">فشارسنج</a> <a href="">میخ</a> <a href="">تفنگ بادی</a> <a href="">دیسک برش</a></div></div></div></div></div></div></div><div class="block-space block-space--layout--before-footer"></div></div><!-- site__body / end --><!-- site__footer --><footer class="site__footer"><div class="site-footer"><div class="decor site-footer__decor decor--type--bottom"><div class="decor__body"><div class="decor__start"></div><div class="decor__end"></div><div class="decor__center"></div></div></div><div class="site-footer__widgets"><div class="container"><div class="row"><div class="col-12 col-xl-4"><div class="site-footer__widget footer-contacts"><h5 class="footer-contacts__title">تماس با ما</h5><div class="footer-contacts__text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer in feugiat lorem.</div><address class="footer-contacts__contacts"><dl><dt>Phone Number</dt><dd>09360590157</dd></dl><dl><dt>Email Address</dt><dd>hsn@gmail.com</dd></dl><dl><dt>Our Location</dt><dd>715 Fake Street, New York 10021 USA</dd></dl><dl><dt>Working Hours</dt><dd>Mon-Sat 10:00pm - 7:00pm</dd></dl></address></div></div><div class="col-6 col-md-3 col-xl-2"><div class="site-footer__widget footer-links"><h5 class="footer-links__title">Information</h5><ul class="footer-links__list"><li class="footer-links__item"><a href="" class="footer-links__link">درباره ما</a></li><li class="footer-links__item"><a href="" class="footer-links__link">Delivery Information</a></li><li class="footer-links__item"><a href="" class="footer-links__link">Privacy Policy</a></li><li class="footer-links__item"><a href="" class="footer-links__link">Brands</a></li><li class="footer-links__item"><a href="" class="footer-links__link">تماس با ما</a></li><li class="footer-links__item"><a href="" class="footer-links__link">Returns</a></li><li class="footer-links__item"><a href="" class="footer-links__link">Site Map</a></li></ul></div></div><div class="col-6 col-md-3 col-xl-2"><div class="site-footer__widget footer-links"><h5 class="footer-links__title">حساب کاربری من</h5><ul class="footer-links__list"><li class="footer-links__item"><a href="" class="footer-links__link">Store Location</a></li><li class="footer-links__item"><a href="" class="footer-links__link">تاریخچه سفارشات</a></li><li class="footer-links__item"><a href="" class="footer-links__link">Wish List</a></li><li class="footer-links__item"><a href="" class="footer-links__link">Newsletter</a></li><li class="footer-links__item"><a href="" class="footer-links__link">Specials</a></li><li class="footer-links__item"><a href="" class="footer-links__link">Gift Certificates</a></li><li class="footer-links__item"><a href="" class="footer-links__link">Affiliate</a></li></ul></div></div><div class="col-12 col-md-6 col-xl-4"><div class="site-footer__widget footer-newsletter"><h5 class="footer-newsletter__title">Newsletter</h5><div class="footer-newsletter__text">Enter your email address below to subscribe to our newsletter and keep up to date with discounts and special offers.</div><form action="" class="footer-newsletter__form"><label class="sr-only" for="footer-newsletter-address">Email Address</label> <input type="text" class="footer-newsletter__form-input" id="footer-newsletter-address" placeholder="Email Address..."> <button class="footer-newsletter__form-button">Subscribe</button></form><div class="footer-newsletter__text footer-newsletter__text--social">Follow us on social networks</div><div class="footer-newsletter__social-links social-links"><ul class="social-links__list"><li class="social-links__item social-links__item--facebook"><a href="https://themeforest.net/user/kos9" target="_blank"><i class="fab fa-facebook-f"></i></a></li><li class="social-links__item social-links__item--twitter"><a href="https://themeforest.net/user/kos9" target="_blank"><i class="fab fa-twitter"></i></a></li><li class="social-links__item social-links__item--youtube"><a href="https://themeforest.net/user/kos9" target="_blank"><i class="fab fa-youtube"></i></a></li><li class="social-links__item social-links__item--instagram"><a href="https://themeforest.net/user/kos9" target="_blank"><i class="fab fa-instagram"></i></a></li><li class="social-links__item social-links__item--rss"><a href="https://themeforest.net/user/kos9" target="_blank"><i class="fas fa-rss"></i></a></li></ul></div></div></div></div></div></div><div class="site-footer__bottom"><div class="container"><div class="site-footer__bottom-row"><div class="site-footer__copyright"><!-- copyright --> Powered by HTML — Designed by <a href="https://themeforest.net/user/kos9" target="_blank">Kos</a><!-- copyright / end --></div><div class="site-footer__payments"><img src="images/payments.png" alt=""></div></div></div></div></div></footer><!-- site__footer / end --></div><!-- site / end --><!-- mobile-menu --><div class="mobile-menu"><div class="mobile-menu__backdrop"></div><div class="mobile-menu__body"><button class="mobile-menu__close" type="button"><svg width="12" height="12"><path d="M10.8,10.8L10.8,10.8c-0.4,0.4-1,0.4-1.4,0L6,7.4l-3.4,3.4c-0.4,0.4-1,0.4-1.4,0l0,0c-0.4-0.4-0.4-1,0-1.4L4.6,6L1.2,2.6
 
 	c-0.4-0.4-0.4-1,0-1.4l0,0c0.4-0.4,1-0.4,1.4,0L6,4.6l3.4-3.4c0.4-0.4,1-0.4,1.4,0l0,0c0.4,0.4,0.4,1,0,1.4L7.4,6l3.4,3.4
 
@@ -209,4 +492,101 @@
 
 	c-0.4-0.4-0.4-1,0-1.4l0,0c0.4-0.4,1-0.4,1.4,0L6,4.6l3.4-3.4c0.4-0.4,1-0.4,1.4,0l0,0c0.4,0.4,0.4,1,0,1.4L7.4,6l3.4,3.4
 
-	C11.2,9.8,11.2,10.4,10.8,10.8z"/></svg></button><div class="vehicle-picker-modal__panel vehicle-picker-modal__panel--active" data-panel="factories"><div class="vehicle-picker-modal__title card-title">انتخاب وسیله نقلیه</div><div class="vehicle-picker-modal__text">برای یافتن قطعات مناسب، وسیله نقلیه خود را انتخاب کنید</div><div class="vehicles-list"><div class="vehicles-list__body"><!-- Vehicles will be loaded dynamically from API --></div></div><div class="vehicle-picker-modal__actions"><button type="button" class="btn btn-sm btn-secondary vehicle-picker-modal__close-button">لغو</button> <button type="button" class="btn btn-sm btn-primary" data-to-panel="form">افزودن وسیله نقلیه</button><div class="vehicle-picker-modal__panel" data-panel="vehicles"><div class="vehicle-picker-modal__title card-title">انتخاب وسیله نقلیه</div><div class="vehicle-picker-modal__text">وسیله نقلیه خود را انتخاب کنید</div><div class="vehicles-list"><div class="vehicles-list__body"><!-- Vehicles will be loaded dynamically from API --></div></div><div class="vehicle-picker-modal__actions"><button type="button" class="btn btn-sm btn-secondary" data-back-to-factories>بازگشت</button> <button type="button" class="btn btn-sm btn-secondary vehicle-picker-modal__close-button">لغو</button></div></div></div></div><div class="vehicle-picker-modal__panel" data-panel="form"><div class="vehicle-picker-modal__title card-title">افزودن وسیله نقلیه</div><div class="vehicle-form vehicle-form--layout--modal"><div class="vehicle-form__item vehicle-form__item--select"><select class="form-control form-control-select2" aria-label="Brand" disabled="disabled"><option value="none">انتخاب برند</option><option>Audi</option><option>BMW</option><option>Ferrari</option><option>Ford</option><option>KIA</option><option>Nissan</option><option>Tesla</option><option>Toyota</option></select></div><div class="vehicle-form__item vehicle-form__item--select"><select class="form-control form-control-select2" aria-label="Model" disabled="disabled"><option value="none">انتخاب مدل</option><option>Explorer</option><option>Focus S</option><option>Fusion SE</option><option>Mustang</option></select></div><div class="vehicle-form__item vehicle-form__item--select"><select class="form-control form-control-select2" aria-label="Engine" disabled="disabled"><option value="none">انتخاب موتور</option><option>Gas 1.6L 125 hp AT/L4</option><option>Diesel 2.5L 200 hp AT/L5</option><option>Diesel 3.0L 250 hp MT/L5</option></select></div><div class="vehicle-form__divider">Or</div><div class="vehicle-form__item"><input type="text" class="form-control" placeholder="شماره VIN را وارد کنید" aria-label="شماره VIN"></div></div><div class="vehicle-picker-modal__actions"><button type="button" class="btn btn-sm btn-secondary" data-to-panel="list">بازگشت به لیست</button> <button type="button" class="btn btn-sm btn-primary">افزودن وسیله نقلیه</button></div></div></div></div></div><!-- vehicle-picker-modal / end --><!-- photoswipe --><div class="pswp" tabindex="-1" role="dialog" aria-hidden="true"><div class="pswp__bg"></div><div class="pswp__scroll-wrap"><div class="pswp__container"><div class="pswp__item"></div><div class="pswp__item"></div><div class="pswp__item"></div></div><div class="pswp__ui pswp__ui--hidden"><div class="pswp__top-bar"><div class="pswp__counter"></div><button class="pswp__button pswp__button--close" title="Close (Esc)"></button><!--<button class="pswp__button pswp__button&#45;&#45;share" title="Share"></button>--> <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button> <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button><div class="pswp__preloader"><div class="pswp__preloader__icn"><div class="pswp__preloader__cut"><div class="pswp__preloader__donut"></div></div></div></div></div><div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap"><div class="pswp__share-tooltip"></div></div><button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)"></button> <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)"></button><div class="pswp__caption"><div class="pswp__caption__center"></div></div></div></div></div><!-- photoswipe / end --><!-- scripts --><script src="vendor/jquery/jquery.min.js"></script><script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script><script src="vendor/owl-carousel/owl.carousel.min.js"></script><script src="vendor/nouislider/nouislider.min.js"></script><script src="vendor/photoswipe/photoswipe.min.js"></script><script src="vendor/photoswipe/photoswipe-ui-default.min.js"></script><script src="vendor/select2/js/select2.min.js"></script><script src="js/number.js"></script><script src="js/main.js"></script><script src="js/blog-loader.js"></script></body></html>
+	C11.2,9.8,11.2,10.4,10.8,10.8z"/></svg></button><div class="vehicle-picker-modal__panel vehicle-picker-modal__panel--active" data-panel="factories"><div class="vehicle-picker-modal__title card-title">انتخاب وسیله نقلیه</div><div class="vehicle-picker-modal__text">برای یافتن قطعات مناسب، وسیله نقلیه خود را انتخاب کنید</div><div class="vehicles-list"><div class="vehicles-list__body"><!-- Vehicles will be loaded dynamically from API --></div></div><div class="vehicle-picker-modal__actions"><button type="button" class="btn btn-sm btn-secondary vehicle-picker-modal__close-button">لغو</button> <button type="button" class="btn btn-sm btn-primary" data-to-panel="form">افزودن وسیله نقلیه</button><div class="vehicle-picker-modal__panel" data-panel="vehicles"><div class="vehicle-picker-modal__title card-title">انتخاب وسیله نقلیه</div><div class="vehicle-picker-modal__text">وسیله نقلیه خود را انتخاب کنید</div><div class="vehicles-list"><div class="vehicles-list__body"><!-- Vehicles will be loaded dynamically from API --></div></div><div class="vehicle-picker-modal__actions"><button type="button" class="btn btn-sm btn-secondary" data-back-to-factories>بازگشت</button> <button type="button" class="btn btn-sm btn-secondary vehicle-picker-modal__close-button">لغو</button></div></div></div></div><div class="vehicle-picker-modal__panel" data-panel="form"><div class="vehicle-picker-modal__title card-title">افزودن وسیله نقلیه</div><div class="vehicle-form vehicle-form--layout--modal"><div class="vehicle-form__item vehicle-form__item--select"><select class="form-control form-control-select2" aria-label="Brand" disabled="disabled"><option value="none">انتخاب برند</option><option>Audi</option><option>BMW</option><option>Ferrari</option><option>Ford</option><option>KIA</option><option>Nissan</option><option>Tesla</option><option>Toyota</option></select></div><div class="vehicle-form__item vehicle-form__item--select"><select class="form-control form-control-select2" aria-label="Model" disabled="disabled"><option value="none">انتخاب مدل</option><option>Explorer</option><option>Focus S</option><option>Fusion SE</option><option>Mustang</option></select></div><div class="vehicle-form__item vehicle-form__item--select"><select class="form-control form-control-select2" aria-label="Engine" disabled="disabled"><option value="none">انتخاب موتور</option><option>Gas 1.6L 125 hp AT/L4</option><option>Diesel 2.5L 200 hp AT/L5</option><option>Diesel 3.0L 250 hp MT/L5</option></select></div><div class="vehicle-form__divider">Or</div><div class="vehicle-form__item"><input type="text" class="form-control" placeholder="شماره VIN را وارد کنید" aria-label="شماره VIN"></div></div><div class="vehicle-picker-modal__actions"><button type="button" class="btn btn-sm btn-secondary" data-to-panel="list">بازگشت به لیست</button> <button type="button" class="btn btn-sm btn-primary">افزودن وسیله نقلیه</button></div></div></div></div></div><!-- vehicle-picker-modal / end --><!-- photoswipe --><div class="pswp" tabindex="-1" role="dialog" aria-hidden="true"><div class="pswp__bg"></div><div class="pswp__scroll-wrap"><div class="pswp__container"><div class="pswp__item"></div><div class="pswp__item"></div><div class="pswp__item"></div></div><div class="pswp__ui pswp__ui--hidden"><div class="pswp__top-bar"><div class="pswp__counter"></div><button class="pswp__button pswp__button--close" title="Close (Esc)"></button><!--<button class="pswp__button pswp__button&#45;&#45;share" title="Share"></button>--> <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button> <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button><div class="pswp__preloader"><div class="pswp__preloader__icn"><div class="pswp__preloader__cut"><div class="pswp__preloader__donut"></div></div></div></div></div><div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap"><div class="pswp__share-tooltip"></div></div><button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)"></button> <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)"></button><div class="pswp__caption"><div class="pswp__caption__center"></div></div></div></div></div><!-- photoswipe / end --><!-- scripts --><script src="vendor/jquery/jquery.min.js"></script><script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script><script src="vendor/owl-carousel/owl.carousel.min.js"></script><script src="vendor/nouislider/nouislider.min.js"></script><script src="vendor/photoswipe/photoswipe.min.js"></script><script src="vendor/photoswipe/photoswipe-ui-default.min.js"></script><script src="vendor/select2/js/select2.min.js"></script><script src="js/number.js"></script><script src="js/main.js"></script><script src="js/blog-loader.js"></script><script>
+(function() {
+    'use strict';
+    
+    // Feature Banner Header Auto-Rotation
+    const featureBanner = document.querySelector('.feature-banner-header');
+    if (!featureBanner) return;
+    
+    const items = featureBanner.querySelectorAll('.feature-banner-header__item');
+    if (items.length === 0) return;
+    
+    let currentIndex = 0;
+    let autoRotateInterval = null;
+    const ROTATION_INTERVAL = 6000; // 6 seconds
+    
+    // Function to set focused item
+    function setFocusedItem(index) {
+        items.forEach((item, i) => {
+            if (i === index) {
+                item.classList.add('feature-banner-header__item--focused');
+            } else {
+                item.classList.remove('feature-banner-header__item--focused');
+            }
+        });
+    }
+    
+    // Function to go to next item
+    function nextItem() {
+        currentIndex = (currentIndex + 1) % items.length;
+        setFocusedItem(currentIndex);
+    }
+    
+    // Function to go to specific item
+    function goToItem(index) {
+        if (index >= 0 && index < items.length) {
+            currentIndex = index;
+            setFocusedItem(currentIndex);
+            resetAutoRotate();
+        }
+    }
+    
+    // Function to start auto-rotation
+    function startAutoRotate() {
+        if (autoRotateInterval) {
+            clearInterval(autoRotateInterval);
+        }
+        autoRotateInterval = setInterval(nextItem, ROTATION_INTERVAL);
+    }
+    
+    // Function to reset auto-rotation
+    function resetAutoRotate() {
+        if (autoRotateInterval) {
+            clearInterval(autoRotateInterval);
+        }
+        startAutoRotate();
+    }
+    
+    // Function to pause auto-rotation
+    function pauseAutoRotate() {
+        if (autoRotateInterval) {
+            clearInterval(autoRotateInterval);
+            autoRotateInterval = null;
+        }
+    }
+    
+    // Initialize: Set first item as focused
+    setFocusedItem(0);
+    
+    // Add click handlers to items
+    items.forEach((item, index) => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            goToItem(index);
+        });
+        
+        // Pause on hover, resume on leave
+        item.addEventListener('mouseenter', function() {
+            pauseAutoRotate();
+        });
+        
+        item.addEventListener('mouseleave', function() {
+            startAutoRotate();
+        });
+    });
+    
+    // Start auto-rotation
+    startAutoRotate();
+    
+    // Pause when page is hidden, resume when visible
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            pauseAutoRotate();
+        } else {
+            startAutoRotate();
+        }
+    });
+})();
+</script></body></html>
