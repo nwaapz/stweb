@@ -217,12 +217,61 @@ try {
     // Get total count before applying limit/offset
     $totalCount = getProductsCount($filters);
     
-    // Get min/max prices from filtered products (excluding price filters for range calculation)
-    $priceFilters = $filters;
-    unset($priceFilters['price_min']);
-    unset($priceFilters['price_max']);
-    $priceRange = getProductsPriceRange($priceFilters);
+    // Calculate price range from products that match ALL current filters (including price filter)
+    // This gives the actual min/max of products that are currently being displayed/filtered
+    $filtersForRange = $filters;
+    unset($filtersForRange['limit']);
+    unset($filtersForRange['offset']);
     
+    // Get all products matching current filters (including price filter)
+    $allMatchingProducts = getProducts($filtersForRange);
+    
+    // Calculate price range from all matching products after price calculations
+    $priceRange = ['min' => 0, 'max' => 1000];
+    if (!empty($allMatchingProducts)) {
+        $prices = [];
+        foreach ($allMatchingProducts as $product) {
+            // Calculate discount_price from discount_percent if needed
+            if ((empty($product['discount_price']) || $product['discount_price'] == 0) && !empty($product['discount_percent']) && !empty($product['price'])) {
+                $numericPrice = (float)$product['price'];
+                $discountPercent = (float)$product['discount_percent'];
+                $calculatedPrice = (int)round($numericPrice - ($numericPrice * $discountPercent / 100));
+                if ($calculatedPrice > 0 && $calculatedPrice < $numericPrice) {
+                    // Check if discount is active
+                    $discountActive = true;
+                    if (!empty($product['discount_start']) && strtotime($product['discount_start']) > time()) {
+                        $discountActive = false;
+                    }
+                    if (!empty($product['discount_end']) && strtotime($product['discount_end']) < time()) {
+                        $discountActive = false;
+                    }
+                    if ($discountActive) {
+                        $product['discount_price'] = $calculatedPrice;
+                    }
+                }
+            }
+            
+            // Get effective price (discount_price if active, else price)
+            $effectivePrice = getEffectivePrice($product);
+            if ($effectivePrice > 0) {
+                $prices[] = (float)$effectivePrice;
+            }
+        }
+        
+        if (!empty($prices)) {
+            $priceRange = [
+                'min' => floor(min($prices)),
+                'max' => ceil(max($prices))
+            ];
+            // If min equals max (only one product), ensure we have a valid range
+            if ($priceRange['min'] == $priceRange['max']) {
+                // Keep the same value for both, or add a small buffer
+                $priceRange['max'] = $priceRange['min'];
+            }
+        }
+    }
+    
+    // Get products for current page (with limit/offset)
     $products = getProducts($filters);
 
     // Format products

@@ -567,7 +567,25 @@ function getProductsPriceRange($filters = [])
         $params[] = $filters['category_name'];
     }
 
-    // Don't include price filters - we want the full range of filtered products
+    // Include price filters - we want the range of products that match ALL current filters
+    // Price filtering - check effective price (discount_price if active, otherwise price)
+    if (isset($filters['price_min']) || isset($filters['price_max'])) {
+        $priceConditions = [];
+        
+        if (isset($filters['price_min'])) {
+            $priceConditions[] = "(CASE WHEN (p.discount_price IS NOT NULL AND p.discount_price > 0 AND (p.discount_end IS NULL OR p.discount_end >= NOW()) AND (p.discount_start IS NULL OR p.discount_start <= NOW())) THEN p.discount_price ELSE p.price END) >= ?";
+            $params[] = $filters['price_min'];
+        }
+        
+        if (isset($filters['price_max'])) {
+            $priceConditions[] = "(CASE WHEN (p.discount_price IS NOT NULL AND p.discount_price > 0 AND (p.discount_end IS NULL OR p.discount_end >= NOW()) AND (p.discount_start IS NULL OR p.discount_start <= NOW())) THEN p.discount_price ELSE p.price END) <= ?";
+            $params[] = $filters['price_max'];
+        }
+        
+        if (!empty($priceConditions)) {
+            $sql .= " AND (" . implode(" AND ", $priceConditions) . ")";
+        }
+    }
     
     $stmt = $conn->prepare($sql);
     $stmt->execute($params);
