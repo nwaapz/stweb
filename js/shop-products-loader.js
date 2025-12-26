@@ -42,8 +42,12 @@
         ProductLoader.$limitSelect = ProductLoader.$container.find('#view-option-limit');
         ProductLoader.$layoutSwitcher = ProductLoader.$container.find('.layout-switcher');
         
-        // Show pagination initially (will be updated after products load)
+        // Clear static pagination HTML immediately to prevent showing wrong page count
         if (ProductLoader.$pagination.length) {
+            const $paginationList = ProductLoader.$pagination.find('.pagination');
+            if ($paginationList.length) {
+                $paginationList.empty(); // Clear static HTML
+            }
             ProductLoader.$pagination.show();
         }
 
@@ -185,16 +189,29 @@
 
             const href = $link.attr('href');
             if (href && href !== '#') {
-                const pageMatch = href.match(/page=(\d+)/);
-                if (pageMatch) {
-                    ProductLoader.currentPage = parseInt(pageMatch[1]);
+                // Parse page number from URL
+                const url = new URL(href, window.location.origin);
+                const pageParam = url.searchParams.get('page');
+                
+                if (pageParam) {
+                    ProductLoader.currentPage = parseInt(pageParam);
                 } else if ($link.attr('aria-label') === 'Previous') {
                     ProductLoader.currentPage = Math.max(1, ProductLoader.currentPage - 1);
                 } else if ($link.attr('aria-label') === 'Next') {
-                    ProductLoader.currentPage = ProductLoader.currentPage + 1;
+                    const totalPages = Math.ceil(ProductLoader.totalProducts / ProductLoader.limit);
+                    ProductLoader.currentPage = Math.min(totalPages, ProductLoader.currentPage + 1);
+                } else {
+                    // Try to extract page number from link text
+                    const pageText = $link.text().trim();
+                    const pageNum = parseInt(pageText);
+                    if (!isNaN(pageNum)) {
+                        ProductLoader.currentPage = pageNum;
+                    }
                 }
-                loadProducts();
+                
+                // Update URL and load products
                 updateURL();
+                loadProducts();
             }
         });
     }
@@ -266,7 +283,16 @@
                 ProductLoader.isLoading = false;
                 
                 if (data.success && data.data) {
-                    ProductLoader.totalProducts = data.total || data.count || data.data.length;
+                    // Use total from API (total count of all matching products)
+                    // Fallback to count (products in current page) only if total is not provided
+                    // Never use data.data.length as it's just the current page
+                    ProductLoader.totalProducts = (data.total !== undefined && data.total !== null) ? data.total : (data.count || 0);
+                    
+                    // Ensure totalProducts is at least the number of products we have
+                    if (ProductLoader.totalProducts < data.data.length) {
+                        ProductLoader.totalProducts = data.data.length;
+                    }
+                    
                     renderProducts(data.data);
                     updatePagination();
                     updateLegend();
@@ -439,12 +465,60 @@
     }
 
     /**
+     * Build pagination URL with all current parameters
+     */
+    function buildPaginationUrl(page) {
+        const params = new URLSearchParams();
+        
+        // Add page number (only if > 1)
+        if (page > 1) {
+            params.append('page', page);
+        }
+        
+        // Preserve all existing URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const preserveParams = ['category', 'vehicle', 'search', 'featured', 'discounted', 'price_min', 'price_max', 'sort', 'dir', 'limit'];
+        
+        preserveParams.forEach(key => {
+            const value = urlParams.get(key);
+            if (value && key !== 'page') { // Don't preserve old page param
+                params.append(key, value);
+            }
+        });
+        
+        // Add current state parameters if not in URL
+        if (!params.has('limit') && ProductLoader.limit !== 16) {
+            params.append('limit', ProductLoader.limit);
+        }
+        if (!params.has('sort') && ProductLoader.sortBy !== 'created_at') {
+            params.append('sort', ProductLoader.sortBy);
+        }
+        if (!params.has('dir') && ProductLoader.sortDir !== 'DESC') {
+            params.append('dir', ProductLoader.sortDir);
+        }
+        
+        const queryString = params.toString();
+        return queryString ? '?' + queryString : '';
+    }
+
+    /**
      * Update pagination
      */
     function updatePagination() {
         if (!ProductLoader.$pagination.length) return;
 
+        // Ensure totalProducts is a valid number
+        if (isNaN(ProductLoader.totalProducts) || ProductLoader.totalProducts < 0) {
+            ProductLoader.totalProducts = 0;
+        }
+        
+        // Ensure limit is a valid positive number
+        if (isNaN(ProductLoader.limit) || ProductLoader.limit <= 0) {
+            ProductLoader.limit = 16;
+        }
+
         const totalPages = Math.ceil(ProductLoader.totalProducts / ProductLoader.limit);
+        
         // Always show pagination, even if there's only 1 page
         ProductLoader.$pagination.show();
         
@@ -478,7 +552,7 @@
 
         // Previous button
         const prevDisabled = ProductLoader.currentPage === 1 ? 'disabled' : '';
-        const prevHref = ProductLoader.currentPage > 1 ? `?page=${ProductLoader.currentPage - 1}` : '#';
+        const prevHref = ProductLoader.currentPage > 1 ? buildPaginationUrl(ProductLoader.currentPage - 1) : '#';
         $paginationList.append(`
             <li class="page-item ${prevDisabled}">
                 <a class="page-link page-link--with-arrow" href="${prevHref}" aria-label="Previous">
@@ -499,7 +573,8 @@
         }
 
         if (startPage > 1) {
-            $paginationList.append(`<li class="page-item"><a class="page-link" href="?page=1">1</a></li>`);
+            const firstPageUrl = buildPaginationUrl(1);
+            $paginationList.append(`<li class="page-item"><a class="page-link" href="${firstPageUrl}">1</a></li>`);
             if (startPage > 2) {
                 $paginationList.append(`<li class="page-item page-item--dots"><div class="pagination__dots"></div></li>`);
             }
@@ -508,11 +583,12 @@
         for (let i = startPage; i <= endPage; i++) {
             const active = i === ProductLoader.currentPage ? 'active' : '';
             const current = i === ProductLoader.currentPage ? 'aria-current="page"' : '';
+            const pageUrl = buildPaginationUrl(i);
             $paginationList.append(`
                 <li class="page-item ${active}" ${current}>
                     ${active ? 
                         `<span class="page-link">${i} <span class="sr-only">(current)</span></span>` :
-                        `<a class="page-link" href="?page=${i}">${i}</a>`
+                        `<a class="page-link" href="${pageUrl}">${i}</a>`
                     }
                 </li>
             `);
@@ -522,12 +598,13 @@
             if (endPage < totalPages - 1) {
                 $paginationList.append(`<li class="page-item page-item--dots"><div class="pagination__dots"></div></li>`);
             }
-            $paginationList.append(`<li class="page-item"><a class="page-link" href="?page=${totalPages}">${totalPages}</a></li>`);
+            const lastPageUrl = buildPaginationUrl(totalPages);
+            $paginationList.append(`<li class="page-item"><a class="page-link" href="${lastPageUrl}">${totalPages}</a></li>`);
         }
 
         // Next button
         const nextDisabled = ProductLoader.currentPage >= totalPages ? 'disabled' : '';
-        const nextHref = ProductLoader.currentPage < totalPages ? `?page=${ProductLoader.currentPage + 1}` : '#';
+        const nextHref = ProductLoader.currentPage < totalPages ? buildPaginationUrl(ProductLoader.currentPage + 1) : '#';
         $paginationList.append(`
             <li class="page-item ${nextDisabled}">
                 <a class="page-link page-link--with-arrow" href="${nextHref}" aria-label="Next">
