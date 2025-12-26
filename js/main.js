@@ -65,48 +65,120 @@
     */
     $(function () {
         $('.filter-price').each(function (i, element) {
-            const min = parseFloat($(element).data('min'));
-            const max = parseFloat($(element).data('max'));
-            const from = parseFloat($(element).data('from'));
-            const to = parseFloat($(element).data('to'));
+            let min = parseFloat($(element).data('min'));
+            let max = parseFloat($(element).data('max'));
+            let from = parseFloat($(element).data('from'));
+            let to = parseFloat($(element).data('to'));
             const slider = element.querySelector('.filter-price__slider');
+
+            if (!slider) {
+                return; // Slider element not found
+            }
+
+            // Validate and set defaults for min/max
+            if (isNaN(min) || min < 0) min = 0;
+            if (isNaN(max) || max <= min) max = min + 1000;
+
+            // Validate and clamp from/to values
+            if (isNaN(from) || from < min) from = min;
+            if (from > max) from = max;
+            if (isNaN(to) || to > max) to = max;
+            if (to < min) to = min;
+            if (from > to) {
+                // If from > to, swap them or set to defaults
+                from = min;
+                to = max;
+            }
+
+            // Ensure from and to are within valid range
+            from = Math.max(min, Math.min(max, from));
+            to = Math.max(min, Math.min(max, to));
+            if (from > to) {
+                from = min;
+                to = max;
+            }
 
             // Destroy existing slider if it exists
             if (slider.noUiSlider) {
                 slider.noUiSlider.destroy();
             }
 
-            noUiSlider.create(slider, {
-                start: [from, to],
-                connect: true,
-                direction: 'ltr',
-                behaviour: 'tap-drag',
-                step: 1,
-                range: {
-                    'min': min,
-                    'max': max
-                },
-                format: {
-                    to: function (value) {
-                        return Math.round(value);
-                    },
-                    from: function (value) {
-                        return Number(value);
-                    }
+            // Ensure slider element has dimensions before initialization
+            function initWhenReady() {
+                if (slider.offsetWidth === 0 || slider.offsetParent === null) {
+                    // Wait for element to be visible
+                    requestAnimationFrame(initWhenReady);
+                } else {
+                    initializeSlider(slider, min, max, from, to, element);
                 }
-            });
-
-            const titleValues = [
-                $(element).find('.filter-price__min-value')[0],
-                $(element).find('.filter-price__max-value')[0]
-            ];
-
-            slider.noUiSlider.on('update', function (values, handle) {
-                // Format value as integer (remove decimals)
-                const formattedValue = Math.round(parseFloat(values[handle]));
-                titleValues[handle].innerHTML = formattedValue.toLocaleString('fa-IR');
-            });
+            }
+            initWhenReady();
         });
+
+        function initializeSlider(slider, min, max, from, to, element) {
+            try {
+                // Ensure all values are numbers
+                min = Number(min);
+                max = Number(max);
+                from = Number(from);
+                to = Number(to);
+
+                // Final validation
+                if (isNaN(min) || min < 0) min = 0;
+                if (isNaN(max) || max <= min) max = min + 1000;
+                if (isNaN(from) || from < min) from = min;
+                if (from > max) from = max;
+                if (isNaN(to) || to > max) to = max;
+                if (to < min) to = min;
+                if (from > to) {
+                    from = min;
+                    to = max;
+                }
+
+                noUiSlider.create(slider, {
+                    start: [from, to],
+                    connect: true,
+                    direction: 'ltr',
+                    behaviour: 'tap-drag',
+                    step: 1,
+                    range: {
+                        'min': min,
+                        'max': max
+                    },
+                    format: {
+                        to: function (value) {
+                            return Math.round(Number(value));
+                        },
+                        from: function (value) {
+                            return Number(value);
+                        }
+                    }
+                });
+
+                const titleValues = [
+                    $(element).find('.filter-price__min-value')[0],
+                    $(element).find('.filter-price__max-value')[0]
+                ];
+
+                slider.noUiSlider.on('update', function (values, handle) {
+                    // Format value as integer (remove decimals)
+                    const formattedValue = Math.round(parseFloat(values[handle]));
+                    if (titleValues[handle]) {
+                        titleValues[handle].innerHTML = formattedValue.toLocaleString('fa-IR');
+                    }
+                });
+
+                // Force slider to update positions after initialization
+                setTimeout(function() {
+                    if (slider.noUiSlider) {
+                        const currentValues = slider.noUiSlider.get();
+                        slider.noUiSlider.set(currentValues);
+                    }
+                }, 50);
+            } catch (error) {
+                console.error('Error initializing price slider:', error);
+            }
+        }
     });
 
     /*
