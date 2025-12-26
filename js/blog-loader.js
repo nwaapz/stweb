@@ -175,6 +175,127 @@
     }
 
     /**
+     * Render carousel post card
+     */
+    function renderCarouselPostCard(post, index) {
+        const imageUrl = post.featured_image || 'images/posts/post-1-730x485.jpg';
+        const excerpt = post.excerpt || getExcerpt(post.content);
+        const date = formatDateEnglish(post.published_at || post.created_at);
+        const author = post.author_name || 'مدیر';
+        const postUrl = `post-full-width.html?slug=${post.slug}`;
+        
+        // Default categories to cycle through if no category is set
+        const defaultCategories = ['آخرین اخبار', 'پیشنهادات ویژه', 'محصولات جدید'];
+        const category = post.category_name || defaultCategories[index % defaultCategories.length];
+        
+        return `
+            <div class="block-posts-carousel__item">
+                <div class="post-card">
+                    <div class="post-card__image">
+                        <a href="${postUrl}">
+                            <img src="${imageUrl}" alt="${post.title}">
+                        </a>
+                    </div>
+                    <div class="post-card__content">
+                        <div class="post-card__category">
+                            <a href="blog-classic-right-sidebar.html">${category}</a>
+                        </div>
+                        <div class="post-card__title">
+                            <h2><a href="${postUrl}">${post.title}</a></h2>
+                        </div>
+                        <div class="post-card__date">
+                            توسط <a href="">${author}</a> در ${date}
+                        </div>
+                        <div class="post-card__excerpt">
+                            <div class="typography">${excerpt}</div>
+                        </div>
+                        <div class="post-card__more">
+                            <a href="${postUrl}" class="btn btn-secondary btn-sm">ادامه مطلب</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * Load and render blog posts carousel
+     */
+    async function loadPostsCarousel() {
+        const $carouselContainer = $('.block-posts-carousel .owl-carousel');
+        if (!$carouselContainer.length) return;
+
+        // Show loading state
+        $carouselContainer.html('<div class="text-center py-5"><p>در حال بارگذاری...</p></div>');
+
+        // Fetch latest posts for carousel (default 6 posts)
+        const posts = await fetchBlogPosts(1, 6);
+
+        if (posts.length === 0) {
+            $carouselContainer.html('<div class="text-center py-5"><p class="text-muted">هیچ پستی یافت نشد.</p></div>');
+            return;
+        }
+
+        // Render carousel items
+        const carouselItems = posts.map((post, index) => renderCarouselPostCard(post, index)).join('');
+        $carouselContainer.html(carouselItems);
+
+        // Initialize Owl Carousel after content is loaded
+        if (typeof $.fn.owlCarousel !== 'undefined') {
+            const $block = $carouselContainer.closest('.block-posts-carousel');
+            const layout = $block.data('layout') || 'grid';
+            
+            // Destroy existing carousel if it exists
+            if ($carouselContainer.data('owl.carousel')) {
+                $carouselContainer.trigger('destroy.owl.carousel');
+            }
+
+            // Default options
+            const defaultOptions = {
+                dots: false,
+                margin: 20,
+                loop: true,
+                rtl: true
+            };
+
+            // Layout-specific options
+            const layoutOptions = {
+                grid: {
+                    items: 4,
+                    responsive: {
+                        1400: { items: 4, margin: 20 },
+                        1200: { items: 3, margin: 20 },
+                        992: { items: 3, margin: 16 },
+                        768: { items: 2, margin: 16 },
+                        0: { items: 1, margin: 16 },
+                    },
+                },
+                list: {
+                    items: 2,
+                    responsive: {
+                        1400: { items: 2, margin: 20 },
+                        992: { items: 2, margin: 16 },
+                        0: { items: 1, margin: 16 },
+                    },
+                },
+            };
+
+            // Initialize carousel
+            const carouselOptions = Object.assign({}, defaultOptions, layoutOptions[layout] || layoutOptions.grid);
+            $carouselContainer.owlCarousel(carouselOptions);
+
+            // Setup navigation arrows
+            $block.find('.section-header__arrow--prev').off('click').on('click', function () {
+                $carouselContainer.trigger('prev.owl.carousel', [500]);
+            });
+
+            $block.find('.section-header__arrow--next').off('click').on('click', function () {
+                $carouselContainer.trigger('next.owl.carousel', [500]);
+            });
+        }
+    }
+
+    /**
      * Build pagination URL with all current parameters
      */
     function buildPaginationUrl(page) {
@@ -390,6 +511,9 @@
         
         // Load latest posts for sidebar
         loadLatestPosts();
+        
+        // Load posts carousel
+        loadPostsCarousel();
     }
 
     // Initialize when DOM is ready
