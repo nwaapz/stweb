@@ -497,6 +497,88 @@ function getProducts($filters = [])
 /**
  * Get total count of products (for pagination)
  */
+/**
+ * Get min/max price range for filtered products
+ */
+function getProductsPriceRange($filters = [])
+{
+    $conn = getConnection();
+    $sql = "SELECT 
+                MIN(COALESCE(
+                    CASE 
+                        WHEN p.discount_price IS NOT NULL 
+                        AND (p.discount_end IS NULL OR p.discount_end >= NOW())
+                        AND (p.discount_start IS NULL OR p.discount_start <= NOW())
+                        THEN p.discount_price
+                        ELSE p.price
+                    END,
+                    p.price
+                )) as min_price,
+                MAX(COALESCE(
+                    CASE 
+                        WHEN p.discount_price IS NOT NULL 
+                        AND (p.discount_end IS NULL OR p.discount_end >= NOW())
+                        AND (p.discount_start IS NULL OR p.discount_start <= NOW())
+                        THEN p.discount_price
+                        ELSE p.price
+                    END,
+                    p.price
+                )) as max_price
+            FROM products p 
+            LEFT JOIN categories c ON p.category_id = c.id 
+            LEFT JOIN vehicles v ON p.vehicle_id = v.id 
+            WHERE 1=1";
+    $params = [];
+
+    if (!empty($filters['category_id'])) {
+        $sql .= " AND p.category_id = ?";
+        $params[] = $filters['category_id'];
+    }
+
+    if (!empty($filters['vehicle_id'])) {
+        $sql .= " AND p.vehicle_id = ?";
+        $params[] = $filters['vehicle_id'];
+    }
+
+    if (isset($filters['is_active'])) {
+        $sql .= " AND p.is_active = ?";
+        $params[] = $filters['is_active'];
+    }
+
+    if (!empty($filters['is_featured'])) {
+        $sql .= " AND p.is_featured = 1";
+    }
+
+    if (!empty($filters['has_discount'])) {
+        $sql .= " AND p.discount_price IS NOT NULL 
+                  AND (p.discount_end IS NULL OR p.discount_end >= NOW())
+                  AND (p.discount_start IS NULL OR p.discount_start <= NOW())";
+    }
+
+    if (!empty($filters['search'])) {
+        $sql .= " AND (p.name LIKE ? OR p.description LIKE ?)";
+        $search = '%' . $filters['search'] . '%';
+        $params[] = $search;
+        $params[] = $search;
+    }
+
+    if (!empty($filters['category_name'])) {
+        $sql .= " AND c.name = ?";
+        $params[] = $filters['category_name'];
+    }
+
+    // Don't include price filters - we want the full range of filtered products
+    
+    $stmt = $conn->prepare($sql);
+    $stmt->execute($params);
+    $result = $stmt->fetch();
+    
+    return [
+        'min' => $result['min_price'] ? (float)$result['min_price'] : 0,
+        'max' => $result['max_price'] ? (float)$result['max_price'] : 1000
+    ];
+}
+
 function getProductsCount($filters = [])
 {
     $conn = getConnection();

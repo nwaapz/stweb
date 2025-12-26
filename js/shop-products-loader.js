@@ -270,6 +270,11 @@
                     renderProducts(data.data);
                     updatePagination();
                     updateLegend();
+                    
+                    // Update price filter range if available
+                    if (data.price_range) {
+                        updatePriceFilterRange(data.price_range);
+                    }
                 } else {
                     $contentContainer.html('<div style="text-align: center; padding: 40px;">محصولی یافت نشد</div>');
                 }
@@ -532,6 +537,69 @@
                 </a>
             </li>
         `);
+    }
+
+    /**
+     * Update price filter range
+     */
+    function updatePriceFilterRange(priceRange) {
+        if (!priceRange || !priceRange.min || !priceRange.max) {
+            return;
+        }
+        
+        const minPrice = Math.floor(priceRange.min);
+        const maxPrice = Math.ceil(priceRange.max);
+        
+        $('.filter-price').each(function() {
+            const $filterPrice = $(this);
+            const $slider = $filterPrice.find('.filter-price__slider');
+            
+            // Update data attributes
+            $filterPrice.attr('data-min', minPrice);
+            $filterPrice.attr('data-max', maxPrice);
+            
+            // Get current values or use defaults
+            const currentFrom = parseFloat($filterPrice.data('from')) || minPrice;
+            const currentTo = parseFloat($filterPrice.data('to')) || maxPrice;
+            
+            // Clamp to new range
+            const newFrom = Math.max(minPrice, Math.min(maxPrice, currentFrom));
+            const newTo = Math.max(minPrice, Math.min(maxPrice, currentTo));
+            
+            $filterPrice.attr('data-from', newFrom);
+            $filterPrice.attr('data-to', newTo);
+            
+            // Reinitialize slider if it exists
+            if ($slider.length && $slider[0].noUiSlider) {
+                try {
+                    const slider = $slider[0].noUiSlider;
+                    const currentValues = slider.get();
+                    
+                    // Update slider range
+                    slider.updateOptions({
+                        range: {
+                            'min': minPrice,
+                            'max': maxPrice
+                        }
+                    }, false);
+                    
+                    // Set values within new range
+                    const clampedFrom = Math.max(minPrice, Math.min(maxPrice, parseFloat(currentValues[0])));
+                    const clampedTo = Math.max(minPrice, Math.min(maxPrice, parseFloat(currentValues[1])));
+                    slider.set([clampedFrom, clampedTo]);
+                } catch(e) {
+                    console.error('Error updating price slider:', e);
+                    // If update fails, destroy and let main.js reinitialize
+                    $slider[0].noUiSlider.destroy();
+                    // Trigger reinitialization
+                    setTimeout(function() {
+                        if (typeof window.initPriceSliders === 'function') {
+                            window.initPriceSliders();
+                        }
+                    }, 100);
+                }
+            }
+        });
     }
 
     /**

@@ -217,6 +217,12 @@ try {
     // Get total count before applying limit/offset
     $totalCount = getProductsCount($filters);
     
+    // Get min/max prices from filtered products (excluding price filters for range calculation)
+    $priceFilters = $filters;
+    unset($priceFilters['price_min']);
+    unset($priceFilters['price_max']);
+    $priceRange = getProductsPriceRange($priceFilters);
+    
     $products = getProducts($filters);
 
     // Format products
@@ -267,6 +273,7 @@ try {
         'success' => true,
         'count' => count($products),
         'total' => $totalCount,
+        'price_range' => $priceRange, // Add min/max prices for filtered products
         'data' => $products
     ], JSON_UNESCAPED_UNICODE);
 
