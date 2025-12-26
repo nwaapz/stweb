@@ -228,47 +228,76 @@ try {
     
     // Calculate price range from all matching products after price calculations
     $priceRange = ['min' => 0, 'max' => 1000];
-    if (!empty($allMatchingProducts)) {
-        $prices = [];
-        foreach ($allMatchingProducts as $product) {
-            // Calculate discount_price from discount_percent if needed
-            if ((empty($product['discount_price']) || $product['discount_price'] == 0) && !empty($product['discount_percent']) && !empty($product['price'])) {
-                $numericPrice = (float)$product['price'];
-                $discountPercent = (float)$product['discount_percent'];
-                $calculatedPrice = (int)round($numericPrice - ($numericPrice * $discountPercent / 100));
-                if ($calculatedPrice > 0 && $calculatedPrice < $numericPrice) {
-                    // Check if discount is active
-                    $discountActive = true;
-                    if (!empty($product['discount_start']) && strtotime($product['discount_start']) > time()) {
-                        $discountActive = false;
+    try {
+        if (!empty($allMatchingProducts)) {
+            $prices = [];
+            foreach ($allMatchingProducts as $product) {
+                // Calculate discount_price from discount_percent if needed
+                if ((empty($product['discount_price']) || $product['discount_price'] == 0) && !empty($product['discount_percent']) && !empty($product['price'])) {
+                    $numericPrice = (float)$product['price'];
+                    $discountPercent = (float)$product['discount_percent'];
+                    $calculatedPrice = (int)round($numericPrice - ($numericPrice * $discountPercent / 100));
+                    if ($calculatedPrice > 0 && $calculatedPrice < $numericPrice) {
+                        // Check if discount is active
+                        $discountActive = true;
+                        if (!empty($product['discount_start']) && strtotime($product['discount_start']) > time()) {
+                            $discountActive = false;
+                        }
+                        if (!empty($product['discount_end']) && strtotime($product['discount_end']) < time()) {
+                            $discountActive = false;
+                        }
+                        if ($discountActive) {
+                            $product['discount_price'] = $calculatedPrice;
+                        }
                     }
-                    if (!empty($product['discount_end']) && strtotime($product['discount_end']) < time()) {
-                        $discountActive = false;
+                }
+                
+                // Get effective price (discount_price if active, else price)
+                $effectivePrice = 0;
+                if (function_exists('getEffectivePrice')) {
+                    $effectivePrice = getEffectivePrice($product);
+                } else {
+                    // Fallback: use discount_price if it exists and is active, otherwise use price
+                    if (!empty($product['discount_price']) && $product['discount_price'] > 0) {
+                        // Check if discount is active
+                        $discountActive = true;
+                        if (!empty($product['discount_start']) && strtotime($product['discount_start']) > time()) {
+                            $discountActive = false;
+                        }
+                        if (!empty($product['discount_end']) && strtotime($product['discount_end']) < time()) {
+                            $discountActive = false;
+                        }
+                        if ($discountActive) {
+                            $effectivePrice = (float)$product['discount_price'];
+                        } else {
+                            $effectivePrice = (float)($product['price'] ?? 0);
+                        }
+                    } else {
+                        $effectivePrice = (float)($product['price'] ?? 0);
                     }
-                    if ($discountActive) {
-                        $product['discount_price'] = $calculatedPrice;
-                    }
+                }
+                
+                if ($effectivePrice > 0 && is_numeric($effectivePrice)) {
+                    $prices[] = $effectivePrice;
                 }
             }
             
-            // Get effective price (discount_price if active, else price)
-            $effectivePrice = getEffectivePrice($product);
-            if ($effectivePrice > 0) {
-                $prices[] = (float)$effectivePrice;
+            if (!empty($prices)) {
+                $priceRange = [
+                    'min' => floor(min($prices)),
+                    'max' => ceil(max($prices))
+                ];
+                // If min equals max (only one product), ensure we have a valid range
+                if ($priceRange['min'] == $priceRange['max']) {
+                    // Keep the same value for both
+                    $priceRange['max'] = $priceRange['min'];
+                }
             }
         }
-        
-        if (!empty($prices)) {
-            $priceRange = [
-                'min' => floor(min($prices)),
-                'max' => ceil(max($prices))
-            ];
-            // If min equals max (only one product), ensure we have a valid range
-            if ($priceRange['min'] == $priceRange['max']) {
-                // Keep the same value for both, or add a small buffer
-                $priceRange['max'] = $priceRange['min'];
-            }
-        }
+    } catch (Exception $e) {
+        // If price range calculation fails, use default range
+        error_log('Error calculating price range: ' . $e->getMessage());
+        $priceRange = ['min' => 0, 'max' => 1000];
     }
     
     // Get products for current page (with limit/offset)
@@ -276,20 +305,36 @@ try {
 
     // Format products
     foreach ($products as &$product) {
-        // Calculate discount_price from discount_percent if discount_price is NULL but discount_percent exists
-        // This should happen BEFORE checking hasActiveDiscount
-        if ((empty($product['discount_price']) || $product['discount_price'] == 0) && !empty($product['discount_percent']) && !empty($product['price'])) {
-            $numericPrice = (float)$product['price'];
-            $discountPercent = (float)$product['discount_percent'];
-            $calculatedPrice = (int)round($numericPrice - ($numericPrice * $discountPercent / 100));
-            if ($calculatedPrice > 0 && $calculatedPrice < $numericPrice) {
-                $product['discount_price'] = $calculatedPrice;
+        try {
+            // Calculate discount_price from discount_percent if discount_price is NULL but discount_percent exists
+            // This should happen BEFORE checking hasActiveDiscount
+            if ((empty($product['discount_price']) || $product['discount_price'] == 0) && !empty($product['discount_percent']) && !empty($product['price'])) {
+                $numericPrice = (float)$product['price'];
+                $discountPercent = (float)$product['discount_percent'];
+                $calculatedPrice = (int)round($numericPrice - ($numericPrice * $discountPercent / 100));
+                if ($calculatedPrice > 0 && $calculatedPrice < $numericPrice) {
+                    $product['discount_price'] = $calculatedPrice;
+                }
             }
-        }
-        
-        $product['has_discount'] = hasActiveDiscount($product);
-        $product['effective_price'] = getEffectivePrice($product);
-        $product['formatted_price'] = formatPrice($product['price']);
+            
+            // Safely call functions with fallbacks
+            if (function_exists('hasActiveDiscount')) {
+                $product['has_discount'] = hasActiveDiscount($product);
+            } else {
+                $product['has_discount'] = !empty($product['discount_price']) && $product['discount_price'] > 0;
+            }
+            
+            if (function_exists('getEffectivePrice')) {
+                $product['effective_price'] = getEffectivePrice($product);
+            } else {
+                $product['effective_price'] = $product['discount_price'] ?? $product['price'] ?? 0;
+            }
+            
+            if (function_exists('formatPrice')) {
+                $product['formatted_price'] = formatPrice($product['price']);
+            } else {
+                $product['formatted_price'] = number_format($product['price'] ?? 0, 0, '.', ',');
+            }
         
         // Always return formatted_discount_price if discount_percent exists, even if discount isn't active yet
         if (!empty($product['discount_percent']) && !empty($product['price'])) {
@@ -309,13 +354,29 @@ try {
                 $product['formatted_discount_price'] = null;
             }
         } else {
-            $product['formatted_discount_price'] = $product['discount_price'] ? formatPrice($product['discount_price']) : null;
+            if (function_exists('formatPrice')) {
+                $product['formatted_discount_price'] = $product['discount_price'] ? formatPrice($product['discount_price']) : null;
+            } else {
+                $product['formatted_discount_price'] = $product['discount_price'] ? number_format($product['discount_price'], 0, '.', ',') : null;
+            }
         }
         $product['image_url'] = $product['image'] ? UPLOAD_URL . $product['image'] : null;
         $product['rating'] = $product['rating'] ?? 0;
         $product['reviews'] = $product['reviews'] ?? 0;
 
         // Vehicle info is already included from the JOIN in getProducts()
+        } catch (Exception $e) {
+            // If formatting fails for a product, log and continue
+            error_log('Error formatting product ' . ($product['id'] ?? 'unknown') . ': ' . $e->getMessage());
+            // Set default values
+            $product['has_discount'] = false;
+            $product['effective_price'] = $product['price'] ?? 0;
+            $product['formatted_price'] = number_format($product['price'] ?? 0, 0, '.', ',');
+            $product['formatted_discount_price'] = null;
+            $product['image_url'] = $product['image'] ? UPLOAD_URL . $product['image'] : null;
+            $product['rating'] = $product['rating'] ?? 0;
+            $product['reviews'] = $product['reviews'] ?? 0;
+        }
     }
 
     echo json_encode([

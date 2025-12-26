@@ -160,11 +160,51 @@
                     $(element).find('.filter-price__max-value')[0]
                 ];
 
+                // Always update displayed values to show current handle positions
+                // This handler will run every time the slider values change
                 slider.noUiSlider.on('update', function (values, handle) {
+                    // Always show current handle positions (from/to values)
                     // Format value as integer (remove decimals)
                     const formattedValue = Math.round(parseFloat(values[handle]));
                     if (titleValues[handle]) {
                         titleValues[handle].innerHTML = formattedValue.toLocaleString('fa-IR');
+                        // Mark that this is showing handle position, not filtered range
+                        $(titleValues[handle]).data('is-filtered-range', false);
+                    }
+                });
+                
+                // Also update on slide (while dragging) for real-time feedback
+                slider.noUiSlider.on('slide', function (values, handle) {
+                    const formattedValue = Math.round(parseFloat(values[handle]));
+                    if (titleValues[handle]) {
+                        titleValues[handle].innerHTML = formattedValue.toLocaleString('fa-IR');
+                        $(titleValues[handle]).data('is-filtered-range', false);
+                    }
+                });
+                
+                // Track user interaction to prevent filtered range from overriding handle positions
+                slider.noUiSlider.on('start', function() {
+                    $(element).data('user-interacted', true);
+                    // Ensure values will show handle positions
+                    const $minValue = $(element).find('.filter-price__min-value');
+                    const $maxValue = $(element).find('.filter-price__max-value');
+                    if ($minValue.length) {
+                        $minValue.data('is-filtered-range', false);
+                    }
+                    if ($maxValue.length) {
+                        $maxValue.data('is-filtered-range', false);
+                    }
+                });
+                
+                // Also update on set (when values are programmatically changed)
+                slider.noUiSlider.on('set', function (values, handle) {
+                    // Only update if user has interacted (to avoid conflicts with initial setup)
+                    if ($(element).data('user-interacted')) {
+                        const formattedValue = Math.round(parseFloat(values[handle]));
+                        if (titleValues[handle]) {
+                            titleValues[handle].innerHTML = formattedValue.toLocaleString('fa-IR');
+                            $(titleValues[handle]).data('is-filtered-range', false);
+                        }
                     }
                 });
 

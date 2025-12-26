@@ -577,14 +577,20 @@
             $filterPrice.data('filtered-min', minPrice);
             $filterPrice.data('filtered-max', finalMaxPrice);
             
-            // Update displayed min/max values to show filtered products range
-            if ($minValue.length) {
-                $minValue.text(minPrice.toLocaleString('fa-IR'));
-                $minValue.data('is-filtered-range', true);
-            }
-            if ($maxValue.length) {
-                $maxValue.text(finalMaxPrice.toLocaleString('fa-IR'));
-                $maxValue.data('is-filtered-range', true);
+            // Initially show filtered products range (min/max)
+            // Once user moves handles, the main.js update handler will show handle positions
+            // Don't override displayed values if user has already interacted with slider
+            const userInteracted = $filterPrice.data('user-interacted');
+            if (!userInteracted) {
+                // Only set initial values if user hasn't interacted yet
+                if ($minValue.length) {
+                    $minValue.text(minPrice.toLocaleString('fa-IR'));
+                    $minValue.data('is-filtered-range', true);
+                }
+                if ($maxValue.length) {
+                    $maxValue.text(finalMaxPrice.toLocaleString('fa-IR'));
+                    $maxValue.data('is-filtered-range', true);
+                }
             }
             
             // Update slider if it exists
@@ -616,25 +622,8 @@
                     // Set slider handles to start (min) and end (max) positions
                     slider.set([handleMin, handleMax]);
                     
-                    // Force update displayed values to show min/max of filtered products
-                    setTimeout(function() {
-                        if ($minValue.length) {
-                            $minValue.text(minPrice.toLocaleString('fa-IR'));
-                        }
-                        if ($maxValue.length) {
-                            $maxValue.text(finalMaxPrice.toLocaleString('fa-IR'));
-                        }
-                    }, 50);
-                    
-                    // Also update after a longer delay to ensure it sticks
-                    setTimeout(function() {
-                        if ($minValue.length) {
-                            $minValue.text(minPrice.toLocaleString('fa-IR'));
-                        }
-                        if ($maxValue.length) {
-                            $maxValue.text(finalMaxPrice.toLocaleString('fa-IR'));
-                        }
-                    }, 200);
+                    // The main.js update handler will automatically update displayed values
+                    // based on handle positions. We don't need to force update here.
                 } catch(e) {
                     console.error('Error updating price slider:', e);
                     // If update fails, destroy and let main.js reinitialize

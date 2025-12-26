@@ -3122,28 +3122,45 @@
 							const sliderElement = $slider[0];
 							const sliderInstance = sliderElement.noUiSlider;
 							
-							// Ensure displayed values show filtered products range, not slider position
-							// Add a handler that runs after the slider's update event to restore filtered range display
-							const $minValue = $filterPrice.find('.filter-price__min-value');
-							const $maxValue = $filterPrice.find('.filter-price__max-value');
+							// Track user interaction - once user moves handles, always show handle positions
+							// The main.js handler will update displayed values automatically
+							// We just need to mark interaction so updatePriceFilterRange doesn't override
+							sliderElement.noUiSlider.on('start', function() {
+								// Mark that user has interacted - from now on, show handle positions
+								$filterPrice.data('user-interacted', true);
+							});
 							
-							// Store original update handler if it exists
+							// Ensure displayed values update when handles are moved
+							// This is a backup to main.js handler - always update to show handle positions
 							sliderElement.noUiSlider.on('update', function(values, handle) {
-								// After the default update handler runs, restore filtered products range display
-								setTimeout(function() {
-									const filteredMin = $filterPrice.data('filtered-min');
-									const filteredMax = $filterPrice.data('filtered-max');
-									
-									// Only restore if we have filtered range data and values are marked as filtered range
-									if (filteredMin !== undefined && filteredMax !== undefined) {
-										if ($minValue.length && $minValue.data('is-filtered-range')) {
-											$minValue.text(filteredMin.toLocaleString('fa-IR'));
-										}
-										if ($maxValue.length && $maxValue.data('is-filtered-range')) {
-											$maxValue.text(filteredMax.toLocaleString('fa-IR'));
-										}
-									}
-								}, 10);
+								const $minValue = $filterPrice.find('.filter-price__min-value');
+								const $maxValue = $filterPrice.find('.filter-price__max-value');
+								const formattedValue = Math.round(parseFloat(values[handle]));
+								
+								// Always update displayed values to show current handle positions
+								// The main.js handler should handle this, but this is a backup
+								if (handle === 0 && $minValue.length) {
+									$minValue.text(formattedValue.toLocaleString('fa-IR'));
+									$minValue.data('is-filtered-range', false);
+								} else if (handle === 1 && $maxValue.length) {
+									$maxValue.text(formattedValue.toLocaleString('fa-IR'));
+									$maxValue.data('is-filtered-range', false);
+								}
+							});
+							
+							// Also update on slide for real-time feedback
+							sliderElement.noUiSlider.on('slide', function(values, handle) {
+								const $minValue = $filterPrice.find('.filter-price__min-value');
+								const $maxValue = $filterPrice.find('.filter-price__max-value');
+								const formattedValue = Math.round(parseFloat(values[handle]));
+								
+								if (handle === 0 && $minValue.length) {
+									$minValue.text(formattedValue.toLocaleString('fa-IR'));
+									$minValue.data('is-filtered-range', false);
+								} else if (handle === 1 && $maxValue.length) {
+									$maxValue.text(formattedValue.toLocaleString('fa-IR'));
+									$maxValue.data('is-filtered-range', false);
+								}
 							});
 
 							// Fix slider positioning multiple times to ensure it works
