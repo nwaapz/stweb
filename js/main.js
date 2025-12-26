@@ -169,12 +169,33 @@
                 });
 
                 // Force slider to update positions after initialization
+                // Use multiple timeouts to ensure proper positioning
+                setTimeout(function() {
+                    if (slider.noUiSlider) {
+                        const currentValues = slider.noUiSlider.get();
+                        // Force re-render by setting values
+                        slider.noUiSlider.set(currentValues);
+                        
+                        // Fix handle positioning for RTL layout
+                        const handles = slider.querySelectorAll('.noUi-handle');
+                        handles.forEach(function(handle) {
+                            const origin = handle.closest('.noUi-origin');
+                            if (origin) {
+                                // Ensure proper positioning
+                                origin.style.right = 'auto';
+                                origin.style.left = 'auto';
+                            }
+                        });
+                    }
+                }, 50);
+                
+                // Additional fix after a longer delay to ensure layout is complete
                 setTimeout(function() {
                     if (slider.noUiSlider) {
                         const currentValues = slider.noUiSlider.get();
                         slider.noUiSlider.set(currentValues);
                     }
-                }, 50);
+                }, 200);
             } catch (error) {
                 console.error('Error initializing price slider:', error);
             }

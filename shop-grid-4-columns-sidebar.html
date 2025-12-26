@@ -38,14 +38,72 @@
 			font-weight: 600;
 		}
 
-		/* Fix for noUiSlider in RTL layout */
-		.noUi-horizontal .noUi-base {
-			width: 100% !important;
-			height: 100%;
+		/* Fix for noUiSlider in RTL layout - ensure no right offset */
+		.filter-price__slider.noUi-target {
+			direction: ltr !important;
+			text-align: left !important;
+			position: relative;
+			/* Ensure container starts from left edge */
+			margin-left: 0 !important;
+			margin-right: 0 !important;
+			padding-left: 0 !important;
+			padding-right: 0 !important;
 		}
 
-		.noUi-horizontal .noUi-origin {
+		.filter-price__slider .noUi-base {
+			width: 100% !important;
+			height: 100%;
+			direction: ltr !important;
+			position: relative;
+			/* Ensure base starts from absolute left */
+			left: 0 !important;
+			right: auto !important;
+			margin: 0 !important;
+			padding: 0 !important;
+		}
+
+		/* Origins are positioned by transform - just ensure no right offset */
+		.filter-price__slider .noUi-origin {
 			position: absolute !important;
+			height: 100%;
+			right: auto !important;
+		}
+
+		/* Handles are positioned by transform relative to origin - fix right offset */
+		.filter-price__slider .noUi-handle {
+			position: absolute;
+			right: auto !important;
+			/* Add left adjustment to compensate for right offset */
+			/* Adjust this value (-3px to -5px) based on the amount of offset you see */
+			margin-left: -4px !important;
+		}
+		
+		/* Additional adjustment for both handles */
+		.filter-price__slider .noUi-handle-lower,
+		.filter-price__slider .noUi-handle-upper {
+			margin-left: -4px !important;
+		}
+		
+		/* Fix handle positioning - ensure proper centering */
+		.filter-price__slider .noUi-handle::before,
+		.filter-price__slider .noUi-handle::after {
+			/* Ensure pseudo-elements don't cause offset */
+			right: auto !important;
+		}
+
+		/* Fix connect bar container */
+		.filter-price__slider .noUi-connects {
+			position: relative;
+			width: 100%;
+			height: 100%;
+			left: 0 !important;
+			right: auto !important;
+		}
+
+		/* Connect bar is positioned by transform */
+		.filter-price__slider .noUi-connect {
+			position: absolute;
+			top: 0;
 			height: 100%;
 			right: auto !important;
 		}
@@ -1540,10 +1598,8 @@
 								<li class="breadcrumb__spaceship-safe-area" role="presentatiدر"></li>
 								<li class="breadcrumb__item breadcrumb__item--parent breadcrumb__item--first"><a
 										href="index.html" class="breadcrumb__item-link">خانه</a></li>
-								<li class="breadcrumb__item breadcrumb__item--parent"><a href="#"
-										class="breadcrumb__item-link">Breadcrumb</a></li>
 								<li class="breadcrumb__item breadcrumb__item--current breadcrumb__item--last"
-									aria-current="page"><span class="breadcrumb__item-link">Current Page</span></li>
+									aria-current="page"><span class="breadcrumb__item-link">فروشگاه</span></li>
 								<li class="breadcrumb__title-safe-area" role="presentatiدر"></li>
 							</ol>
 						</nav>
@@ -2960,6 +3016,79 @@
 		(function ($) {
 			'use strict';
 
+			// Function to fix slider positioning and handle offset
+			function fixSliderPosition(sliderElement) {
+				if (!sliderElement || !sliderElement.noUiSlider) {
+					return;
+				}
+
+				try {
+					const slider = sliderElement.noUiSlider;
+					const currentValues = slider.get();
+					
+					// Get the base element width
+					const base = sliderElement.querySelector('.noUi-base');
+					if (!base) return;
+					
+					const baseWidth = base.offsetWidth;
+					if (baseWidth === 0) return;
+					
+					// Force re-render by setting values again
+					slider.set(currentValues);
+					
+					// Fix origins - ensure they don't have right offset
+					const origins = sliderElement.querySelectorAll('.noUi-origin');
+					origins.forEach(function(origin) {
+						if (origin.style) {
+							// Clear any right positioning
+							origin.style.right = 'auto';
+							origin.style.left = '';
+							// Get computed transform
+							const computedStyle = window.getComputedStyle(origin);
+							const transform = computedStyle.transform;
+							// If transform exists, ensure it's correct (noUiSlider manages this)
+							// Just ensure no right offset
+							if (computedStyle.right && computedStyle.right !== 'auto') {
+								origin.style.right = 'auto';
+							}
+						}
+					});
+					
+							// Fix handles - apply offset correction
+					const handles = sliderElement.querySelectorAll('.noUi-handle');
+					handles.forEach(function(handle) {
+						if (handle.style) {
+							// Remove any right offset
+							handle.style.right = 'auto';
+							handle.style.marginRight = '';
+							
+							// Apply left margin correction to fix right offset
+							// Adjust this value (-3px to -6px) based on visual inspection
+							handle.style.marginLeft = '-4px';
+							
+							// Get the parent origin
+							const origin = handle.closest('.noUi-origin');
+							if (origin && origin.style) {
+								// Ensure origin doesn't have right offset
+								origin.style.right = 'auto';
+							}
+						}
+					});
+					
+					// Fix connect bar
+					const connect = sliderElement.querySelector('.noUi-connect');
+					if (connect && connect.style) {
+						connect.style.right = 'auto';
+						connect.style.left = '';
+					}
+					
+					// Force a layout recalculation
+					void sliderElement.offsetHeight;
+				} catch(e) {
+					console.error('Error fixing slider position:', e);
+				}
+			}
+
 			$(document).ready(function () {
 				// Remove dollar signs from price display (clean up HTML template)
 				$('.filter-price__title').each(function () {
@@ -2967,7 +3096,7 @@
 					const html = $title.html();
 					// Replace dollar signs with clean separator
 					const cleaned = html.replace(/\$/g, '').replace(//g, ' - ');
-						$title.html(cleaned);
+					$title.html(cleaned);
 				});
 
 				// Initialize price filter after noUiSlider is created
@@ -2981,6 +3110,38 @@
 						if ($slider.length && $slider[0].noUiSlider) {
 							clearInterval(checkSlider);
 
+							const sliderElement = $slider[0];
+							const sliderInstance = sliderElement.noUiSlider;
+
+							// Fix slider positioning multiple times to ensure it works
+							fixSliderPosition(sliderElement);
+							setTimeout(function() {
+								fixSliderPosition(sliderElement);
+								// Additional fix: ensure handles don't have right offset
+								const handles = sliderElement.querySelectorAll('.noUi-handle');
+								handles.forEach(function(handle) {
+									const origin = handle.closest('.noUi-origin');
+									if (origin) {
+										// Get computed positions
+										const originRect = origin.getBoundingClientRect();
+										const baseRect = sliderElement.querySelector('.noUi-base').getBoundingClientRect();
+										// Ensure origin is positioned from left edge of base
+										if (originRect.left < baseRect.left) {
+											// Origin is offset to the left, which shouldn't happen
+											const offset = baseRect.left - originRect.left;
+											if (offset > 0) {
+												// Adjust if needed
+												const currentTransform = window.getComputedStyle(origin).transform;
+												// This is a fallback - noUiSlider should handle this
+											}
+										}
+									}
+								});
+							}, 100);
+							setTimeout(function() {
+								fixSliderPosition(sliderElement);
+							}, 300);
+
 							// Get initial values from URL
 							const urlParams = new URLSearchParams(window.location.search);
 							const priceMin = urlParams.get('price_min');
@@ -2988,11 +3149,10 @@
 
 							// Set slider values from URL if they exist
 							if (priceMin || priceMax) {
-								const slider = $slider[0].noUiSlider;
-								const sliderRange = slider.options.range;
+								const sliderRange = sliderInstance.options.range;
 								const sliderMin = sliderRange.min;
 								const sliderMax = sliderRange.max;
-								const currentValues = slider.get();
+								const currentValues = sliderInstance.get();
 								
 								let min = priceMin ? parseFloat(priceMin) : parseFloat(currentValues[0]);
 								let max = priceMax ? parseFloat(priceMax) : parseFloat(currentValues[1]);
@@ -3007,14 +3167,18 @@
 									max = sliderMax;
 								}
 								
-								slider.set([min, max]);
+								sliderInstance.set([min, max]);
+								// Fix position after setting URL values
+								setTimeout(function() {
+									fixSliderPosition(sliderElement);
+								}, 50);
 							}
 
 							// Handle filter button click
 							$filterButton.off('click').on('click', function (e) {
 								e.preventDefault();
 
-								const values = $slider[0].noUiSlider.get();
+								const values = sliderInstance.get();
 								const minPrice = Math.round(parseFloat(values[0]));
 								const maxPrice = Math.round(parseFloat(values[1]));
 
