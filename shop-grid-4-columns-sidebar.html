@@ -1691,9 +1691,9 @@
 																	data-from="590" data-to="1000">
 																	<div class="filter-price__slider"></div>
 																	<div class="filter-price__title-button">
-																		<div class="filter-price__title">$<span
+																		<div class="filter-price__title"><span
 																				class="filter-price__min-value"></span>
-																			� $<span
+																			� <span
 																				class="filter-price__max-value"></span>
 																		</div><button type="button"
 																			class="btn btn-xs btn-secondary filter-price__button">فیلتر</button>
@@ -3090,13 +3090,22 @@
 			}
 
 			$(document).ready(function () {
-				// Remove dollar signs from price display (clean up HTML template)
+				// Remove dollar signs and clean up price display (clean up HTML template)
 				$('.filter-price__title').each(function () {
 					const $title = $(this);
-					const html = $title.html();
-					// Replace dollar signs with clean separator
-					const cleaned = html.replace(/\$/g, '').replace(//g, ' - ');
-					$title.html(cleaned);
+					const $minValue = $title.find('.filter-price__min-value');
+					const $maxValue = $title.find('.filter-price__max-value');
+					
+					// Rebuild the title with proper separator, removing all currency symbols
+					if ($minValue.length && $maxValue.length) {
+						// Remove all currency symbols and rebuild with clean separator
+						$title.html($minValue[0].outerHTML + ' <span> - </span> ' + $maxValue[0].outerHTML);
+					} else {
+						// Fallback: clean up any currency symbols
+						const html = $title.html();
+						const cleaned = html.replace(/\$/g, '').replace(/€/g, '').replace(/£/g, '').replace(/[^\d\s\-<>=]/g, '').replace(/  +/g, ' ').trim();
+						$title.html(cleaned);
+					}
 				});
 
 				// Initialize price filter after noUiSlider is created
@@ -3112,6 +3121,30 @@
 
 							const sliderElement = $slider[0];
 							const sliderInstance = sliderElement.noUiSlider;
+							
+							// Ensure displayed values show filtered products range, not slider position
+							// Add a handler that runs after the slider's update event to restore filtered range display
+							const $minValue = $filterPrice.find('.filter-price__min-value');
+							const $maxValue = $filterPrice.find('.filter-price__max-value');
+							
+							// Store original update handler if it exists
+							sliderElement.noUiSlider.on('update', function(values, handle) {
+								// After the default update handler runs, restore filtered products range display
+								setTimeout(function() {
+									const filteredMin = $filterPrice.data('filtered-min');
+									const filteredMax = $filterPrice.data('filtered-max');
+									
+									// Only restore if we have filtered range data and values are marked as filtered range
+									if (filteredMin !== undefined && filteredMax !== undefined) {
+										if ($minValue.length && $minValue.data('is-filtered-range')) {
+											$minValue.text(filteredMin.toLocaleString('fa-IR'));
+										}
+										if ($maxValue.length && $maxValue.data('is-filtered-range')) {
+											$maxValue.text(filteredMax.toLocaleString('fa-IR'));
+										}
+									}
+								}, 10);
+							});
 
 							// Fix slider positioning multiple times to ensure it works
 							fixSliderPosition(sliderElement);

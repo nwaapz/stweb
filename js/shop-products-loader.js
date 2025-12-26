@@ -543,7 +543,7 @@
      * Update price filter range
      */
     function updatePriceFilterRange(priceRange) {
-        if (!priceRange || !priceRange.min || !priceRange.max) {
+        if (!priceRange || priceRange.min === undefined || priceRange.max === undefined) {
             return;
         }
         
@@ -553,10 +553,27 @@
         $('.filter-price').each(function() {
             const $filterPrice = $(this);
             const $slider = $filterPrice.find('.filter-price__slider');
+            const $minValue = $filterPrice.find('.filter-price__min-value');
+            const $maxValue = $filterPrice.find('.filter-price__max-value');
             
             // Update data attributes
             $filterPrice.attr('data-min', minPrice);
             $filterPrice.attr('data-max', maxPrice);
+            
+            // Mark that these values should show filtered products range, not slider position
+            $filterPrice.data('show-filtered-range', true);
+            $filterPrice.data('filtered-min', minPrice);
+            $filterPrice.data('filtered-max', maxPrice);
+            
+            // Update displayed min/max values directly (based on filtered products range)
+            if ($minValue.length) {
+                $minValue.text(minPrice.toLocaleString('fa-IR'));
+                $minValue.data('is-filtered-range', true);
+            }
+            if ($maxValue.length) {
+                $maxValue.text(maxPrice.toLocaleString('fa-IR'));
+                $maxValue.data('is-filtered-range', true);
+            }
             
             // Get current values or use defaults
             const currentFrom = parseFloat($filterPrice.data('from')) || minPrice;
@@ -587,6 +604,27 @@
                     const clampedFrom = Math.max(minPrice, Math.min(maxPrice, parseFloat(currentValues[0])));
                     const clampedTo = Math.max(minPrice, Math.min(maxPrice, parseFloat(currentValues[1])));
                     slider.set([clampedFrom, clampedTo]);
+                    
+                    // Force update displayed values to show min/max of filtered products
+                    // These values represent the range of filtered products, not the slider position
+                    setTimeout(function() {
+                        if ($minValue.length) {
+                            $minValue.text(minPrice.toLocaleString('fa-IR'));
+                        }
+                        if ($maxValue.length) {
+                            $maxValue.text(maxPrice.toLocaleString('fa-IR'));
+                        }
+                    }, 50);
+                    
+                    // Also update after a longer delay to ensure it sticks
+                    setTimeout(function() {
+                        if ($minValue.length) {
+                            $minValue.text(minPrice.toLocaleString('fa-IR'));
+                        }
+                        if ($maxValue.length) {
+                            $maxValue.text(maxPrice.toLocaleString('fa-IR'));
+                        }
+                    }, 200);
                 } catch(e) {
                     console.error('Error updating price slider:', e);
                     // If update fails, destroy and let main.js reinitialize
@@ -598,6 +636,9 @@
                         }
                     }, 100);
                 }
+            } else {
+                // If slider doesn't exist yet, update data attributes so it initializes correctly
+                // The displayed values are already updated above
             }
         });
     }
