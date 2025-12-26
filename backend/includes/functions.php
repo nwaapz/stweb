@@ -828,6 +828,44 @@ function getBlogPosts($filters = [])
 }
 
 /**
+ * Get total count of blog posts
+ */
+function getBlogPostsCount($filters = [])
+{
+    // Ensure table exists before querying
+    ensureBlogTableExists();
+    
+    $conn = getConnection();
+    $sql = "SELECT COUNT(*) as total 
+            FROM blog_posts bp 
+            WHERE 1=1";
+    $params = [];
+
+    if (isset($filters['is_published'])) {
+        $sql .= " AND bp.is_published = ?";
+        $params[] = $filters['is_published'];
+    }
+
+    if (!empty($filters['search'])) {
+        $sql .= " AND (bp.title LIKE ? OR bp.content LIKE ? OR bp.excerpt LIKE ?)";
+        $search = '%' . $filters['search'] . '%';
+        $params[] = $search;
+        $params[] = $search;
+        $params[] = $search;
+    }
+
+    if (!empty($filters['author_id'])) {
+        $sql .= " AND bp.author_id = ?";
+        $params[] = $filters['author_id'];
+    }
+
+    $stmt = $conn->prepare($sql);
+    $stmt->execute($params);
+    $result = $stmt->fetch();
+    return (int)($result['total'] ?? 0);
+}
+
+/**
  * Get blog post by ID
  */
 function getBlogPostById($id)

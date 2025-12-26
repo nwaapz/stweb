@@ -91,6 +91,12 @@ try {
             $filters['order_dir'] = strtoupper($_GET['order_dir']) === 'ASC' ? 'ASC' : 'DESC';
         }
         
+        // Get total count before applying limit/offset
+        $countFilters = $filters;
+        unset($countFilters['limit']);
+        unset($countFilters['offset']);
+        $totalCount = getBlogPostsCount($countFilters);
+        
         $posts = getBlogPosts($filters);
         
         // Format posts for API response
@@ -118,6 +124,7 @@ try {
         $response['success'] = true;
         $response['data'] = $formattedPosts;
         $response['count'] = count($formattedPosts);
+        $response['total'] = $totalCount;
     }
     
 } catch (Exception $e) {
