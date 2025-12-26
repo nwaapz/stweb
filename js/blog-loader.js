@@ -67,7 +67,7 @@
      * Render blog post card
      */
     function renderPostCard(post) {
-        const imageUrl = post.image_url || post.featured_image || 'images/posts/post-1-730x485.jpg';
+        const imageUrl = post.featured_image || 'images/posts/post-1-730x485.jpg';
         const excerpt = post.excerpt || getExcerpt(post.content);
         const date = formatDateEnglish(post.published_at || post.created_at);
         const author = post.author_name || 'مدیر';
@@ -146,7 +146,7 @@
         }
 
         latestPostsContainer.innerHTML = posts.map(post => {
-            const imageUrl = post.image_url || post.featured_image || 'images/posts/post-1-70x70.jpg';
+            const imageUrl = post.featured_image || 'images/posts/post-1-70x70.jpg';
             const date = formatDateEnglish(post.published_at || post.created_at);
             const postUrl = `post-full-width.html?slug=${post.slug}`;
             
