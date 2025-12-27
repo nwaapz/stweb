@@ -2452,8 +2452,14 @@
 
     /*
     // Account Garage - User Vehicles
+    // NOTE: This is disabled when account-garage.js is loaded to prevent duplicates
     */
     $(function () {
+        // Skip if account-garage.js is handling this (check if the script exists)
+        if (typeof window.accountGarageInitialized !== 'undefined') {
+            return;
+        }
+        
         const garageList = $('#garage-vehicles-list');
         const loadingTemplate = $('#garage-loading-template');
 

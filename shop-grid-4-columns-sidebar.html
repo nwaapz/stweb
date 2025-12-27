@@ -2888,6 +2888,19 @@
 		(function ($) {
 			'use strict';
 
+			// Handle legacy vehicle_id parameter and convert to vehicle
+			(function() {
+				const urlParams = new URLSearchParams(window.location.search);
+				const vehicleId = urlParams.get('vehicle_id');
+				if (vehicleId && !urlParams.get('vehicle')) {
+					// Convert vehicle_id to vehicle parameter
+					urlParams.delete('vehicle_id');
+					urlParams.set('vehicle', vehicleId);
+					const newUrl = window.location.pathname + '?' + urlParams.toString();
+					window.history.replaceState({}, '', newUrl);
+				}
+			})();
+
 			// Function to fetch vehicles from API
 			function loadVehicleFilters() {
 				const $vehiclesList = $('#filter-vehicle-list');
@@ -2962,10 +2975,10 @@
 				// Add each vehicle
 				vehicles.forEach(vehicle => {
 					const isCurrent = currentVehicleId && parseInt(currentVehicleId) === parseInt(vehicle.id);
-					const vehicleName = vehicle.description || vehicle.details ||
+					const vehicleName = vehicle.name || vehicle.description || vehicle.details ||
 						(vehicle.year && vehicle.make && vehicle.model ?
 							`${vehicle.year} ${vehicle.make} ${vehicle.model}` :
-							vehicle.name || 'بدون نام');
+							'بدون نام');
 					const productCount = vehicle.product_count || 0;
 
 					const $item = $('<li></li>').addClass('filter-vehicle__item');
@@ -3624,10 +3637,10 @@
 					.then(data => {
 						if (data.success && data.data) {
 							const vehicle = data.data;
-							const vehicleName = vehicle.description || vehicle.details ||
+							const vehicleName = vehicle.name || vehicle.description || vehicle.details ||
 								(vehicle.year && vehicle.make && vehicle.model ?
 									`${vehicle.year} ${vehicle.make} ${vehicle.model}` :
-									vehicle.name || 'وسیله نقلیه');
+									'وسیله نقلیه');
 							vehicleCache[vehicleId] = vehicleName;
 							return vehicleName;
 						}

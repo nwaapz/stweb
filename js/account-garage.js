@@ -44,8 +44,8 @@
             addVehicle();
         });
 
-        // Remove Vehicle
-        $(document).on('click', '.vehicle-remove-btn', function (e) {
+        // Remove Vehicle - handle both class names for compatibility
+        $(document).on('click', '.vehicle-remove-btn, .remove-vehicle-btn', function (e) {
             e.preventDefault();
             const id = $(this).data('id');
             if (confirm('آیا از حذف این خودرو مطمئن هستید؟')) {
@@ -54,7 +54,17 @@
         });
     }
 
+    // Prevent multiple simultaneous loads
+    let isLoadingVehicles = false;
+    
     function loadUserVehicles() {
+        // Prevent duplicate calls
+        if (isLoadingVehicles) {
+            return;
+        }
+        
+        isLoadingVehicles = true;
+        
         $.ajax({
             url: API_URL + 'user_garage.php',
             method: 'GET',
@@ -70,31 +80,67 @@
                     console.error('Garage Load Error:', xhr);
                     $vehicleList.html('<div class="alert alert-danger">خطا در دریافت اطلاعات خودروها: ' + (xhr.responseJSON?.error || xhr.statusText) + '</div>');
                 }
+            },
+            complete: function() {
+                isLoadingVehicles = false;
             }
         });
     }
 
     function renderVehicles(vehicles) {
+        // Clear all content including any template elements
         $vehicleList.empty();
+        
+        // Remove any duplicate items that might exist (from main.js or previous renders)
+        $('.vehicles-list--layout--account .vehicles-list__item').remove();
 
         if (vehicles.length === 0) {
             $vehicleList.html('<div class="p-4 text-center text-muted">هنوز خودرویی ثبت نکرده‌اید.</div>');
             return;
         }
 
+        // Create a document fragment to batch DOM operations
+        const fragment = document.createDocumentFragment();
+        
         vehicles.forEach(vehicle => {
-            const html = `
-                <div class="vehicles-list__item">
-                    <div class="vehicles-list__item-info">
-                        <div class="vehicles-list__item-name">${vehicle.display_name}</div>
-                        <div class="vehicles-list__item-links">
-                            <a href="#" class="text-danger vehicle-remove-btn" data-id="${vehicle.id}">حذف</a>
-                        </div>
+            const item = document.createElement('div');
+            item.className = 'vehicles-list__item';
+            item.setAttribute('data-id', vehicle.id);
+            
+            // Build parts link if vehicle_id exists
+            const partsLink = vehicle.vehicle_id 
+                ? `shop-grid-4-columns-sidebar.html?vehicle_id=${vehicle.vehicle_id}&user_vehicle_id=${vehicle.id}`
+                : '#';
+            
+            const vehicleEngine = vehicle.engine ? `motor: ${vehicle.engine}` : '';
+            
+            item.innerHTML = `
+                <div class="vehicles-list__item-info">
+                    <div class="vehicles-list__item-name">${escapeHtml(vehicle.display_name)}</div>
+                    ${vehicleEngine ? `<div class="vehicles-list__item-details">${escapeHtml(vehicleEngine)}</div>` : ''}
+                    <div class="vehicles-list__item-links">
+                        ${vehicle.vehicle_id ? `<a href="${partsLink}">نمایش قطعات</a> <span>|</span> ` : ''}
+                        <a href="#" class="text-danger vehicle-remove-btn remove-vehicle-btn" data-id="${vehicle.id}">حذف</a>
                     </div>
                 </div>
             `;
-            $vehicleList.append(html);
+            fragment.appendChild(item);
         });
+        
+        // Append all items at once
+        $vehicleList[0].appendChild(fragment);
+    }
+    
+    // Helper function to escape HTML
+    function escapeHtml(text) {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, m => map[m]);
     }
 
     function loadFactories() {
@@ -246,6 +292,9 @@
         $modelSelect.val('none').prop('disabled', true);
     }
 
+    // Mark that account-garage.js is handling garage functionality
+    window.accountGarageInitialized = true;
+    
     // Initialize
     $(document).ready(init);
 
