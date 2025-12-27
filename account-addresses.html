@@ -17,32 +17,77 @@
 /* Address cards styling - make them more square */
 .addresses-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    width: 100%;
 }
 .addresses-list__divider {
     display: none; /* Hide dividers since grid gap handles spacing */
 }
 .addresses-list__item {
-    min-height: 250px;
+    min-height: 280px;
+    width: 100%;
+}
+.addresses-list__item--new {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 280px;
+    width: 100%;
 }
 .address-card {
     height: 100%;
+    min-height: 280px;
     display: flex;
     flex-direction: column;
 }
 .address-card__body {
     flex: 1;
-    padding: 20px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
 }
 @media (min-width: 768px) {
     .addresses-list {
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .addresses-list__item {
+        min-height: 350px;
+    }
+    .addresses-list__item--new {
+        min-height: 350px;
+    }
+    .address-card {
+        min-height: 350px;
+    }
+}
+@media (min-width: 992px) {
+    .addresses-list {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .addresses-list__item {
+        min-height: 400px;
+    }
+    .addresses-list__item--new {
+        min-height: 400px;
+    }
+    .address-card {
+        min-height: 400px;
     }
 }
 @media (min-width: 1200px) {
     .addresses-list {
-        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .addresses-list__item {
+        min-height: 450px;
+    }
+    .addresses-list__item--new {
+        min-height: 450px;
+    }
+    .address-card {
+        min-height: 450px;
     }
 }
 </style>
