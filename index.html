@@ -451,11 +451,11 @@
 							</div>
 							<div class="search__dropdown search__dropdown--suggestions suggestions">
 								<div class="suggestions__group suggestions__group--products" style="display: none;">
-									<div class="suggestions__group-title">Products</div>
+									<div class="suggestions__group-title">محصولات</div>
 									<div class="suggestions__group-content suggestions__products-list"></div>
 								</div>
 								<div class="suggestions__group suggestions__group--categories" style="display: none;">
-									<div class="suggestions__group-title">Categories</div>
+									<div class="suggestions__group-title">دسته‌بندی‌ها</div>
 									<div class="suggestions__group-content suggestions__categories-list"></div>
 								</div>
 							</div>
@@ -6373,8 +6373,17 @@
 						// Not logged in state
 						if (userNameEl) userNameEl.textContent = 'وارد نشده';
 						if (userEmailEl) userEmailEl.textContent = '';
-						if (headerIndicatorTitle) headerIndicatorTitle.textContent = 'سلام، ورود';
-						if (headerIndicatorValue) headerIndicatorValue.textContent = 'حساب کاربری من';
+						if (headerIndicatorTitle) {
+							headerIndicatorTitle.textContent = 'سلام، ورود';
+							headerIndicatorTitle.style.display = ''; // Restore visibility
+						}
+						if (headerIndicatorValue) {
+							headerIndicatorValue.textContent = 'حساب کاربری من';
+							// Reset styles
+							headerIndicatorValue.style.position = '';
+							headerIndicatorValue.style.top = '';
+							headerIndicatorValue.style.fontWeight = '';
+						}
 
 						// Show form, hide user info (optional but good UX, though redundant if text says 'Not logged in')
 						if (accountMenuForm) accountMenuForm.style.display = 'block';
@@ -6420,6 +6429,11 @@
 						// So we hide title, and show the Name/Phone in the Value slot.
 						headerIndicatorTitle.style.display = 'none';
 						headerIndicatorValue.textContent = displayName;
+
+						// Fix vertical alignment (move down as per user request)
+						headerIndicatorValue.style.position = 'relative';
+						headerIndicatorValue.style.top = '14px';
+						headerIndicatorValue.style.fontWeight = 'bold'; // Optional: make it look impactful
 					}
 				}
 
