@@ -14,6 +14,37 @@
     font-family: 'Vazir', 'Tahoma', 'Arial', sans-serif;
     font-weight: 600;
 }
+/* Address cards styling - make them more square */
+.addresses-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+.addresses-list__divider {
+    display: none; /* Hide dividers since grid gap handles spacing */
+}
+.addresses-list__item {
+    min-height: 250px;
+}
+.address-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+.address-card__body {
+    flex: 1;
+    padding: 20px;
+}
+@media (min-width: 768px) {
+    .addresses-list {
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    }
+}
+@media (min-width: 1200px) {
+    .addresses-list {
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    }
+}
 </style>
 
 </head><body><!-- site --><div class="site"><!-- site__mobile-header --><header class="site__mobile-header"><div class="mobile-header"><div class="container"><div class="mobile-header__body"><button class="mobile-header__menu-button" type="button"><svg width="18px" height="14px"><path d="M-0,8L-0,6L18,6L18,8L-0,8ZM-0,-0L18,-0L18,2L-0,2L-0,-0ZM14,14L-0,14L-0,12L14,12L14,14Z"/></svg></button> <a class="mobile-header__logo" href=""><!-- mobile-logo --> <svg width="130" height="20"><path class="mobile-header__logo-part-one" d="M40,19.9c-0.3,0-0.7,0.1-1,0.1h-4.5c-0.8,0-1.5-0.7-1.5-1.5v-17C33,0.7,33.7,0,34.5,0H39c0.3,0,0.7,0,1,0.1
@@ -232,21 +263,17 @@
         // Render addresses
         let html = '';
         addresses.forEach((address, index) => {
-            if (index > 0) {
-                html += '<div class="addresses-list__divider"></div>';
-            }
-            
             // Build address lines: province, postal_code, city, address
             const addressParts = [];
-            if (address.province) addressParts.push(address.province);
+            if (address.province) addressParts.push(escapeHtml(address.province));
             if (address.postal_code && address.city) {
-                addressParts.push(address.postal_code + ', ' + address.city);
+                addressParts.push(escapeHtml(address.postal_code + ', ' + address.city));
             } else if (address.postal_code) {
-                addressParts.push(address.postal_code);
+                addressParts.push(escapeHtml(address.postal_code));
             } else if (address.city) {
-                addressParts.push(address.city);
+                addressParts.push(escapeHtml(address.city));
             }
-            if (address.address) addressParts.push(address.address);
+            if (address.address) addressParts.push(escapeHtml(address.address));
             const addressLines = addressParts.join('<br>');
             
             html += '<div class="addresses-list__item card address-card">';
@@ -257,7 +284,7 @@
             
             html += '<div class="address-card__body">';
             html += '<div class="address-card__name">' + escapeHtml(address.recipient_name || '') + '</div>';
-            html += '<div class="address-card__row">' + escapeHtml(addressLines) + '</div>';
+            html += '<div class="address-card__row">' + addressLines + '</div>';
             
             if (address.phone) {
                 html += '<div class="address-card__row">';
