@@ -21,5 +21,149 @@
 <body>
 <center><h1>404 Not Found</h1></center>
 <hr><center>nginx/1.18.0</center>
+	<!-- User Account Info Script -->
+	<script>
+		(function () {
+			function updateUserAccountInfo() {
+				const userNameEl = document.getElementById('account-menu-user-name');
+				const userEmailEl = document.getElementById('account-menu-user-email');
+
+				// Header indicator elements
+				const headerIndicatorTitle = document.querySelector('.indicator--trigger--click a[href="account-login.html"] .indicator__title');
+				const headerIndicatorValue = document.querySelector('.indicator--trigger--click a[href="account-login.html"] .indicator__value');
+
+				// Dropdown elements
+				const accountMenuForm = document.querySelector('.account-menu__form');
+				const accountMenuUser = document.querySelector('.account-menu__user');
+				const accountMenuDivider = document.querySelector('.account-menu__divider'); // The one after form
+
+				// Helper to update UI with user data
+				function updateUI(user) {
+					if (!user) {
+						// Not logged in state
+						if (userNameEl) userNameEl.textContent = 'وارد نشده';
+						if (userEmailEl) userEmailEl.textContent = '';
+						if (headerIndicatorTitle) {
+							headerIndicatorTitle.textContent = 'سلام، ورود';
+							headerIndicatorTitle.style.display = ''; // Restore visibility
+						}
+						if (headerIndicatorValue) {
+							headerIndicatorValue.textContent = 'حساب کاربری من';
+							// Reset styles
+							headerIndicatorValue.style.position = '';
+							headerIndicatorValue.style.top = '';
+							headerIndicatorValue.style.fontWeight = '';
+						}
+
+						// Show form, hide user info (optional but good UX, though redundant if text says 'Not logged in')
+						if (accountMenuForm) accountMenuForm.style.display = 'block';
+						if (accountMenuDivider) accountMenuDivider.style.display = 'block';
+
+						return;
+					}
+
+					// Logged in state: Hide form and its divider
+					if (accountMenuForm) accountMenuForm.style.display = 'none';
+					if (accountMenuDivider) accountMenuDivider.style.display = 'none';
+
+					// Get display name (Name > Mobile > Phone > 'User')
+					let displayName = 'کاربر';
+					if (user.name && user.name.trim() !== '') {
+						displayName = user.name;
+					} else if (user.first_name || user.last_name) {
+						displayName = ((user.first_name || '') + ' ' + (user.last_name || '')).trim();
+					}
+
+					// Get secondary info (Mobile > Phone > Email)
+					let secondaryInfo = '';
+					if (user.mobile && user.mobile.trim() !== '') {
+						secondaryInfo = user.mobile;
+					} else if (user.phone && user.phone.trim() !== '') {
+						secondaryInfo = user.phone;
+					} else if (user.email && user.email.trim() !== '') {
+						secondaryInfo = user.email;
+					}
+
+					// If display name is still generic/empty, try to use secondary info as display name
+					if (displayName === 'کاربر' || displayName === '') {
+						if (secondaryInfo) displayName = secondaryInfo;
+					}
+
+					// Update Account Menu
+					if (userNameEl) userNameEl.textContent = displayName;
+					if (userEmailEl) userEmailEl.textContent = secondaryInfo;
+
+					// Update Header Indicator
+					if (headerIndicatorTitle && headerIndicatorValue) {
+						// User requested to remove the title (which was showing phone) if logged in.
+						// So we hide title, and show the Name/Phone in the Value slot.
+						headerIndicatorTitle.style.display = 'none';
+						headerIndicatorValue.textContent = displayName;
+
+						// Fix vertical alignment (move down as per user request)
+						headerIndicatorValue.style.position = 'relative';
+						headerIndicatorValue.style.top = '14px';
+						headerIndicatorValue.style.fontWeight = 'bold'; // Optional: make it look impactful
+					}
+				}
+
+				// 1. Try to load from localStorage first (fast render)
+				try {
+					const userDataStr = localStorage.getItem('user') || localStorage.getItem('currentUser');
+					if (userDataStr) {
+						const userData = JSON.parse(userDataStr);
+						if (userData && (userData.id || userData.userId || userData.isLoggedIn)) {
+							updateUI(userData);
+						} else {
+							updateUI(null);
+						}
+					}
+				} catch (e) {
+					console.error('Error reading localStorage:', e);
+				}
+
+				// 2. Fetch fresh data from API
+				fetch('backend/api/auth.php?action=me')
+					.then(response => response.json())
+					.then(data => {
+						if (data.success && data.data) {
+							// Save latest user data to localStorage
+							localStorage.setItem('user', JSON.stringify(data.data));
+							updateUI(data.data);
+						} else {
+							// If API says not logged in, clear UI
+							// But be careful not to flash 'not logged in' if we had data in localStorage 
+							// matching the session. 
+							// Actually, if API says not logged in, we should trust it.
+							localStorage.removeItem('user');
+							localStorage.removeItem('currentUser');
+							updateUI(null);
+						}
+					})
+					.catch(error => {
+						console.error('Error fetching user info:', error);
+						// Don't clear UI on network error, keep localStorage version
+					});
+			}
+
+			// Update on page load
+			if (document.readyState === 'loading') {
+				document.addEventListener('DOMContentLoaded', updateUserAccountInfo);
+			} else {
+				updateUserAccountInfo();
+			}
+
+			// Update when storage changes
+			window.addEventListener('storage', function (e) {
+				if (e.key === 'user' || e.key === 'currentUser') {
+					updateUserAccountInfo();
+				}
+			});
+
+			// Make function globally available
+			window.updateUserAccountInfo = updateUserAccountInfo;
+		})();
+	</script>
+	<script src="js/cart-loader.js"></script>
 </body>
 </html>
