@@ -47,10 +47,19 @@ try {
                 $offset = isset($_GET['offset']) ? (int) $_GET['offset'] : 0;
 
                 $orders = getUserOrders($user['id'], $limit, $offset);
+                
+                // Get total count for pagination
+                $conn = getConnection();
+                $countStmt = $conn->prepare("SELECT COUNT(*) FROM orders WHERE user_id = ?");
+                $countStmt->execute([$user['id']]);
+                $total = (int) $countStmt->fetchColumn();
 
                 echo json_encode([
                     'success' => true,
-                    'data' => $orders
+                    'data' => $orders,
+                    'total' => $total,
+                    'limit' => $limit,
+                    'offset' => $offset
                 ], JSON_UNESCAPED_UNICODE);
             }
             break;
