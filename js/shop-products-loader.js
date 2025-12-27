@@ -41,7 +41,7 @@
         ProductLoader.$sortSelect = ProductLoader.$container.find('#view-option-sort');
         ProductLoader.$limitSelect = ProductLoader.$container.find('#view-option-limit');
         ProductLoader.$layoutSwitcher = ProductLoader.$container.find('.layout-switcher');
-        
+
         // Clear static pagination HTML immediately to prevent showing wrong page count
         if (ProductLoader.$pagination.length) {
             const $paginationList = ProductLoader.$pagination.find('.pagination');
@@ -108,12 +108,12 @@
 
         ProductLoader.$sortSelect.empty();
         sortOptions.forEach(option => {
-            const selected = (option.value === ProductLoader.sortBy || 
-                            (option.value === 'price_desc' && ProductLoader.sortBy === 'price' && ProductLoader.sortDir === 'DESC')) ? 'selected' : '';
+            const selected = (option.value === ProductLoader.sortBy ||
+                (option.value === 'price_desc' && ProductLoader.sortBy === 'price' && ProductLoader.sortDir === 'DESC')) ? 'selected' : '';
             ProductLoader.$sortSelect.append(`<option value="${option.value}" ${selected}>${option.text}</option>`);
         });
 
-        ProductLoader.$sortSelect.on('change', function() {
+        ProductLoader.$sortSelect.on('change', function () {
             const value = $(this).val();
             if (value === 'price_desc') {
                 ProductLoader.sortBy = 'price';
@@ -141,7 +141,7 @@
             ProductLoader.$limitSelect.append(`<option value="${limit}" ${selected}>${limit}</option>`);
         });
 
-        ProductLoader.$limitSelect.on('change', function() {
+        ProductLoader.$limitSelect.on('change', function () {
             ProductLoader.limit = parseInt($(this).val());
             ProductLoader.currentPage = 1;
             loadProducts();
@@ -155,7 +155,7 @@
     function initLayoutSwitcher() {
         if (!ProductLoader.$layoutSwitcher.length) return;
 
-        ProductLoader.$layoutSwitcher.find('.layout-switcher__button').on('click', function() {
+        ProductLoader.$layoutSwitcher.find('.layout-switcher__button').on('click', function () {
             const $button = $(this);
             ProductLoader.layout = $button.data('layout');
             ProductLoader.withFeatures = $button.data('with-features') === true;
@@ -178,7 +178,7 @@
     function initPagination() {
         if (!ProductLoader.$pagination.length) return;
 
-        ProductLoader.$pagination.on('click', '.page-link', function(e) {
+        ProductLoader.$pagination.on('click', '.page-link', function (e) {
             e.preventDefault();
             const $link = $(this);
             const $pageItem = $link.closest('.page-item');
@@ -192,7 +192,7 @@
                 // Parse page number from URL
                 const url = new URL(href, window.location.origin);
                 const pageParam = url.searchParams.get('page');
-                
+
                 if (pageParam) {
                     ProductLoader.currentPage = parseInt(pageParam);
                 } else if ($link.attr('aria-label') === 'Previous') {
@@ -208,7 +208,7 @@
                         ProductLoader.currentPage = pageNum;
                     }
                 }
-                
+
                 // Update URL and load products
                 updateURL();
                 loadProducts();
@@ -221,7 +221,7 @@
      */
     function buildAPIUrl() {
         const params = new URLSearchParams();
-        
+
         // Add filters
         if (ProductLoader.filters.category_id) {
             params.append('category', ProductLoader.filters.category_id);
@@ -273,7 +273,7 @@
         }
 
         const $contentContainer = ProductLoader.$productsList.find('.products-list__content');
-        
+
         // Show loading state
         $contentContainer.html('<div style="text-align: center; padding: 40px;"><div class="spinner-border" role="status"><span class="sr-only">در حال بارگذاری...</span></div></div>');
 
@@ -281,22 +281,22 @@
             .then(response => response.json())
             .then(data => {
                 ProductLoader.isLoading = false;
-                
+
                 if (data.success && data.data) {
                     // Use total from API (total count of all matching products)
                     // Fallback to count (products in current page) only if total is not provided
                     // Never use data.data.length as it's just the current page
                     ProductLoader.totalProducts = (data.total !== undefined && data.total !== null) ? data.total : (data.count || 0);
-                    
+
                     // Ensure totalProducts is at least the number of products we have
                     if (ProductLoader.totalProducts < data.data.length) {
                         ProductLoader.totalProducts = data.data.length;
                     }
-                    
+
                     renderProducts(data.data);
                     updatePagination();
                     updateLegend();
-                    
+
                     // Update price filter range if available
                     if (data.price_range) {
                         updatePriceFilterRange(data.price_range);
@@ -330,7 +330,7 @@
         });
 
         // Re-initialize quickview handlers
-        $('.product-card__action--quickview', ProductLoader.$container).off('click').on('click', function() {
+        $('.product-card__action--quickview', ProductLoader.$container).off('click').on('click', function () {
             if (typeof quickview !== 'undefined' && quickview.clickHandler) {
                 quickview.clickHandler.apply(this, arguments);
             }
@@ -341,10 +341,13 @@
      * Create a product card element
      */
     function createProductCard(product) {
-        const productUrl = product.slug ? 
-            'product-full.html?product=' + encodeURIComponent(product.slug) : 
+        const productUrl = product.slug ?
+            'product-full.html?product=' + encodeURIComponent(product.slug) :
             'product-full.html?id=' + product.id;
-        const productImage = product.image_url || 'images/products/product-1-245x245.jpg';
+        let productImage = product.image_url || 'images/products/product-1-245x245.jpg';
+        if (productImage && productImage.startsWith('products/')) {
+            productImage = 'backend/uploads/' + productImage;
+        }
         const productName = product.name || 'بدون نام';
         const productPrice = product.formatted_price || '0';
         const discountPrice = product.formatted_discount_price || null;
@@ -366,7 +369,7 @@
                 if (daysDiff <= 30) {
                     badgesHtml += '<div class="tag-badge tag-badge--new">جدید</div>';
                 }
-            } catch (e) {}
+            } catch (e) { }
         }
         if (product.is_featured) {
             badgesHtml += '<div class="tag-badge tag-badge--hot">ویژه</div>';
@@ -375,8 +378,8 @@
         // Build rating stars
         let starsHtml = '';
         for (let i = 1; i <= 5; i++) {
-            starsHtml += i <= activeStars ? 
-                '<div class="rating__star rating__star--active"></div>' : 
+            starsHtml += i <= activeStars ?
+                '<div class="rating__star rating__star--active"></div>' :
                 '<div class="rating__star"></div>';
         }
 
@@ -469,23 +472,23 @@
      */
     function buildPaginationUrl(page) {
         const params = new URLSearchParams();
-        
+
         // Add page number (only if > 1)
         if (page > 1) {
             params.append('page', page);
         }
-        
+
         // Preserve all existing URL parameters
         const urlParams = new URLSearchParams(window.location.search);
         const preserveParams = ['category', 'vehicle', 'search', 'featured', 'discounted', 'price_min', 'price_max', 'sort', 'dir', 'limit'];
-        
+
         preserveParams.forEach(key => {
             const value = urlParams.get(key);
             if (value && key !== 'page') { // Don't preserve old page param
                 params.append(key, value);
             }
         });
-        
+
         // Add current state parameters if not in URL
         if (!params.has('limit') && ProductLoader.limit !== 16) {
             params.append('limit', ProductLoader.limit);
@@ -496,7 +499,7 @@
         if (!params.has('dir') && ProductLoader.sortDir !== 'DESC') {
             params.append('dir', ProductLoader.sortDir);
         }
-        
+
         const queryString = params.toString();
         return queryString ? '?' + queryString : '';
     }
@@ -511,17 +514,17 @@
         if (isNaN(ProductLoader.totalProducts) || ProductLoader.totalProducts < 0) {
             ProductLoader.totalProducts = 0;
         }
-        
+
         // Ensure limit is a valid positive number
         if (isNaN(ProductLoader.limit) || ProductLoader.limit <= 0) {
             ProductLoader.limit = 16;
         }
 
         const totalPages = Math.ceil(ProductLoader.totalProducts / ProductLoader.limit);
-        
+
         // Always show pagination, even if there's only 1 page
         ProductLoader.$pagination.show();
-        
+
         if (totalPages <= 1) {
             // If only 1 page, just show page 1 as active
             const $paginationList = ProductLoader.$pagination.find('.pagination');
@@ -567,7 +570,7 @@
         const maxPages = 7;
         let startPage = Math.max(1, ProductLoader.currentPage - Math.floor(maxPages / 2));
         let endPage = Math.min(totalPages, startPage + maxPages - 1);
-        
+
         if (endPage - startPage < maxPages - 1) {
             startPage = Math.max(1, endPage - maxPages + 1);
         }
@@ -586,10 +589,10 @@
             const pageUrl = buildPaginationUrl(i);
             $paginationList.append(`
                 <li class="page-item ${active}" ${current}>
-                    ${active ? 
-                        `<span class="page-link">${i} <span class="sr-only">(current)</span></span>` :
-                        `<a class="page-link" href="${pageUrl}">${i}</a>`
-                    }
+                    ${active ?
+                    `<span class="page-link">${i} <span class="sr-only">(current)</span></span>` :
+                    `<a class="page-link" href="${pageUrl}">${i}</a>`
+                }
                 </li>
             `);
         }
@@ -623,37 +626,37 @@
         if (!priceRange || priceRange.min === undefined || priceRange.max === undefined) {
             return;
         }
-        
+
         const minPrice = Math.floor(priceRange.min);
         const maxPrice = Math.ceil(priceRange.max);
-        
+
         // Ensure we have valid prices
         if (isNaN(minPrice) || isNaN(maxPrice) || minPrice < 0 || maxPrice < 0) {
             return;
         }
-        
+
         // If min equals max (single product), ensure max is at least min
         const finalMaxPrice = Math.max(maxPrice, minPrice);
-        
-        $('.filter-price').each(function() {
+
+        $('.filter-price').each(function () {
             const $filterPrice = $(this);
             const $slider = $filterPrice.find('.filter-price__slider');
             const $minValue = $filterPrice.find('.filter-price__min-value');
             const $maxValue = $filterPrice.find('.filter-price__max-value');
-            
+
             // Update data attributes - set min/max to filtered products range
             $filterPrice.attr('data-min', minPrice);
             $filterPrice.attr('data-max', finalMaxPrice);
-            
+
             // Set handles to start (min) and end (max) positions
             $filterPrice.attr('data-from', minPrice);
             $filterPrice.attr('data-to', finalMaxPrice);
-            
+
             // Mark that these values should show filtered products range
             $filterPrice.data('show-filtered-range', true);
             $filterPrice.data('filtered-min', minPrice);
             $filterPrice.data('filtered-max', finalMaxPrice);
-            
+
             // Initially show filtered products range (min/max)
             // Once user moves handles, the main.js update handler will show handle positions
             // Don't override displayed values if user has already interacted with slider
@@ -669,44 +672,44 @@
                     $maxValue.data('is-filtered-range', true);
                 }
             }
-            
+
             // Update slider if it exists
             if ($slider.length && $slider[0].noUiSlider) {
                 try {
                     const slider = $slider[0].noUiSlider;
-                    
+
                     // Update slider range to match filtered products
                     // If min equals max (single product), we need a small range for the slider to work
                     const sliderMin = minPrice;
                     let sliderMax = finalMaxPrice;
                     let handleMin = minPrice;
                     let handleMax = finalMaxPrice;
-                    
+
                     // If min equals max (single product), create a small range
                     if (minPrice === finalMaxPrice) {
                         sliderMax = minPrice + 1000; // Small buffer for slider functionality
                         handleMin = minPrice;
                         handleMax = minPrice; // Both handles at the same position
                     }
-                    
+
                     slider.updateOptions({
                         range: {
                             'min': sliderMin,
                             'max': sliderMax
                         }
                     }, false);
-                    
+
                     // Set slider handles to start (min) and end (max) positions
                     slider.set([handleMin, handleMax]);
-                    
+
                     // The main.js update handler will automatically update displayed values
                     // based on handle positions. We don't need to force update here.
-                } catch(e) {
+                } catch (e) {
                     console.error('Error updating price slider:', e);
                     // If update fails, destroy and let main.js reinitialize
                     $slider[0].noUiSlider.destroy();
                     // Trigger reinitialization
-                    setTimeout(function() {
+                    setTimeout(function () {
                         if (typeof window.initPriceSliders === 'function') {
                             window.initPriceSliders();
                         }
@@ -745,7 +748,7 @@
         if (ProductLoader.limit !== 16) params.append('limit', ProductLoader.limit);
         if (ProductLoader.sortBy !== 'created_at') params.append('sort', ProductLoader.sortBy);
         if (ProductLoader.sortDir !== 'DESC') params.append('dir', ProductLoader.sortDir);
-        
+
         // Add existing URL params
         const urlParams = new URLSearchParams(window.location.search);
         ['category', 'vehicle', 'search', 'featured', 'discounted', 'price_min', 'price_max'].forEach(key => {
@@ -757,7 +760,7 @@
     }
 
     // Initialize on document ready
-    $(document).ready(function() {
+    $(document).ready(function () {
         init();
     });
 

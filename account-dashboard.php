@@ -1631,9 +1631,9 @@ $recentOrders = getUserOrders($user['id'], 3);
 							<div class="dashboard">
 								<div class="dashboard__profile card profile-card">
 									<div class="card-body profile-card__body">
-										<?php 
-											$userName = $user['name'] ?? ($user['first_name'] && $user['last_name'] ? $user['first_name'] . ' ' . $user['last_name'] : 'کاربر مهمان');
-											$userEmail = $user['email'] ?? $user['phone'] ?? '';
+										<?php
+										$userName = $user['name'] ?? ((!empty($user['first_name']) && !empty($user['last_name'])) ? $user['first_name'] . ' ' . $user['last_name'] : 'کاربر مهمان');
+										$userEmail = $user['email'] ?? $user['phone'] ?? '';
 										?>
 										<div class="profile-card__name">
 											<?= htmlspecialchars($userName) ?>
@@ -1650,33 +1650,36 @@ $recentOrders = getUserOrders($user['id'], 3);
 									<div class="address-card__body">
 										<?php if ($defaultAddress): ?>
 											<div class="address-card__name">
-												<?= htmlspecialchars($defaultAddress['recipient_name'] ?: ($user['name'] ?? ($user['first_name'] && $user['last_name'] ? $user['first_name'] . ' ' . $user['last_name'] : 'کاربر مهمان'))) ?>
+												<?= htmlspecialchars($defaultAddress['recipient_name'] ?: ($user['name'] ?? ((!empty($user['first_name']) && !empty($user['last_name'])) ? $user['first_name'] . ' ' . $user['last_name'] : 'کاربر مهمان'))) ?>
 											</div>
 											<div class="address-card__row">
-												<?php 
-													$locationParts = [];
-													if (!empty($defaultAddress['province'])) $locationParts[] = htmlspecialchars($defaultAddress['province']);
-													if (!empty($defaultAddress['city'])) $locationParts[] = htmlspecialchars($defaultAddress['city']);
-													echo implode(' - ', $locationParts);
+												<?php
+												$locationParts = [];
+												if (!empty($defaultAddress['province']))
+													$locationParts[] = htmlspecialchars($defaultAddress['province']);
+												if (!empty($defaultAddress['city']))
+													$locationParts[] = htmlspecialchars($defaultAddress['city']);
+												echo implode(' - ', $locationParts);
 												?>
 												<?php if (!empty($defaultAddress['address'])): ?><br><?= htmlspecialchars($defaultAddress['address']) ?><?php endif; ?>
-												<?php if (!empty($defaultAddress['postal_code'])): ?><br>کد پستی: <?= htmlspecialchars($defaultAddress['postal_code']) ?><?php endif; ?>
+												<?php if (!empty($defaultAddress['postal_code'])): ?><br>کد پستی:
+													<?= htmlspecialchars($defaultAddress['postal_code']) ?>	<?php endif; ?>
 											</div>
 											<?php if (!empty($defaultAddress['landline'] ?? $defaultAddress['phone'] ?? '')): ?>
-											<div class="address-card__row">
-												<div class="address-card__row-title">تلفن ثابت</div>
-												<div class="address-card__row-content">
-													<?= htmlspecialchars($defaultAddress['landline'] ?? $defaultAddress['phone'] ?? '') ?>
+												<div class="address-card__row">
+													<div class="address-card__row-title">تلفن ثابت</div>
+													<div class="address-card__row-content">
+														<?= htmlspecialchars($defaultAddress['landline'] ?? $defaultAddress['phone'] ?? '') ?>
+													</div>
 												</div>
-											</div>
 											<?php endif; ?>
 											<?php if (!empty($user['email'])): ?>
-											<div class="address-card__row">
-												<div class="address-card__row-title">آدرس ایمیل</div>
-												<div class="address-card__row-content">
-													<?= htmlspecialchars($user['email']) ?>
+												<div class="address-card__row">
+													<div class="address-card__row-title">آدرس ایمیل</div>
+													<div class="address-card__row-content">
+														<?= htmlspecialchars($user['email']) ?>
+													</div>
 												</div>
-											</div>
 											<?php endif; ?>
 										<?php else: ?>
 											<div class="address-card__row">
@@ -2702,4 +2705,5 @@ $recentOrders = getUserOrders($user['id'], 3);
 </body>
 
 </html>
+
 </html>

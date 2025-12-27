@@ -1337,7 +1337,10 @@
                         }
 
                         const productUrl = product.slug ? 'product-full.html?product=' + encodeURIComponent(product.slug) : 'product-full.html?id=' + product.id;
-                        const productImage = product.image_url || 'images/products/product-1-245x245.jpg';
+                        let productImage = product.image_url || 'images/products/product-1-245x245.jpg';
+                        if (productImage && productImage.startsWith('products/')) {
+                            productImage = 'backend/uploads/' + productImage;
+                        }
                         const productName = (product.name && product.name.trim()) ? product.name.trim() : 'بدون نام';
                         const productPrice = product.formatted_price || '0';
                         const discountPrice = product.formatted_discount_price || null;
@@ -1701,7 +1704,7 @@
         const categoriesGroup = suggestions.find('.suggestions__group--categories');
         const productsList = suggestions.find('.suggestions__products-list');
         const categoriesList = suggestions.find('.suggestions__categories-list');
-        
+
         let searchTimeout = null;
         let lastSearchQuery = '';
 
@@ -1747,11 +1750,14 @@
                     const rating = product.rating_rounded || product.rating || 0;
                     const reviews = product.reviews || 0;
                     const stars = generateStars(rating);
-                    const imageUrl = product.thumbnail_url || product.image_url || 'images/products/default-40x40.jpg';
+                    let imageUrl = product.thumbnail_url || product.image_url || 'images/products/default-40x40.jpg';
+                    if (imageUrl && imageUrl.startsWith('products/')) {
+                        imageUrl = 'backend/uploads/' + imageUrl;
+                    }
                     const productName = escapeHtml(product.name || '');
                     const productUrl = escapeHtml(product.url || '#');
                     const productPrice = escapeHtml(product.formatted_price || '0');
-                    
+
                     const productHtml = `
                         <a class="suggestions__item suggestions__product" href="${productUrl}">
                             <div class="suggestions__product-image image image--type--product">
@@ -1809,7 +1815,7 @@
             let starsHtml = '';
             const fullStars = Math.floor(rating);
             const hasHalfStar = (rating % 1) >= 0.5;
-            
+
             for (let i = 0; i < 5; i++) {
                 if (i < fullStars) {
                     starsHtml += '<div class="rating__star rating__star--active"></div>';
@@ -1825,14 +1831,14 @@
         // Handle input events
         input.on('input', function () {
             const query = $(this).val();
-            
+
             // Clear previous timeout
             if (searchTimeout) {
                 clearTimeout(searchTimeout);
             }
-            
+
             // Debounce search - wait 300ms after user stops typing
-            searchTimeout = setTimeout(function() {
+            searchTimeout = setTimeout(function () {
                 if (query !== lastSearchQuery) {
                     lastSearchQuery = query;
                     fetchSuggestions(query);
@@ -1848,22 +1854,22 @@
                 suggestions.addClass('search__dropdown--open');
             }
         });
-        
+
         input.on('blur', function () {
             // Delay hiding to allow clicks on suggestions
-            setTimeout(function() {
+            setTimeout(function () {
                 if (!suggestions.is(':hover') && !input.is(':focus')) {
                     suggestions.removeClass('search__dropdown--open');
                 }
             }, 200);
         });
-        
+
         // Keep dropdown open when hovering
-        suggestions.on('mouseenter', function() {
+        suggestions.on('mouseenter', function () {
             suggestions.addClass('search__dropdown--open');
         });
-        
-        suggestions.on('mouseleave', function() {
+
+        suggestions.on('mouseleave', function () {
             if (!input.is(':focus')) {
                 suggestions.removeClass('search__dropdown--open');
             }
@@ -1935,7 +1941,10 @@
 
                 discountedProducts.forEach(function (product) {
                     const productUrl = product.slug ? 'product-full.html?product=' + encodeURIComponent(product.slug) : 'product-full.html?id=' + product.id;
-                    const productImage = product.image_url || 'images/products/product-1-245x245.jpg';
+                    let productImage = product.image_url || 'images/products/product-1-245x245.jpg';
+                    if (productImage && productImage.startsWith('products/')) {
+                        productImage = 'backend/uploads/' + productImage;
+                    }
                     const productName = product.name || 'بدون نام';
                     const productPrice = product.formatted_price || '0';
                     const discountPrice = product.formatted_discount_price || null;
@@ -2623,7 +2632,7 @@
         if (typeof window.accountGarageInitialized !== 'undefined') {
             return;
         }
-        
+
         const garageList = $('#garage-vehicles-list');
         const loadingTemplate = $('#garage-loading-template');
 

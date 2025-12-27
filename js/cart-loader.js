@@ -3,11 +3,11 @@
  * Dynamically loads cart data and renders the cart dropdown
  */
 
-(function() {
+(function () {
     'use strict';
 
     const CART_API_URL = 'backend/api/cart.php';
-    
+
     /**
      * Find cart indicator element
      */
@@ -21,7 +21,7 @@
         }
         return null;
     }
-    
+
     /**
      * Format price with Persian number formatting
      */
@@ -99,7 +99,10 @@
         let html = '';
         items.forEach((item, index) => {
             const productUrl = item.slug ? `product-full.html?slug=${item.slug}` : `product-full.html?id=${item.product_id}`;
-            const imageUrl = item.image_url || item.image || 'images/products/product-placeholder-70x70.jpg';
+            let imageUrl = item.image_url || item.image || 'images/products/product-placeholder-70x70.jpg';
+            if (imageUrl && imageUrl.startsWith('products/')) {
+                imageUrl = 'backend/uploads/' + imageUrl;
+            }
             const productName = item.product_name || item.name || 'محصول';
             const quantity = item.quantity || 1;
             const price = item.effective_price || item.price || 0;
@@ -275,7 +278,7 @@ C9.2,7.8,9.2,8.4,8.8,8.8z"/>
     function attachRemoveHandlers() {
         const removeButtons = document.querySelectorAll('.dropcart__item-remove[data-product-id]');
         removeButtons.forEach(button => {
-            button.addEventListener('click', async function() {
+            button.addEventListener('click', async function () {
                 const productId = this.getAttribute('data-product-id');
                 if (!productId) return;
 
@@ -324,7 +327,7 @@ C9.2,7.8,9.2,8.4,8.8,8.8z"/>
         if (indicator) {
             const button = indicator.querySelector('.indicator__button');
             if (button) {
-                button.addEventListener('click', function() {
+                button.addEventListener('click', function () {
                     // Small delay to ensure dropdown is visible
                     setTimeout(loadCart, 100);
                 });

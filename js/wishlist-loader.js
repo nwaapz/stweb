@@ -66,7 +66,7 @@
             })
             .then(data => {
                 WishlistLoader.isLoading = false;
-                
+
                 if (!data) return; // Handled redirect
 
                 if (data.success && data.data) {
@@ -119,14 +119,17 @@
      * Create a wishlist table row
      */
     function createWishlistRow(item) {
-        const productUrl = item.slug ? 
-            'product-full.html?product=' + encodeURIComponent(item.slug) : 
+        const productUrl = item.slug ?
+            'product-full.html?product=' + encodeURIComponent(item.slug) :
             'product-full.html?id=' + item.product_id;
-        const productImage = item.image_url || 'images/products/product-1-160x160.jpg';
+        let productImage = item.image_url || 'images/products/product-1-160x160.jpg';
+        if (productImage && productImage.startsWith('products/')) {
+            productImage = 'backend/uploads/' + productImage;
+        }
         const productName = item.name || 'بدون نام';
         const productPrice = item.formatted_effective_price || item.formatted_price || '0';
         const originalPrice = item.has_discount && item.formatted_price ? item.formatted_price : null;
-        
+
         // Stock status
         const stockStatus = item.stock > 0 ? 'In Stock' : 'Out of Stock';
         const stockStatusClass = item.stock > 0 ? 'status-badge--style--success' : 'status-badge--style--danger';
@@ -140,8 +143,8 @@
         // Build rating stars
         let starsHtml = '';
         for (let i = 1; i <= 5; i++) {
-            starsHtml += i <= activeStars ? 
-                '<div class="rating__star rating__star--active"></div>' : 
+            starsHtml += i <= activeStars ?
+                '<div class="rating__star rating__star--active"></div>' :
                 '<div class="rating__star"></div>';
         }
 
@@ -235,14 +238,14 @@
             .then(data => {
                 if (data.success) {
                     // Remove row from table
-                    $button.closest('tr').fadeOut(300, function() {
+                    $button.closest('tr').fadeOut(300, function () {
                         $(this).remove();
                         // Check if wishlist is now empty
                         if (WishlistLoader.$tableBody.find('tr').length === 0) {
                             renderEmptyWishlist();
                         }
                     });
-                    
+
                     // Show success message (optional)
                     if (typeof showNotification === 'function') {
                         showNotification('از لیست علاقه‌مندی حذف شد', 'success');
@@ -280,7 +283,7 @@
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ 
+            body: JSON.stringify({
                 product_id: productId,
                 quantity: 1
             })
@@ -295,7 +298,7 @@
                     if (typeof showNotification === 'function') {
                         showNotification('به سبد خرید اضافه شد', 'success');
                     }
-                    
+
                     // Update cart indicator if exists
                     if (typeof updateCartIndicator === 'function') {
                         updateCartIndicator();
@@ -313,7 +316,7 @@
     }
 
     // Initialize on document ready
-    $(document).ready(function() {
+    $(document).ready(function () {
         init();
     });
 

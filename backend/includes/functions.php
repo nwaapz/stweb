@@ -80,23 +80,23 @@ function resizeImage($filepath, $width, $height, $quality = 90)
         error_log("PHP GD extension is not loaded");
         return false;
     }
-    
+
     if (!file_exists($filepath)) {
         error_log("Image file not found: " . $filepath);
         return false;
     }
-    
+
     // Get image info
     $imageInfo = getimagesize($filepath);
     if (!$imageInfo) {
         error_log("Invalid image file: " . $filepath);
         return false;
     }
-    
+
     $originalWidth = $imageInfo[0];
     $originalHeight = $imageInfo[1];
     $mimeType = $imageInfo['mime'];
-    
+
     // Create image resource based on type
     switch ($mimeType) {
         case 'image/jpeg':
@@ -114,14 +114,14 @@ function resizeImage($filepath, $width, $height, $quality = 90)
         default:
             return false;
     }
-    
+
     if (!$sourceImage) {
         return false;
     }
-    
+
     // Create new image with exact dimensions
     $newImage = imagecreatetruecolor($width, $height);
-    
+
     // Preserve transparency for PNG and GIF
     if ($mimeType == 'image/png' || $mimeType == 'image/gif') {
         imagealphablending($newImage, false);
@@ -133,11 +133,11 @@ function resizeImage($filepath, $width, $height, $quality = 90)
         $white = imagecolorallocate($newImage, 255, 255, 255);
         imagefilledrectangle($newImage, 0, 0, $width, $height, $white);
     }
-    
+
     // Calculate aspect ratio and resize with cropping to fit exact dimensions
     $sourceAspect = $originalWidth / $originalHeight;
     $targetAspect = $width / $height;
-    
+
     // Calculate source crop dimensions
     if ($sourceAspect > $targetAspect) {
         // Source is wider - crop width (center crop)
@@ -152,27 +152,31 @@ function resizeImage($filepath, $width, $height, $quality = 90)
         $x = 0;
         $y = ($originalHeight - $cropHeight) / 2;
     }
-    
+
     // Enable high-quality resampling
     imagealphablending($newImage, true);
     imagesavealpha($newImage, true);
-    
+
     // Resize and crop to exact dimensions (cast to int for imagecopyresampled)
     $resizeSuccess = imagecopyresampled(
-        $newImage, 
-        $sourceImage, 
-        0, 0, 
-        (int)round($x), (int)round($y), 
-        $width, $height, 
-        (int)round($cropWidth), (int)round($cropHeight)
+        $newImage,
+        $sourceImage,
+        0,
+        0,
+        (int) round($x),
+        (int) round($y),
+        $width,
+        $height,
+        (int) round($cropWidth),
+        (int) round($cropHeight)
     );
-    
+
     if (!$resizeSuccess) {
         imagedestroy($sourceImage);
         imagedestroy($newImage);
         return false;
     }
-    
+
     // Save resized image (overwrite original file)
     $result = false;
     switch ($mimeType) {
@@ -192,11 +196,11 @@ function resizeImage($filepath, $width, $height, $quality = 90)
             $result = imagewebp($newImage, $filepath, $quality);
             break;
     }
-    
+
     // Clean up
     imagedestroy($sourceImage);
     imagedestroy($newImage);
-    
+
     // Verify the saved file exists and has correct dimensions
     if ($result) {
         $verifyInfo = @getimagesize($filepath);
@@ -208,7 +212,7 @@ function resizeImage($filepath, $width, $height, $quality = 90)
             return $result;
         }
     }
-    
+
     return false;
 }
 
@@ -219,10 +223,10 @@ function resizeImage($filepath, $width, $height, $quality = 90)
 function uploadTeamImage($file, $folder = 'about/team')
 {
     $upload = uploadImage($file, $folder);
-    
+
     if ($upload['success']) {
         $fullPath = UPLOAD_PATH . $upload['path'];
-        
+
         // FORCE resize to 600x800 - this happens automatically for ALL uploads
         $resizeResult = resizeImage($fullPath, 600, 800);
         if ($resizeResult === false) {
@@ -230,11 +234,11 @@ function uploadTeamImage($file, $folder = 'about/team')
             @unlink($fullPath);
             error_log("Failed to resize team image: " . $fullPath);
             return [
-                'success' => false, 
+                'success' => false,
                 'error' => 'خطا در تغییر اندازه تصویر به 600×800. لطفاً مطمئن شوید که PHP GD extension فعال است.'
             ];
         }
-        
+
         // Verify the resized image dimensions
         $resizedInfo = @getimagesize($fullPath);
         if ($resizedInfo) {
@@ -245,7 +249,7 @@ function uploadTeamImage($file, $folder = 'about/team')
                 if (!$retryResult) {
                     @unlink($fullPath);
                     return [
-                        'success' => false, 
+                        'success' => false,
                         'error' => 'خطا در تغییر اندازه تصویر. تصویر به اندازه 600×800 تنظیم نشد.'
                     ];
                 }
@@ -254,10 +258,10 @@ function uploadTeamImage($file, $folder = 'about/team')
             // Can't verify dimensions, but resize returned true, so assume success
             error_log("Warning: Could not verify image dimensions after resize: " . $fullPath);
         }
-        
+
         return $upload;
     }
-    
+
     return $upload;
 }
 
@@ -446,17 +450,17 @@ function getProducts($filters = [])
     // Price filtering - check effective price (discount_price if active, otherwise price)
     if (isset($filters['price_min']) || isset($filters['price_max'])) {
         $priceConditions = [];
-        
+
         if (isset($filters['price_min'])) {
             $priceConditions[] = "(CASE WHEN (p.discount_price IS NOT NULL AND p.discount_price > 0 AND (p.discount_end IS NULL OR p.discount_end >= NOW()) AND (p.discount_start IS NULL OR p.discount_start <= NOW())) THEN p.discount_price ELSE p.price END) >= ?";
             $params[] = $filters['price_min'];
         }
-        
+
         if (isset($filters['price_max'])) {
             $priceConditions[] = "(CASE WHEN (p.discount_price IS NOT NULL AND p.discount_price > 0 AND (p.discount_end IS NULL OR p.discount_end >= NOW()) AND (p.discount_start IS NULL OR p.discount_start <= NOW())) THEN p.discount_price ELSE p.price END) <= ?";
             $params[] = $filters['price_max'];
         }
-        
+
         if (!empty($priceConditions)) {
             $sql .= " AND (" . implode(" AND ", $priceConditions) . ")";
         }
@@ -571,29 +575,29 @@ function getProductsPriceRange($filters = [])
     // Price filtering - check effective price (discount_price if active, otherwise price)
     if (isset($filters['price_min']) || isset($filters['price_max'])) {
         $priceConditions = [];
-        
+
         if (isset($filters['price_min'])) {
             $priceConditions[] = "(CASE WHEN (p.discount_price IS NOT NULL AND p.discount_price > 0 AND (p.discount_end IS NULL OR p.discount_end >= NOW()) AND (p.discount_start IS NULL OR p.discount_start <= NOW())) THEN p.discount_price ELSE p.price END) >= ?";
             $params[] = $filters['price_min'];
         }
-        
+
         if (isset($filters['price_max'])) {
             $priceConditions[] = "(CASE WHEN (p.discount_price IS NOT NULL AND p.discount_price > 0 AND (p.discount_end IS NULL OR p.discount_end >= NOW()) AND (p.discount_start IS NULL OR p.discount_start <= NOW())) THEN p.discount_price ELSE p.price END) <= ?";
             $params[] = $filters['price_max'];
         }
-        
+
         if (!empty($priceConditions)) {
             $sql .= " AND (" . implode(" AND ", $priceConditions) . ")";
         }
     }
-    
+
     $stmt = $conn->prepare($sql);
     $stmt->execute($params);
     $result = $stmt->fetch();
-    
+
     return [
-        'min' => $result['min_price'] ? (float)$result['min_price'] : 0,
-        'max' => $result['max_price'] ? (float)$result['max_price'] : 1000
+        'min' => $result['min_price'] ? (float) $result['min_price'] : 0,
+        'max' => $result['max_price'] ? (float) $result['max_price'] : 1000
     ];
 }
 
@@ -647,17 +651,17 @@ function getProductsCount($filters = [])
     // Price filtering - check effective price (discount_price if active, otherwise price)
     if (isset($filters['price_min']) || isset($filters['price_max'])) {
         $priceConditions = [];
-        
+
         if (isset($filters['price_min'])) {
             $priceConditions[] = "(CASE WHEN (p.discount_price IS NOT NULL AND p.discount_price > 0 AND (p.discount_end IS NULL OR p.discount_end >= NOW()) AND (p.discount_start IS NULL OR p.discount_start <= NOW())) THEN p.discount_price ELSE p.price END) >= ?";
             $params[] = $filters['price_min'];
         }
-        
+
         if (isset($filters['price_max'])) {
             $priceConditions[] = "(CASE WHEN (p.discount_price IS NOT NULL AND p.discount_price > 0 AND (p.discount_end IS NULL OR p.discount_end >= NOW()) AND (p.discount_start IS NULL OR p.discount_start <= NOW())) THEN p.discount_price ELSE p.price END) <= ?";
             $params[] = $filters['price_max'];
         }
-        
+
         if (!empty($priceConditions)) {
             $sql .= " AND (" . implode(" AND ", $priceConditions) . ")";
         }
@@ -666,7 +670,7 @@ function getProductsCount($filters = [])
     $stmt = $conn->prepare($sql);
     $stmt->execute($params);
     $result = $stmt->fetch();
-    return $result ? (int)$result['total'] : 0;
+    return $result ? (int) $result['total'] : 0;
 }
 
 /**
@@ -784,7 +788,7 @@ function getBlogPosts($filters = [])
 {
     // Ensure table exists before querying
     ensureBlogTableExists();
-    
+
     $conn = getConnection();
     $sql = "SELECT bp.*, au.name as author_name 
             FROM blog_posts bp 
@@ -817,8 +821,8 @@ function getBlogPosts($filters = [])
 
     // Limit
     if (!empty($filters['limit'])) {
-        $limit = (int)$filters['limit'];
-        $offset = !empty($filters['offset']) ? (int)$filters['offset'] : 0;
+        $limit = (int) $filters['limit'];
+        $offset = !empty($filters['offset']) ? (int) $filters['offset'] : 0;
         $sql .= " LIMIT {$offset}, {$limit}";
     }
 
@@ -834,7 +838,7 @@ function getBlogPostsCount($filters = [])
 {
     // Ensure table exists before querying
     ensureBlogTableExists();
-    
+
     $conn = getConnection();
     $sql = "SELECT COUNT(*) as total 
             FROM blog_posts bp 
@@ -862,7 +866,7 @@ function getBlogPostsCount($filters = [])
     $stmt = $conn->prepare($sql);
     $stmt->execute($params);
     $result = $stmt->fetch();
-    return (int)($result['total'] ?? 0);
+    return (int) ($result['total'] ?? 0);
 }
 
 /**
@@ -872,7 +876,7 @@ function getBlogPostById($id)
 {
     // Ensure table exists before querying
     ensureBlogTableExists();
-    
+
     $conn = getConnection();
     $stmt = $conn->prepare("
         SELECT bp.*, au.name as author_name 
@@ -891,7 +895,7 @@ function getBlogPostBySlug($slug)
 {
     // Ensure table exists before querying
     ensureBlogTableExists();
-    
+
     $conn = getConnection();
     $stmt = $conn->prepare("
         SELECT bp.*, au.name as author_name 
@@ -927,7 +931,7 @@ function getFlashMessage()
 function ensureBranchesTablesExist()
 {
     $conn = getConnection();
-    
+
     try {
         // Check if provinces table exists
         $stmt = $conn->query("SHOW TABLES LIKE 'provinces'");
@@ -945,7 +949,7 @@ function ensureBranchesTablesExist()
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
             ");
         }
-        
+
         // Check if branches table exists
         $stmt = $conn->query("SHOW TABLES LIKE 'branches'");
         if ($stmt->rowCount() == 0) {
@@ -980,7 +984,7 @@ function getProvinces($filters = [])
 {
     // Ensure tables exist before querying
     ensureBranchesTablesExist();
-    
+
     $conn = getConnection();
     $sql = "SELECT p.*, (SELECT COUNT(*) FROM branches b WHERE b.province_id = p.id AND b.is_active = 1) as branch_count 
             FROM provinces p 
@@ -1005,7 +1009,7 @@ function getProvinceById($id)
 {
     // Ensure tables exist before querying
     ensureBranchesTablesExist();
-    
+
     $conn = getConnection();
     $stmt = $conn->prepare("SELECT * FROM provinces WHERE id = ?");
     $stmt->execute([$id]);
@@ -1019,7 +1023,7 @@ function getProvinceBySlug($slug)
 {
     // Ensure tables exist before querying
     ensureBranchesTablesExist();
-    
+
     $conn = getConnection();
     // Allow searching by slug OR Persian name
     $stmt = $conn->prepare("SELECT * FROM provinces WHERE slug = ? OR name = ?");
@@ -1035,9 +1039,9 @@ function populateIranProvinces()
 {
     // Ensure tables exist
     ensureBranchesTablesExist();
-    
+
     $conn = getConnection();
-    
+
     // List of 31 provinces of Iran: [Persian name, English name, slug]
     $provinces = [
         ['تهران', 'Tehran', 'tehran'],
@@ -1072,18 +1076,18 @@ function populateIranProvinces()
         ['خراسان جنوبی', 'South Khorasan', 'south-khorasan'],
         ['البرز', 'Alborz', 'alborz']
     ];
-    
+
     $added = 0;
     $skipped = 0;
-    
+
     try {
         $stmt = $conn->prepare("INSERT INTO provinces (name, name_en, slug, is_active) VALUES (?, ?, ?, 1)");
-        
+
         foreach ($provinces as $province) {
             // Check if province already exists
             $checkStmt = $conn->prepare("SELECT COUNT(*) FROM provinces WHERE slug = ?");
             $checkStmt->execute([$province[2]]);
-            
+
             if ($checkStmt->fetchColumn() == 0) {
                 $stmt->execute($province);
                 $added++;
@@ -1091,7 +1095,7 @@ function populateIranProvinces()
                 $skipped++;
             }
         }
-        
+
         return [
             'success' => true,
             'message' => "استان‌های ایران با موفقیت اضافه شدند. $added استان جدید اضافه شد" . ($skipped > 0 ? " و $skipped استان از قبل وجود داشت" : ""),
@@ -1115,7 +1119,7 @@ function getBranches($filters = [])
 {
     // Ensure tables exist before querying
     ensureBranchesTablesExist();
-    
+
     $conn = getConnection();
     $sql = "SELECT b.*, p.name as province_name 
             FROM branches b 
@@ -1146,7 +1150,7 @@ function getBranchById($id)
 {
     // Ensure tables exist before querying
     ensureBranchesTablesExist();
-    
+
     $conn = getConnection();
     $stmt = $conn->prepare("
         SELECT b.*, p.name as province_name 
@@ -1165,7 +1169,7 @@ function getBranchesByProvince($provinceId)
 {
     // Ensure tables exist before querying
     ensureBranchesTablesExist();
-    
+
     $conn = getConnection();
     $stmt = $conn->prepare("
         SELECT * FROM branches 
@@ -1182,7 +1186,7 @@ function getBranchesByProvince($provinceId)
 function getCartSummary($userId)
 {
     $conn = getConnection();
-    
+
     $stmt = $conn->prepare("
         SELECT c.*, p.name, p.price, p.discount_price, p.image, p.sku,
                (CASE 
@@ -1198,16 +1202,16 @@ function getCartSummary($userId)
     ");
     $stmt->execute([$userId]);
     $items = $stmt->fetchAll();
-    
+
     $subtotal = 0;
     foreach ($items as &$item) {
-        $item['price'] = (float)$item['effective_price'];
+        $item['price'] = (float) $item['effective_price'];
         $item['line_total'] = $item['price'] * $item['quantity'];
         $subtotal += $item['line_total'];
         $item['formatted_price'] = formatPrice($item['price']);
         $item['formatted_line_total'] = formatPrice($item['line_total']);
     }
-    
+
     return [
         'items' => $items,
         'subtotal' => $subtotal,
@@ -1223,12 +1227,12 @@ function getCartSummary($userId)
 function addToCart($userId, $productId, $quantity = 1)
 {
     $conn = getConnection();
-    
+
     // Check if item already exists
     $stmt = $conn->prepare("SELECT * FROM cart WHERE user_id = ? AND product_id = ?");
     $stmt->execute([$userId, $productId]);
     $existing = $stmt->fetch();
-    
+
     if ($existing) {
         // Update quantity
         $newQuantity = $existing['quantity'] + $quantity;
@@ -1239,7 +1243,7 @@ function addToCart($userId, $productId, $quantity = 1)
         $stmt = $conn->prepare("INSERT INTO cart (user_id, product_id, quantity) VALUES (?, ?, ?)");
         $stmt->execute([$userId, $productId, $quantity]);
     }
-    
+
     return ['success' => true, 'message' => 'به سبد خرید اضافه شد'];
 }
 
@@ -1249,14 +1253,14 @@ function addToCart($userId, $productId, $quantity = 1)
 function updateCartItem($userId, $productId, $quantity)
 {
     $conn = getConnection();
-    
+
     if ($quantity <= 0) {
         return removeFromCart($userId, $productId);
     }
-    
+
     $stmt = $conn->prepare("UPDATE cart SET quantity = ? WHERE user_id = ? AND product_id = ?");
     $stmt->execute([$quantity, $userId, $productId]);
-    
+
     return ['success' => true, 'message' => 'سبد خرید بروزرسانی شد'];
 }
 
@@ -1266,10 +1270,28 @@ function updateCartItem($userId, $productId, $quantity)
 function removeFromCart($userId, $productId)
 {
     $conn = getConnection();
-    
+
     $stmt = $conn->prepare("DELETE FROM cart WHERE user_id = ? AND product_id = ?");
     $stmt->execute([$userId, $productId]);
-    
+
     return ['success' => true, 'message' => 'از سبد خرید حذف شد'];
+}
+
+/**
+ * Get order status text in Persian
+ */
+function getOrderStatusText($status)
+{
+    $statuses = [
+        'pending' => 'در انتظار پرداخت',
+        'processing' => 'در حال پردازش',
+        'shipped' => 'ارسال شده',
+        'delivered' => 'تحویل شده',
+        'cancelled' => 'لغو شده',
+        'refunded' => 'مسترد شده',
+        'failed' => 'ناموفق'
+    ];
+
+    return $statuses[$status] ?? 'نامشخص';
 }
 ?>

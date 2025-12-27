@@ -72,7 +72,7 @@
             })
             .then(data => {
                 CompareLoader.isLoading = false;
-                
+
                 if (!data) return; // Handled redirect
 
                 if (data.success && data.data) {
@@ -102,12 +102,15 @@
         // Render product header row
         const $productRow = $('<tr class="compare-table__row"></tr>');
         $productRow.append('<th class="compare-table__column compare-table__column--header">محصول</th>');
-        
+
         items.forEach(item => {
-            const productUrl = item.slug ? 
-                'product-full.html?product=' + encodeURIComponent(item.slug) : 
+            const productUrl = item.slug ?
+                'product-full.html?product=' + encodeURIComponent(item.slug) :
                 'product-full.html?id=' + item.product_id;
-            const productImage = item.image_url || 'images/products/product-1-150x150.jpg';
+            let productImage = item.image_url || 'images/products/product-1-150x150.jpg';
+            if (productImage && productImage.startsWith('products/')) {
+                productImage = 'backend/uploads/' + productImage;
+            }
             const productName = item.name || 'بدون نام';
 
             const $productCell = $(`
@@ -130,7 +133,7 @@
         // Render rating row
         const $ratingRow = $('<tr class="compare-table__row"></tr>');
         $ratingRow.append('<th class="compare-table__column compare-table__column--header">Rating</th>');
-        
+
         items.forEach(item => {
             const rating = item.rating || 0;
             const reviews = item.reviews || 0;
@@ -139,8 +142,8 @@
             // Build rating stars
             let starsHtml = '';
             for (let i = 1; i <= 5; i++) {
-                starsHtml += i <= activeStars ? 
-                    '<div class="rating__star rating__star--active"></div>' : 
+                starsHtml += i <= activeStars ?
+                    '<div class="rating__star rating__star--active"></div>' :
                     '<div class="rating__star"></div>';
             }
 
@@ -164,7 +167,7 @@
         // Render availability row
         const $availabilityRow = $('<tr class="compare-table__row"></tr>');
         $availabilityRow.append('<th class="compare-table__column compare-table__column--header">Availability</th>');
-        
+
         items.forEach(item => {
             const stockStatus = item.stock > 0 ? 'In Stock' : 'Out of Stock';
             const stockStatusClass = item.stock > 0 ? 'status-badge--style--success' : 'status-badge--style--danger';
@@ -187,7 +190,7 @@
         // Render price row
         const $priceRow = $('<tr class="compare-table__row"></tr>');
         $priceRow.append('<th class="compare-table__column compare-table__column--header">Price</th>');
-        
+
         items.forEach(item => {
             const price = item.formatted_effective_price || item.formatted_price || '0';
             $priceRow.append(`<td class="compare-table__column compare-table__column--product">${price}</td>`);
@@ -198,7 +201,7 @@
         // Render add to cart row
         const $addToCartRow = $('<tr class="compare-table__row"></tr>');
         $addToCartRow.append('<th class="compare-table__column compare-table__column--header">Add to cart</th>');
-        
+
         items.forEach(item => {
             const $addToCartCell = $(`
                 <td class="compare-table__column compare-table__column--product">
@@ -215,7 +218,7 @@
         // Render SKU row
         const $skuRow = $('<tr class="compare-table__row"></tr>');
         $skuRow.append('<th class="compare-table__column compare-table__column--header">SKU</th>');
-        
+
         items.forEach(item => {
             const sku = item.sku || 'N/A';
             $skuRow.append(`<td class="compare-table__column compare-table__column--product">${sku}</td>`);
@@ -226,7 +229,7 @@
         // Render weight row (if available)
         const $weightRow = $('<tr class="compare-table__row"></tr>');
         $weightRow.append('<th class="compare-table__column compare-table__column--header">Weight</th>');
-        
+
         items.forEach(item => {
             const weight = item.weight ? item.weight + ' Kg' : 'N/A';
             $weightRow.append(`<td class="compare-table__column compare-table__column--product">${weight}</td>`);
@@ -237,7 +240,7 @@
         // Render color row (if available)
         const $colorRow = $('<tr class="compare-table__row"></tr>');
         $colorRow.append('<th class="compare-table__column compare-table__column--header">Color</th>');
-        
+
         items.forEach(item => {
             const color = item.color || 'N/A';
             $colorRow.append(`<td class="compare-table__column compare-table__column--product">${color}</td>`);
@@ -248,7 +251,7 @@
         // Render material row (if available)
         const $materialRow = $('<tr class="compare-table__row"></tr>');
         $materialRow.append('<th class="compare-table__column compare-table__column--header">Material</th>');
-        
+
         items.forEach(item => {
             const material = item.material || 'N/A';
             $materialRow.append(`<td class="compare-table__column compare-table__column--product">${material}</td>`);
@@ -259,7 +262,7 @@
         // Render remove row
         const $removeRow = $('<tr class="compare-table__row"></tr>');
         $removeRow.append('<th class="compare-table__column compare-table__column--header"></th>');
-        
+
         items.forEach(item => {
             const $removeCell = $(`
                 <td class="compare-table__column compare-table__column--product">
@@ -314,7 +317,7 @@
                 if (data.success) {
                     // Reload compare table
                     loadCompare();
-                    
+
                     // Show success message (optional)
                     if (typeof showNotification === 'function') {
                         showNotification('از لیست مقایسه حذف شد', 'success');
@@ -352,7 +355,7 @@
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ 
+            body: JSON.stringify({
                 product_id: productId,
                 quantity: 1
             })
@@ -367,7 +370,7 @@
                     if (typeof showNotification === 'function') {
                         showNotification('به سبد خرید اضافه شد', 'success');
                     }
-                    
+
                     // Update cart indicator if exists
                     if (typeof updateCartIndicator === 'function') {
                         updateCartIndicator();
@@ -389,7 +392,7 @@
      */
     function handleClearList(e) {
         e.preventDefault();
-        
+
         if (!confirm('آیا مطمئن هستید که می‌خواهید لیست مقایسه را پاک کنید؟')) {
             return;
         }
@@ -414,7 +417,7 @@
                 if (data.success) {
                     // Reload compare table
                     loadCompare();
-                    
+
                     // Show success message
                     if (typeof showNotification === 'function') {
                         showNotification('لیست مقایسه پاک شد', 'success');
@@ -441,7 +444,7 @@
     }
 
     // Initialize on document ready
-    $(document).ready(function() {
+    $(document).ready(function () {
         init();
     });
 

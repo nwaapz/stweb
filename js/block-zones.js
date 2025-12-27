@@ -3,7 +3,7 @@
  * Loads product categories from CMS and renders them as block-zone sections
  */
 
-(function($) {
+(function ($) {
     'use strict';
 
     // SVG icons (reused across all zones)
@@ -87,7 +87,10 @@
      */
     function generateProductCard(product) {
         const productUrl = `product-full.html?id=${product.id}`;
-        const productImage = product.image_url || 'images/products/product-1-245x245.jpg';
+        let productImage = product.image_url || 'images/products/product-1-245x245.jpg';
+        if (productImage && productImage.startsWith('products/')) {
+            productImage = 'backend/uploads/' + productImage;
+        }
         const productName = product.name || 'محصول';
         const productSku = product.sku || '';
         const productPrice = product.formatted_price || '0.00';
@@ -98,7 +101,7 @@
         // Don't rely on has_discount flag since it might be false if discount hasn't started yet
         let hasDiscount = false;
         let discountPrice = product.formatted_discount_price || null;
-        
+
         if (discountPrice && discountPrice.trim() !== '') {
             hasDiscount = true;
         } else if (product.discount_percent && product.discount_percent > 0 && product.price) {
@@ -106,7 +109,7 @@
             const priceStr = product.price.toString().replace(/[^\d]/g, '');
             const originalPrice = parseFloat(priceStr);
             const discountPercent = parseFloat(product.discount_percent);
-            
+
             if (!isNaN(originalPrice) && !isNaN(discountPercent) && discountPercent > 0) {
                 const calculatedPrice = Math.round(originalPrice - (originalPrice * discountPercent / 100));
                 discountPrice = calculatedPrice.toLocaleString('fa-IR') + ' تومان';
@@ -178,11 +181,11 @@
                     </div>
                     <div class="product-card__footer">
                         <div class="product-card__prices">
-                            ${hasDiscount 
-                                ? `<div class="product-card__price product-card__price--new">${discountPrice}</div>
+                            ${hasDiscount
+                ? `<div class="product-card__price product-card__price--new">${discountPrice}</div>
                                    <div class="product-card__price product-card__price--old">${productPrice}</div>`
-                                : `<div class="product-card__price product-card__price--current">${productPrice}</div>`
-                            }
+                : `<div class="product-card__price product-card__price--current">${productPrice}</div>`
+            }
                         </div>
                         <button class="product-card__addtocart-icon" type="button" aria-label="Add to cart">
                             ${SVG_ICONS.addToCart}
@@ -201,7 +204,7 @@
         const categoryName = category.name || 'دسته‌بندی';
         const categoryImage = category.image_url || 'images/categories/category-overlay-1.jpg';
         const categoryImageMobile = category.image_url || 'images/categories/category-overlay-1-mobile.jpg';
-        
+
         // Determine spacing class (first one uses divider-lg, others use divider-sm)
         const spacingClass = index === 0 ? 'block-space--layout--divider-lg' : 'block-space--layout--divider-sm';
 
@@ -294,7 +297,7 @@
      */
     function initializeCarousel(blockZone) {
         const owlCarousel = blockZone.find('.owl-carousel');
-        
+
         if (owlCarousel.length === 0) {
             return;
         }
@@ -320,11 +323,11 @@
         });
 
         // Attach navigation arrows
-        blockZone.find('.block-zone__arrow--prev').on('click', function() {
+        blockZone.find('.block-zone__arrow--prev').on('click', function () {
             owlCarousel.trigger('prev.owl.carousel', [500]);
         });
 
-        blockZone.find('.block-zone__arrow--next').on('click', function() {
+        blockZone.find('.block-zone__arrow--next').on('click', function () {
             owlCarousel.trigger('next.owl.carousel', [500]);
         });
 
@@ -337,7 +340,7 @@
      */
     function loadBlockZones() {
         const container = $('.block-zones-container');
-        
+
         if (container.length === 0) {
             console.warn('Block zones container not found');
             return;
@@ -368,7 +371,7 @@
                     const blockZoneHtml = generateBlockZone(category, products, index);
                     const $blockZone = $(blockZoneHtml);
                     container.append($blockZone);
-                    
+
                     // Initialize carousel after a short delay to ensure DOM is ready
                     setTimeout(() => {
                         initializeCarousel($blockZone);
@@ -386,10 +389,10 @@
     }
 
     // Use event delegation for tab buttons so they work even after carousel reinitialization
-    $(document).on('click', '.block-zone__tabs-button', function(e) {
+    $(document).on('click', '.block-zone__tabs-button', function (e) {
         e.preventDefault();
         e.stopPropagation();
-        
+
         const button = $(this);
         const blockZone = button.closest('.block-zone');
         const tabType = button.data('tab');
@@ -422,7 +425,7 @@
         fetchCategoryProducts(categoryId, tabType, 8).then(products => {
             loader.hide();
             carouselContainer.removeClass('block-zone__carousel--loading');
-            
+
             // Filter products to ensure they belong to this category (double check)
             const filteredProducts = products.filter(product => {
                 const matches = parseInt(product.category_id) === parseInt(categoryId);
@@ -431,13 +434,13 @@
                 }
                 return matches;
             });
-            
+
             // Destroy carousel
             carousel.trigger('destroy.owl.carousel');
-            
+
             // Clear and rebuild content
             carousel.empty();
-            
+
             if (filteredProducts.length > 0) {
                 filteredProducts.forEach(product => {
                     const productCard = $(generateProductCard(product));
@@ -449,19 +452,19 @@
 
             // Reinitialize carousel
             initializeCarousel(blockZone);
-            
+
             return false;
         }).catch(error => {
             loader.hide();
             carouselContainer.removeClass('block-zone__carousel--loading');
             console.error('Error loading products:', error);
         });
-        
+
         return false;
     });
 
     // Initialize when DOM is ready
-    $(document).ready(function() {
+    $(document).ready(function () {
         loadBlockZones();
     });
 
