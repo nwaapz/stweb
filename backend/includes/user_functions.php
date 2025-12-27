@@ -767,6 +767,12 @@ function getOrderById($orderId, $userId = null)
     $order = $stmt->fetch();
 
     if ($order) {
+        // Get user email
+        $userStmt = $conn->prepare("SELECT email FROM users WHERE id = ?");
+        $userStmt->execute([$order['user_id']]);
+        $user = $userStmt->fetch();
+        $order['user_email'] = $user['email'] ?? null;
+        
         $order['status_text'] = getOrderStatusText($order['status']);
         $order['formatted_total'] = formatPrice($order['total']);
         $order['formatted_subtotal'] = formatPrice($order['subtotal']);

@@ -262,7 +262,7 @@
         // Update totals - use formatted values if available
         const subtotal = cartData.subtotal || 0;
         const formattedSubtotal = cartData.formatted_subtotal || formatPrice(subtotal);
-        const shipping = 25000; // Default shipping cost
+        const shipping = 0; // No delivery fee
         const tax = 0;
         const total = subtotal + shipping + tax;
 
@@ -425,10 +425,10 @@
     function showEmptyCart() {
         cartTableBody.innerHTML = '';
         cartEmptyMessage.style.display = '';
-        cartSubtotalEl.textContent = '0.00';
-        cartShippingEl.innerHTML = '0.00<div><a href="">محاسبه هزینه ارسال</a></div>';
-        cartTaxEl.textContent = '0.00';
-        cartTotalEl.textContent = '0.00';
+        cartSubtotalEl.textContent = formatPrice(0);
+        cartShippingEl.innerHTML = formatPrice(0) + '<div><a href="">محاسبه هزینه ارسال</a></div>';
+        cartTaxEl.textContent = formatPrice(0);
+        cartTotalEl.textContent = formatPrice(0);
         if (checkoutBtn) {
             checkoutBtn.style.display = 'none';
         }
