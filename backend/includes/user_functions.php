@@ -484,6 +484,8 @@ function getCartItems($userId)
         $item['effective_price'] = getEffectivePrice($item);
         $item['line_total'] = $item['effective_price'] * $item['quantity'];
         $item['image_url'] = $item['image'] ? UPLOAD_URL . $item['image'] : null;
+        $item['formatted_price'] = formatPrice($item['effective_price']);
+        $item['formatted_line_total'] = formatPrice($item['line_total']);
     }
 
     return $items;
