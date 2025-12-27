@@ -1,15 +1,24 @@
-﻿<!DOCTYPE html>
+﻿<?php
+require_once __DIR__ . '/backend/includes/functions.php';
+require_once __DIR__ . '/backend/includes/user_functions.php';
+$user = requireUserLogin();
+$addresses = getUserAddresses($user['id']);
+$defaultAddress = !empty($addresses) ? $addresses[0] : null;
+
+// Fetch unique orders for dashboard
+$recentOrders = getUserOrders($user['id'], 3);
+?>
+<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width,initial-scale=1">
 	<meta name="format-detection" content="telephone=no">
-	<title>حساب کاربری گاراژ — Red Parts</title>
+	<title>حساب کاربری داشبورد — Red Parts</title>
 	<link rel="icon" type="image/png" href="images/favicon.png"><!-- fonts -->
 	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:400,400i,500,500i,700,700i">
-	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazir:wght@400;500;700&display=swap">
-	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazir:wght@400;500;700&display=swap">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap">
 	<!-- css -->
 	<link rel="stylesheet" href="vendor/bootstrap/css/bootstrap.css">
 	<link rel="stylesheet" href="vendor/owl-carousel/assets/owl.carousel.min.css">
@@ -22,20 +31,52 @@
 	<!-- font - fontawesome -->
 	<link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
 	<script async src="https://www.googletagmanager.com/gtag/js?id=UA-97489509-8"></script>
-	<script>window.dataLayer = window.dataLayer || []; function gtag() { dataLayer.push(arguments); } gtag("js", new Date()); gtag("config", "UA-97489509-8");</script>
+	<script>window.dataLayer = window.dataLayer || []; function gtag() { dataLayer.push(argumen t s); } gtag("js", new Da te()); gtag("config", "UA-97489509-8");</script>
 	<style>
+		/* Global Farsi font for all content */
+		body {
+			font-family: 'Vazirmatn', 'Tahoma', 'Arial', sans-serif;
+		}
+
+		/* Ensure all text elements use Vazirmatn */
+		p,
+		div,
+		span,
+		a,
+		h1,
+		h2,
+		h3,
+		h4,
+		h5,
+		h6,
+		li,
+		td,
+		th,
+		label,
+		input,
+		textarea,
+		select,
+		button,
+		.card,
+		.dashboard,
+		.profile-card,
+		.address-card,
+		.account-nav {
+			font-family: 'Vazirmatn', 'Tahoma', 'Arial', sans-serif;
+		}
+
 		.main-menu__link strong {
 			font-weight: 700 !important;
-			font-family: 'Vazir', 'Tahoma', 'Arial', sans-serif !important;
+			font-family: 'Vazirmatn', 'Tahoma', 'Arial', sans-serif !important;
 			letter-spacing: 0;
 		}
 
 		.main-menu__link {
-			font-family: 'Vazir', 'Tahoma', 'Arial', sans-serif;
+			font-family: 'Vazirmatn', 'Tahoma', 'Arial', sans-serif;
 		}
 
 		.departments__button-title {
-			font-family: 'Vazir', 'Tahoma', 'Arial', sans-serif;
+			font-family: 'Vazirmatn', 'Tahoma', 'Arial', sans-serif;
 			font-weight: 600;
 		}
 	</style>
@@ -1362,8 +1403,17 @@
 													<option>Fusion SE</option>
 													<option>Mustang</option>
 												</select></div>
-
-
+											<div class="vehicle-form__item vehicle-form__item--select"><select
+													class="form-control form-control-select2" aria-label="Engine"
+													disabled="disabled">
+													<option value="none">انتخاب موتور</option>
+													<option>Gas 1.6L 125 hp AT/L4</option>
+													<option>Diesel 2.5L 200 hp AT/L5</option>
+													<option>Diesel 3.0L 250 hp MT/L5</option>
+												</select></div>
+											<div class="vehicle-form__divider">Or</div>
+											<div class="vehicle-form__item"><input type="text" class="form-control"
+													placeholder="شماره VIN را وارد کنید" aria-label="شماره VIN"></div>
 										</div>
 										<div class="vehicle-picker__actions">
 											<div class="search__car-selector-link"><a href=""
@@ -1416,8 +1466,12 @@
 									<div class="account-menu__user-avatar"><img src="images/avatars/avatar-4.jpg"
 											alt=""></div>
 									<div class="account-menu__user-info">
-										<div class="account-menu__user-name">حسین عبدالمحمدی</div>
-										<div class="account-menu__user-email">hsn@gmail.com</div>
+										<div class="account-menu__user-name">
+											<?= htmlspecialchars($user['name'] ?? 'کاربر مهمان') ?>
+										</div>
+										<div class="account-menu__user-email">
+											<?= htmlspecialchars($user['email'] ?? $user['phone']) ?>
+										</div>
 									</div>
 								</a>
 								<div class="account-menu__divider"></div>
@@ -1558,9 +1612,9 @@
 							<div class="account-nav flex-grow-1">
 								<h4 class="account-nav__title">Navigation</h4>
 								<ul class="account-nav__list">
-									<li class="account-nav__item"><a href="account-dashboard.html">داشبورد</a></li>
 									<li class="account-nav__item account-nav__item--active"><a
-											href="account-garage.html">گاراژ</a></li>
+											href="account-dashboard.html">داشبورد</a></li>
+									<li class="account-nav__item"><a href="account-garage.html">گاراژ</a></li>
 									<li class="account-nav__item"><a href="account-profile.html">ویرایش پروفایل</a></li>
 									<li class="account-nav__item"><a href="account-orders.html">تاریخچه سفارشات</a></li>
 									<li class="account-nav__item"><a href="account-order-details.html">جزئیات سفارش</a>
@@ -1575,59 +1629,85 @@
 							</div>
 						</div>
 						<div class="col-12 col-lg-9 mt-4 mt-lg-0">
-							<div class="card">
-								<div class="card-header">
-									<h5>گاراژ</h5>
+							<div class="dashboard">
+								<div class="dashboard__profile card profile-card">
+									<div class="card-body profile-card__body">
+										<div class="profile-card__name">
+											<?= htmlspecialchars($user['name'] ?? 'کاربر مهمان') ?>
+										</div>
+										<div class="profile-card__email">
+											<?= htmlspecialchars($user['email'] ?? $user['phone']) ?>
+										</div>
+										<div class="profile-card__edit"><a href="account-profile.html"
+												class="btn btn-secondary btn-sm">ویرایش پروفایل</a></div>
+									</div>
 								</div>
-								<div class="card-divider"></div>
-								<div class="card-body card-body--padding--2">
-									<div class="vehicles-list vehicles-list--layout--account">
-										<div class="vehicles-list__body" id="garage-vehicles-list">
-											<!-- vehicles will be loaded here dynamically -->
-											<div class="vehicles-list__item" style="display:none;"
-												id="garage-loading-template">
-												<div class="vehicles-list__item-info">
-													<div class="vehicles-list__item-name">Loading...</div>
+								<div class="dashboard__address card address-card address-card--featured">
+									<div class="address-card__badge tag-badge tag-badge--theme">پیش‌فرض</div>
+									<div class="address-card__body">
+										<?php if ($defaultAddress): ?>
+											<div class="address-card__name">
+												<?= htmlspecialchars($defaultAddress['recipient_name'] ?: ($user['name'] ?? 'کاربر مهمان')) ?>
+											</div>
+											<div class="address-card__row">
+												<?= htmlspecialchars($defaultAddress['province']) ?> -
+												<?= htmlspecialchars($defaultAddress['city']) ?><br>
+												<?= htmlspecialchars($defaultAddress['address']) ?><br>
+												کد پستی: <?= htmlspecialchars($defaultAddress['postal_code']) ?>
+											</div>
+											<div class="address-card__row">
+												<div class="address-card__row-title">شماره همراه</div>
+												<div class="address-card__row-content">
+													<?= htmlspecialchars($defaultAddress['phone']) ?>
 												</div>
 											</div>
+										<?php else: ?>
+											<div class="address-card__row">
+												هنوز آدرسی ثبت نکرده‌اید.
+											</div>
+										<?php endif; ?>
+										<div class="address-card__footer"><a href="account-addresses.html">مدیریت
+												آدرس‌ها</a></div>
+									</div>
+								</div>
+								<div class="dashboard__orders card">
+									<div class="card-header">
+										<h5>آخرین سفارشات</h5>
+									</div>
+									<div class="card-divider"></div>
+									<div class="card-table">
+										<div class="table-responsive-sm">
+											<table>
+												<thead>
+													<tr>
+														<th>شماره سفارش</th>
+														<th>تاریخ</th>
+														<th>وضعیت</th>
+														<th>مجموع</th>
+													</tr>
+												</thead>
+												<tbody>
+													<?php if (!empty($recentOrders)): ?>
+														<?php foreach ($recentOrders as $order): ?>
+															<tr>
+																<td><a
+																		href="account/order-details.php?id=<?= $order['id'] ?>">#<?= $order['id'] ?></a>
+																</td>
+																<td><?= date('Y/m/d', strtotime($order['created_at'])) ?></td>
+																<td><?= getOrderStatusText($order['status']) ?></td>
+																<td><?= number_format($order['total']) ?> تومان</td>
+															</tr>
+														<?php endforeach; ?>
+													<?php else: ?>
+														<tr>
+															<td colspan="4" class="text-center py-4">هنوز هیچ سفارشی ثبت
+																نکرده‌اید.</td>
+														</tr>
+													<?php endif; ?>
+												</tbody>
+											</table>
 										</div>
 									</div>
-								</div>
-								<div class="card-divider"></div>
-								<div class="card-header">
-									<h5>افزودن وسیله نقلیه</h5>
-								</div>
-								<div class="card-divider"></div>
-								<div class="card-body card-body--padding--2">
-									<div class="vehicle-form vehicle-form--layout--account">
-										<div class="vehicle-form__item vehicle-form__item--select"><select
-												class="form-control form-control-select2" aria-label="Brand"
-												disabled="disabled">
-												<option value="none">انتخاب برند</option>
-												<option>Audi</option>
-												<option>BMW</option>
-												<option>Ferrari</option>
-												<option>Ford</option>
-												<option>KIA</option>
-												<option>Nissan</option>
-												<option>Tesla</option>
-												<option>Toyota</option>
-											</select></div>
-										<div class="vehicle-form__item vehicle-form__item--select"><select
-												class="form-control form-control-select2" aria-label="Model"
-												disabled="disabled">
-												<option value="none">انتخاب مدل</option>
-												<option>Explorer</option>
-												<option>Focus S</option>
-												<option>Fusion SE</option>
-												<option>Mustang</option>
-											</select></div>
-
-
-									</div>
-									<div class="mt-4 pt-3"><a href="#" id="user-add-vehicle-btn"
-											class="btn btn-sm btn-primary">افزودن وسیله
-											نقلیه</a></div>
 								</div>
 							</div>
 						</div>
@@ -2602,7 +2682,6 @@
 	<script src="vendor/select2/js/select2.min.js"></script>
 	<script src="js/number.js"></script>
 	<script src="js/main.js"></script>
-	<script src="js/account-garage.js"></script>
 </body>
 
 </html>

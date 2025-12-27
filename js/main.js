@@ -172,7 +172,7 @@
                         $(titleValues[handle]).data('is-filtered-range', false);
                     }
                 });
-                
+
                 // Also update on slide (while dragging) for real-time feedback
                 slider.noUiSlider.on('slide', function (values, handle) {
                     const formattedValue = Math.round(parseFloat(values[handle]));
@@ -181,9 +181,9 @@
                         $(titleValues[handle]).data('is-filtered-range', false);
                     }
                 });
-                
+
                 // Track user interaction to prevent filtered range from overriding handle positions
-                slider.noUiSlider.on('start', function() {
+                slider.noUiSlider.on('start', function () {
                     $(element).data('user-interacted', true);
                     // Ensure values will show handle positions
                     const $minValue = $(element).find('.filter-price__min-value');
@@ -195,7 +195,7 @@
                         $maxValue.data('is-filtered-range', false);
                     }
                 });
-                
+
                 // Also update on set (when values are programmatically changed)
                 slider.noUiSlider.on('set', function (values, handle) {
                     // Only update if user has interacted (to avoid conflicts with initial setup)
@@ -210,15 +210,15 @@
 
                 // Force slider to update positions after initialization
                 // Use multiple timeouts to ensure proper positioning
-                setTimeout(function() {
+                setTimeout(function () {
                     if (slider.noUiSlider) {
                         const currentValues = slider.noUiSlider.get();
                         // Force re-render by setting values
                         slider.noUiSlider.set(currentValues);
-                        
+
                         // Fix handle positioning for RTL layout
                         const handles = slider.querySelectorAll('.noUi-handle');
-                        handles.forEach(function(handle) {
+                        handles.forEach(function (handle) {
                             const origin = handle.closest('.noUi-origin');
                             if (origin) {
                                 // Ensure proper positioning
@@ -228,9 +228,9 @@
                         });
                     }
                 }, 50);
-                
+
                 // Additional fix after a longer delay to ensure layout is complete
-                setTimeout(function() {
+                setTimeout(function () {
                     if (slider.noUiSlider) {
                         const currentValues = slider.noUiSlider.get();
                         slider.noUiSlider.set(currentValues);
@@ -2445,6 +2445,114 @@
                 .catch(error => {
                     console.error('Error loading factories for brands section:', error);
                     $brandsList.html('<li style="text-align: center; padding: 40px; width: 100%;">خطا در بارگذاری کارخانجات</li>');
+                });
+        }
+    });
+
+
+    /*
+    // Account Garage - User Vehicles
+    */
+    $(function () {
+        const garageList = $('#garage-vehicles-list');
+        const loadingTemplate = $('#garage-loading-template');
+
+        if (garageList.length) {
+            loadUserGarage();
+        }
+
+        function loadUserGarage() {
+            // Show loading
+            garageList.find('.vehicles-list__item:not(#garage-loading-template)').remove();
+            loadingTemplate.show();
+
+            fetch('backend/api/user_garage.php')
+                .then(response => {
+                    if (response.status === 401) {
+                        // Redirect to login if unauthorized
+                        window.location.href = 'account-login.html';
+                        return null;
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    loadingTemplate.hide();
+
+                    if (!data) return; // Auth failed
+
+                    if (data.success && data.data) {
+                        renderUserGarage(data.data);
+                    } else {
+                        garageList.append('<div class="vehicles-list__empty">خطا در دریافت اطلاعات خودروها</div>');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching user garage:', error);
+                    loadingTemplate.hide();
+                    garageList.append('<div class="vehicles-list__empty">خطا در ارتباط با سرور</div>');
+                });
+        }
+
+        function renderUserGarage(vehicles) {
+            if (vehicles.length === 0) {
+                garageList.append('<div class="vehicles-list__empty">هیچ خودرویی در گاراژ شما ثبت نشده است.</div>');
+                return;
+            }
+
+            vehicles.forEach(vehicle => {
+                const vehicleId = vehicle.id;
+                const vehicleName = vehicle.display_name || 'خودرو ناشناس';
+                const vehicleEngine = vehicle.engine ? `motor: ${vehicle.engine}` : '';
+                const partsLink = `shop-grid-4-columns-sidebar.html?vehicle_id=${vehicle.vehicle_id || ''}&user_vehicle_id=${vehicleId}`;
+
+                const html = `
+                    <div class="vehicles-list__item" data-id="${vehicleId}">
+                        <div class="vehicles-list__item-info">
+                            <div class="vehicles-list__item-name">${vehicleName}</div>
+                            <div class="vehicles-list__item-details">${vehicleEngine}</div>
+                            <div class="vehicles-list__item-links">
+                                <a href="${partsLink}">نمایش قطعات</a> 
+                                <span>|</span>
+                                <a href="#" class="text-danger remove-vehicle-btn" data-id="${vehicleId}">حذف</a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                garageList.append(html);
+            });
+
+            // Bind delete events
+            $('.remove-vehicle-btn').on('click', function (e) {
+                e.preventDefault();
+                const btn = $(this);
+                const id = btn.data('id');
+
+                if (confirm('آیا از حذف این خودرو اطمینان دارید؟')) {
+                    deleteUserVehicle(id, btn.closest('.vehicles-list__item'));
+                }
+            });
+        }
+
+        function deleteUserVehicle(id, itemElement) {
+            fetch(`backend/api/user_garage.php?id=${id}`, {
+                method: 'DELETE'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        itemElement.fadeOut(300, function () {
+                            $(this).remove();
+                            if (garageList.find('.vehicles-list__item').length === 1) { // 1 because of hidden loading template
+                                garageList.append('<div class="vehicles-list__empty">هیچ خودرویی در گاراژ شما ثبت نشده است.</div>');
+                            }
+                        });
+                    } else {
+                        alert('خطا در حذف خودرو: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting vehicle:', error);
+                    alert('خطا در ارتباط با سرور');
                 });
         }
     });

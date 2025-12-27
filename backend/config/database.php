@@ -25,9 +25,10 @@ if (session_status() === PHP_SESSION_NONE) {
  * Get database connection
  * @return PDO|null
  */
-function getConnection() {
+function getConnection()
+{
     static $conn = null;
-    
+
     if ($conn === null) {
         try {
             // First try to connect to the database
@@ -57,7 +58,7 @@ function getConnection() {
             }
         }
     }
-    
+
     return $conn;
 }
 
@@ -65,18 +66,19 @@ function getConnection() {
  * Setup database and tables
  * @return bool
  */
-function setupDatabase() {
+function setupDatabase()
+{
     try {
         // Connect without database name
         $dsn = "mysql:host=" . DB_HOST . ";charset=" . DB_CHARSET;
         $pdo = new PDO($dsn, DB_USER, DB_PASS, [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
         ]);
-        
+
         // Create database
         $pdo->exec("CREATE DATABASE IF NOT EXISTS `" . DB_NAME . "` CHARACTER SET utf8mb4 COLLATE utf8mb4_persian_ci");
         $pdo->exec("USE `" . DB_NAME . "`");
-        
+
         // Create categories table
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS `categories` (
@@ -93,7 +95,7 @@ function setupDatabase() {
                 FOREIGN KEY (`parent_id`) REFERENCES `categories`(`id`) ON DELETE SET NULL
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
         ");
-        
+
         // Create factories table
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS `factories` (
@@ -108,7 +110,7 @@ function setupDatabase() {
                 `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
         ");
-        
+
         // Create vehicles table
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS `vehicles` (
@@ -124,7 +126,7 @@ function setupDatabase() {
                 FOREIGN KEY (`factory_id`) REFERENCES `factories`(`id`) ON DELETE SET NULL
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
         ");
-        
+
         // Create products table
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS `products` (
@@ -153,7 +155,7 @@ function setupDatabase() {
                 FOREIGN KEY (`vehicle_id`) REFERENCES `vehicles`(`id`) ON DELETE SET NULL
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
         ");
-        
+
         // Create admin users table
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS `admin_users` (
@@ -167,14 +169,14 @@ function setupDatabase() {
                 `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
         ");
-        
+
         // Create default admin user (password: admin123)
         $defaultPassword = password_hash('admin123', PASSWORD_DEFAULT);
         $pdo->exec("
             INSERT IGNORE INTO `admin_users` (`username`, `password`, `name`) 
             VALUES ('admin', '$defaultPassword', 'مدیر سیستم')
         ");
-        
+
         // Create settings table
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS `settings` (
@@ -185,7 +187,7 @@ function setupDatabase() {
                 `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
         ");
-        
+
         // Create provinces table
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS `provinces` (
@@ -199,7 +201,7 @@ function setupDatabase() {
                 `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
         ");
-        
+
         // Create branches table
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS `branches` (
@@ -218,7 +220,55 @@ function setupDatabase() {
                 FOREIGN KEY (`province_id`) REFERENCES `provinces`(`id`) ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
         ");
-        
+
+        // Create users table
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `users` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `email` VARCHAR(255) NOT NULL UNIQUE,
+                `password` VARCHAR(255) NOT NULL,
+                `first_name` VARCHAR(100),
+                `last_name` VARCHAR(100),
+                `phone` VARCHAR(20),
+                `is_active` TINYINT(1) DEFAULT 1,
+                `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
+        ");
+
+        // Create user_sessions table
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `user_sessions` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `user_id` INT NOT NULL,
+                `token` VARCHAR(255) NOT NULL UNIQUE,
+                `ip_address` VARCHAR(45),
+                `user_agent` TEXT,
+                `expires_at` DATETIME NOT NULL,
+                `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
+        ");
+
+        // Create user_vehicles table
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `user_vehicles` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `user_id` INT NOT NULL,
+                `vehicle_id` INT DEFAULT NULL,
+                `factory_id` INT DEFAULT NULL,
+                `custom_brand` VARCHAR(255),
+                `custom_model` VARCHAR(255),
+                `engine` VARCHAR(255),
+                `year` INT,
+                `vin` VARCHAR(100),
+                `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+                FOREIGN KEY (`vehicle_id`) REFERENCES `vehicles`(`id`) ON DELETE SET NULL,
+                FOREIGN KEY (`factory_id`) REFERENCES `factories`(`id`) ON DELETE SET NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
+        ");
+
         // Add vehicle_id column to products table if it doesn't exist (for existing databases)
         try {
             $pdo->exec("ALTER TABLE `products` ADD COLUMN `vehicle_id` INT DEFAULT NULL AFTER `category_id`");
@@ -226,7 +276,7 @@ function setupDatabase() {
         } catch (PDOException $e) {
             // Column might already exist, ignore error
         }
-        
+
         // Add factory_id column to vehicles table if it doesn't exist (for existing databases)
         try {
             $pdo->exec("ALTER TABLE `vehicles` ADD COLUMN `factory_id` INT DEFAULT NULL AFTER `id`");
@@ -234,7 +284,7 @@ function setupDatabase() {
         } catch (PDOException $e) {
             // Column might already exist, ignore error
         }
-        
+
         return true;
     } catch (PDOException $e) {
         error_log("Database setup error: " . $e->getMessage());

@@ -255,6 +255,18 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link <?= $currentPage === 'users' || $currentPage === 'user-details' ? 'active' : '' ?>"
+                        href="users.php">
+                        <i class="bi bi-people"></i> مشتریان
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= $currentPage === 'orders-admin' || $currentPage === 'order-view' ? 'active' : '' ?>"
+                        href="orders-admin.php">
+                        <i class="bi bi-bag"></i> سفارشات
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link <?= $currentPage === 'settings' ? 'active' : '' ?>" href="settings.php">
                         <i class="bi bi-gear"></i> تنظیمات
                     </a>
