@@ -55,6 +55,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(width, height);
     renderer.setPixelRatio(window.devicePixelRatio);
+    // Make sure renderer canvas doesn't block pointer events on elements above it
+    renderer.domElement.style.pointerEvents = 'auto';
     container.appendChild(renderer.domElement);
 
     // --- Lighting ---
@@ -128,6 +130,101 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
     `;
     container.appendChild(legend);
+
+    // --- Interaction State (Declared early for button use) ---
+    let mapClickDisabled = false; // Flag to disable map clicks when over province buttons
+
+    // --- Reset View Function (Reusable) - Defined early for button use ---
+    const resetView = () => {
+        // Reset Camera Logic
+        const resetDuration = 1000;
+        const resetStartTime = Date.now();
+        const currentPos = { x: camera.position.x, y: camera.position.y, z: camera.position.z };
+        const targetLookAt = { x: 0, y: 0, z: 0 };
+
+        const resetCameraLoop = () => {
+            const elapsed = Date.now() - resetStartTime;
+            const progress = Math.min(elapsed / resetDuration, 1);
+            const eased = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress;
+
+            camera.position.x = currentPos.x + (CONFIG.camera.posX - currentPos.x) * eased;
+            camera.position.y = currentPos.y + (CONFIG.camera.posY - currentPos.y) * eased;
+            camera.position.z = currentPos.z + (CONFIG.camera.posZ - currentPos.z) * eased;
+            camera.lookAt(currentLookAtTarget.x * (1 - eased), currentLookAtTarget.y * (1 - eased), 0);
+
+            if (progress < 1) requestAnimationFrame(resetCameraLoop);
+            else currentLookAtTarget = { x: 0, y: 0, z: 0 };
+        };
+        resetCameraLoop();
+
+        if (currentDotGrid) {
+            if (currentDotGrid.parent) currentDotGrid.parent.remove(currentDotGrid);
+            currentDotGrid.geometry.dispose();
+            currentDotGrid.material.dispose();
+            currentDotGrid = null;
+        }
+
+        if (selectedObject) {
+            selectedObject.material.color.setHex(selectedObject.userData.baseColor);
+            selectedObject = null;
+        }
+
+        // Close notification if open
+        const notification = document.getElementById('map-notification');
+        if (notification && notification.parentNode) {
+            notification.style.opacity = '0';
+            setTimeout(() => { if (notification.parentNode) notification.remove(); }, 300);
+        }
+    };
+
+    // --- Reset View Button (Always Visible) ---
+    const resetViewButton = document.createElement('button');
+    resetViewButton.id = 'reset-view-button';
+    resetViewButton.innerHTML = '<i class="bi bi-arrow-counterclockwise" style="font-size: 18px;"></i>';
+    resetViewButton.title = 'بازگشت به نمای کلی';
+    resetViewButton.style.position = 'absolute';
+    resetViewButton.style.top = '20px';
+    resetViewButton.style.left = '20px';
+    resetViewButton.style.width = '50px';
+    resetViewButton.style.height = '50px';
+    resetViewButton.style.borderRadius = '50%';
+    resetViewButton.style.border = 'none';
+    resetViewButton.style.background = 'linear-gradient(45deg, #00ffff, #00cccc)';
+    resetViewButton.style.color = '#000';
+    resetViewButton.style.cursor = 'pointer';
+    resetViewButton.style.fontSize = '18px';
+    resetViewButton.style.fontWeight = 'bold';
+    resetViewButton.style.display = 'flex';
+    resetViewButton.style.alignItems = 'center';
+    resetViewButton.style.justifyContent = 'center';
+    resetViewButton.style.zIndex = '1000';
+    resetViewButton.style.boxShadow = '0 5px 20px rgba(0, 255, 255, 0.4)';
+    resetViewButton.style.transition = 'all 0.3s ease';
+    resetViewButton.style.pointerEvents = 'auto';
+    
+    // Hover and click handlers
+    resetViewButton.onmouseenter = (e) => {
+        e.stopPropagation();
+        resetViewButton.style.transform = 'scale(1.1) rotate(180deg)';
+        resetViewButton.style.boxShadow = '0 8px 25px rgba(0, 255, 255, 0.6)';
+        mapClickDisabled = true;
+    };
+    resetViewButton.onmouseleave = (e) => {
+        e.stopPropagation();
+        resetViewButton.style.transform = 'scale(1) rotate(0deg)';
+        resetViewButton.style.boxShadow = '0 5px 20px rgba(0, 255, 255, 0.4)';
+        mapClickDisabled = false;
+    };
+    resetViewButton.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        resetView();
+    };
+    resetViewButton.onmousedown = (e) => e.stopPropagation();
+    resetViewButton.onmouseup = (e) => e.stopPropagation();
+    resetViewButton.onmousemove = (e) => e.stopPropagation();
+    
+    container.appendChild(resetViewButton);
 
     // --- Interaction State (Hoisted for Table Access) ---
     const raycaster = new THREE.Raycaster();
@@ -514,40 +611,7 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             if (resetBtn) resetBtn.onclick = () => {
-                // Reset Camera Logic
-                const resetDuration = 1000;
-                const resetStartTime = Date.now();
-                const currentPos = { x: camera.position.x, y: camera.position.y, z: camera.position.z };
-                const targetLookAt = { x: 0, y: 0, z: 0 };
-
-                const resetCameraLoop = () => {
-                    const elapsed = Date.now() - resetStartTime;
-                    const progress = Math.min(elapsed / resetDuration, 1);
-                    const eased = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress;
-
-                    camera.position.x = currentPos.x + (CONFIG.camera.posX - currentPos.x) * eased;
-                    camera.position.y = currentPos.y + (CONFIG.camera.posY - currentPos.y) * eased;
-                    camera.position.z = currentPos.z + (CONFIG.camera.posZ - currentPos.z) * eased;
-                    camera.lookAt(currentLookAtTarget.x * (1 - eased), currentLookAtTarget.y * (1 - eased), 0); // Simplified lookat reset
-
-                    if (progress < 1) requestAnimationFrame(resetCameraLoop);
-                    else currentLookAtTarget = { x: 0, y: 0, z: 0 };
-                };
-                resetCameraLoop();
-
-                if (currentDotGrid) {
-                    if (currentDotGrid.parent) currentDotGrid.parent.remove(currentDotGrid);
-                    currentDotGrid.geometry.dispose();
-                    currentDotGrid.material.dispose();
-                    currentDotGrid = null;
-                }
-
-                if (selectedObject) {
-                    selectedObject.material.color.setHex(selectedObject.userData.baseColor);
-                    selectedObject = null;
-                }
-
-                if (notification.parentNode) notification.remove();
+                resetView();
             };
         };
     };
@@ -771,6 +835,34 @@ document.addEventListener('DOMContentLoaded', () => {
             listContainer.style.boxSizing = 'border-box';
             listContainer.style.marginTop = 'auto'; // Push to bottom if space
             listContainer.style.backgroundColor = 'rgba(0,0,0,0.2)';
+            listContainer.style.position = 'relative';
+            listContainer.style.zIndex = '10'; // Above the map canvas
+            listContainer.style.pointerEvents = 'auto'; // Ensure it can receive events
+            // Prevent map clicks when mouse is over the button area
+            listContainer.onmouseenter = (e) => {
+                e.stopPropagation();
+                mapClickDisabled = true;
+            };
+            listContainer.onmouseleave = (e) => {
+                e.stopPropagation();
+                mapClickDisabled = false;
+            };
+            // Stop all events from propagating to map
+            listContainer.onmousedown = (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+            };
+            listContainer.onmouseup = (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+            };
+            listContainer.onclick = (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+            };
+            listContainer.onmousemove = (e) => {
+                e.stopPropagation();
+            };
 
             // Grid for cards
             const listGrid = document.createElement('div');
@@ -778,6 +870,23 @@ document.addEventListener('DOMContentLoaded', () => {
             listGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(140px, 1fr))';
             listGrid.style.gap = '15px';
             listGrid.style.direction = 'rtl';
+            listGrid.style.pointerEvents = 'auto';
+            // Also prevent events on the grid
+            listGrid.onmousedown = (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+            };
+            listGrid.onmouseup = (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+            };
+            listGrid.onclick = (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+            };
+            listGrid.onmousemove = (e) => {
+                e.stopPropagation();
+            };
 
             provinceData.data.forEach(p => {
                 const item = document.createElement('div');
@@ -799,29 +908,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 name.style.color = '#fff';
                 name.style.marginBottom = '5px';
 
-                // Status dot - green if province exists in database (all in this list exist)
+                // Status dot - green if province has branches, red if no branches
                 const status = document.createElement('div');
-                const existsInDB = true; // All provinces in this list exist in DB
+                const hasBranches = parseInt(p.branch_count || 0) > 0;
                 status.style.width = '8px';
                 status.style.height = '8px';
                 status.style.borderRadius = '50%';
-                status.style.backgroundColor = existsInDB ? '#00a86b' : '#333';
-                status.style.boxShadow = existsInDB ? '0 0 5px #00a86b' : 'none';
+                status.style.backgroundColor = hasBranches ? '#00a86b' : '#ff0055'; // Green for branches, red for no branches
+                status.style.boxShadow = hasBranches ? '0 0 5px #00a86b' : '0 0 5px #ff0055';
 
                 item.appendChild(name);
                 item.appendChild(status);
 
-                // Hover effect
-                item.onmouseenter = () => {
+                // Hover effect - use green border if has branches, red if no branches
+                item.onmouseenter = (e) => {
+                    e.stopPropagation();
                     item.style.background = 'rgba(255,255,255,0.15)';
                     item.style.transform = 'translateY(-3px)';
-                    item.style.borderColor = '#00a86b'; // All exist in DB, so always green
+                    item.style.borderColor = hasBranches ? '#00a86b' : '#ff0055';
                 };
-                item.onmouseleave = () => {
+                item.onmouseleave = (e) => {
+                    e.stopPropagation();
                     item.style.background = 'rgba(255,255,255,0.05)';
                     item.style.transform = 'translateY(0)';
                     item.style.borderColor = 'rgba(255,255,255,0.05)';
                 };
+                
+                // Prevent all mouse events from reaching the map
+                item.onmousedown = (e) => e.stopPropagation();
+                item.onmouseup = (e) => e.stopPropagation();
+                item.onmousemove = (e) => e.stopPropagation();
 
                 // Click Action
                 item.onclick = (e) => {
@@ -915,6 +1031,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // Variables already defined above
 
     const onMouseMove = (event) => {
+        // Don't process map interactions if clicks are disabled (mouse over buttons)
+        if (mapClickDisabled) {
+            // Hide tooltip when over buttons
+            if (tooltip.style.opacity !== '0') {
+                tooltip.style.opacity = '0';
+            }
+            // Reset hover state
+            if (hoveredObject && hoveredObject !== selectedObject) {
+                hoveredObject.material.color.setHex(hoveredObject.userData.baseColor);
+                hoveredObject = null;
+            }
+            document.body.style.cursor = 'default';
+            return;
+        }
+        
         // Calculate mouse position in normalized device coordinates (-1 to +1)
         const rect = renderer.domElement.getBoundingClientRect();
         mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -933,6 +1064,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const onClick = (event) => {
+        // Don't process map clicks if disabled (mouse over buttons)
+        if (mapClickDisabled) {
+            return;
+        }
+        
         if (hoveredObject) {
             selectProvince(hoveredObject);
         }
