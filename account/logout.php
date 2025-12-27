@@ -9,6 +9,6 @@ require_once __DIR__ . '/../backend/includes/user_functions.php';
 
 logoutUser();
 
-header('Location: login.php');
+header('Location: ../account-login.html');
 exit;
 ?>

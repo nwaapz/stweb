@@ -1697,17 +1697,181 @@
         const suggestions = $('.search__dropdown--suggestions');
         const vehiclePicker = $('.search__dropdown--vehicle-picker');
         const vehiclePickerButton = $('.search__button--start');
+        const productsGroup = suggestions.find('.suggestions__group--products');
+        const categoriesGroup = suggestions.find('.suggestions__group--categories');
+        const productsList = suggestions.find('.suggestions__products-list');
+        const categoriesList = suggestions.find('.suggestions__categories-list');
+        
+        let searchTimeout = null;
+        let lastSearchQuery = '';
+
+        // Fetch search suggestions
+        function fetchSuggestions(query) {
+            if (!query || query.trim().length < 2) {
+                productsGroup.hide();
+                categoriesGroup.hide();
+                return;
+            }
+
+            const queryParam = encodeURIComponent(query.trim());
+            fetch(`backend/api/search-suggestions.php?q=${queryParam}&limit_products=3&limit_categories=4`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        renderSuggestions(data.products, data.categories);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching suggestions:', error);
+                });
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return String(text).replace(/[&<>"']/g, m => map[m]);
+        }
+
+        // Render suggestions
+        function renderSuggestions(products, categories) {
+            // Render products
+            if (products && products.length > 0) {
+                productsList.empty();
+                products.forEach(product => {
+                    const rating = product.rating_rounded || product.rating || 0;
+                    const reviews = product.reviews || 0;
+                    const stars = generateStars(rating);
+                    const imageUrl = product.thumbnail_url || product.image_url || 'images/products/default-40x40.jpg';
+                    const productName = escapeHtml(product.name || '');
+                    const productUrl = escapeHtml(product.url || '#');
+                    const productPrice = escapeHtml(product.formatted_price || '0');
+                    
+                    const productHtml = `
+                        <a class="suggestions__item suggestions__product" href="${productUrl}">
+                            <div class="suggestions__product-image image image--type--product">
+                                <div class="image__body">
+                                    <img class="image__tag" src="${escapeHtml(imageUrl)}" alt="${productName}">
+                                </div>
+                            </div>
+                            <div class="suggestions__product-info">
+                                <div class="suggestions__product-name">${productName}</div>
+                                <div class="suggestions__product-rating">
+                                    <div class="suggestions__product-rating-stars">
+                                        <div class="rating">
+                                            <div class="rating__body">
+                                                ${stars}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    ${reviews > 0 ? `<div class="suggestions__product-rating-label">${rating} از ${reviews} نظر</div>` : ''}
+                                </div>
+                            </div>
+                            <div class="suggestions__product-price">${productPrice}</div>
+                        </a>
+                    `;
+                    productsList.append(productHtml);
+                });
+                productsGroup.show();
+            } else {
+                productsGroup.hide();
+            }
+
+            // Render categories
+            if (categories && categories.length > 0) {
+                categoriesList.empty();
+                categories.forEach(category => {
+                    const categoryName = escapeHtml(category.name || '');
+                    const categoryUrl = escapeHtml(category.url || '#');
+                    const categoryHtml = `
+                        <a class="suggestions__item suggestions__category" href="${categoryUrl}">${categoryName}</a>
+                    `;
+                    categoriesList.append(categoryHtml);
+                });
+                categoriesGroup.show();
+            } else {
+                categoriesGroup.hide();
+            }
+
+            // Show dropdown if there are any results
+            if ((products && products.length > 0) || (categories && categories.length > 0)) {
+                suggestions.addClass('search__dropdown--open');
+            }
+        }
+
+        // Generate star HTML
+        function generateStars(rating) {
+            let starsHtml = '';
+            const fullStars = Math.floor(rating);
+            const hasHalfStar = (rating % 1) >= 0.5;
+            
+            for (let i = 0; i < 5; i++) {
+                if (i < fullStars) {
+                    starsHtml += '<div class="rating__star rating__star--active"></div>';
+                } else if (i === fullStars && hasHalfStar) {
+                    starsHtml += '<div class="rating__star rating__star--active"></div>';
+                } else {
+                    starsHtml += '<div class="rating__star"></div>';
+                }
+            }
+            return starsHtml;
+        }
+
+        // Handle input events
+        input.on('input', function () {
+            const query = $(this).val();
+            
+            // Clear previous timeout
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+            
+            // Debounce search - wait 300ms after user stops typing
+            searchTimeout = setTimeout(function() {
+                if (query !== lastSearchQuery) {
+                    lastSearchQuery = query;
+                    fetchSuggestions(query);
+                }
+            }, 300);
+        });
 
         input.on('focus', function () {
+            const query = $(this).val();
+            if (query && query.trim().length >= 2) {
+                fetchSuggestions(query);
+            } else {
+                suggestions.addClass('search__dropdown--open');
+            }
+        });
+        
+        input.on('blur', function () {
+            // Delay hiding to allow clicks on suggestions
+            setTimeout(function() {
+                if (!suggestions.is(':hover') && !input.is(':focus')) {
+                    suggestions.removeClass('search__dropdown--open');
+                }
+            }, 200);
+        });
+        
+        // Keep dropdown open when hovering
+        suggestions.on('mouseenter', function() {
             suggestions.addClass('search__dropdown--open');
         });
-        input.on('blur', function () {
-            suggestions.removeClass('search__dropdown--open');
+        
+        suggestions.on('mouseleave', function() {
+            if (!input.is(':focus')) {
+                suggestions.removeClass('search__dropdown--open');
+            }
         });
 
-        vehiclePickerButton.on('click', function () {
-            vehiclePickerButton.toggleClass('search__button--hover');
-            vehiclePicker.toggleClass('search__dropdown--open');
+        vehiclePickerButton.on('click', function (event) {
+            event.preventDefault();
+            window.location.href = 'account-garage.html';
         });
 
         vehiclePicker.on('transitionend', function (event) {
@@ -2509,7 +2673,7 @@
                 const vehicleId = vehicle.id;
                 const vehicleName = vehicle.display_name || 'خودرو ناشناس';
                 const vehicleEngine = vehicle.engine ? `motor: ${vehicle.engine}` : '';
-                const partsLink = `shop-grid-4-columns-sidebar.html?vehicle_id=${vehicle.vehicle_id || ''}&user_vehicle_id=${vehicleId}`;
+                const partsLink = `shop-grid-4-columns-sidebar.html?vehicle=${vehicle.vehicle_id || ''}&user_vehicle_id=${vehicleId}`;
 
                 const html = `
                     <div class="vehicles-list__item" data-id="${vehicleId}">

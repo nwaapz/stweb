@@ -8,6 +8,7 @@ session_start();
 require_once '../config/database.php';
 require_once '../includes/functions.php';
 require_once '../includes/user_functions.php';
+require_once '../includes/sms_service.php';
 
 if (!isLoggedIn()) {
     header('Location: login.php');

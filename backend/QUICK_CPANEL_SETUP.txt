@@ -1,0 +1,102 @@
+================================================================================
+QUICK SETUP GUIDE FOR CPANEL HOST
+راهنمای سریع راه‌اندازی در cPanel
+================================================================================
+
+STEP 1: Upload Files
+---------------------
+Upload these files to your cPanel host:
+- backend/includes/sms_service.php
+- backend/config/sms_config.php (create from sms_config.example.php)
+- backend/admin/sms-diagnostics.php
+- backend/admin/check-soap.php
+
+STEP 2: Create Config File
+---------------------------
+1. Copy: backend/config/sms_config.example.php
+2. Rename to: backend/config/sms_config.php
+3. Edit and enter your credentials:
+   - SMS_PROVIDER = 'payamakpanel'
+   - SMS_API_KEY = '09121777039|4thvahdati@FB'
+   - SMS_SENDER = '20001390'
+
+STEP 3: Enable SOAP Extension (cPanel)
+---------------------------------------
+1. Login to cPanel
+2. Go to: "Select PHP Version" or "MultiPHP Manager"
+3. Click "Extensions" or "Extensions" tab
+4. Find "soap" in the list
+5. Check the box to enable it
+6. Click "Save" or "Apply"
+
+Alternative: If you can't find it in cPanel:
+- Contact your hosting provider
+- Or use a REST API provider (Kavenegar, Melipayamak, Ghasedak)
+
+STEP 4: Test
+-------------
+1. Visit: yourdomain.com/backend/admin/check-soap.php
+   - Should show: "✓ افزونه SOAP نصب و فعال است"
+
+2. Visit: yourdomain.com/backend/admin/sms-diagnostics.php
+   - Check configuration status
+   - Send a test SMS
+
+STEP 5: Verify Database
+-----------------------
+Make sure backend/config/database.php has correct:
+- DB_HOST
+- DB_USER
+- DB_PASS
+- DB_NAME
+
+The sms_logs table will be created automatically.
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+Problem: SOAP extension not available
+Solution: Enable in cPanel → Select PHP Version → Extensions
+
+Problem: SMS not sending
+Solution: 
+- Check SMS diagnostics page
+- Verify API credentials
+- Check SMS logs
+
+Problem: Database errors
+Solution:
+- Verify database credentials
+- Check database user permissions
+- Ensure database exists
+
+Problem: File not found errors
+Solution:
+- Check file paths
+- Verify file structure matches local setup
+- Check file permissions (644 for files, 755 for directories)
+
+================================================================================
+SECURITY NOTES
+================================================================================
+
+1. Protect sms_config.php:
+   - File is already protected by .htaccess
+   - Never commit to version control
+   - Use strong passwords
+
+2. Database:
+   - Use strong database passwords
+   - Restrict database user permissions
+   - Regular backups
+
+================================================================================
+SUPPORT
+================================================================================
+
+Check these files for more details:
+- backend/CPANEL_SMS_SETUP.md (detailed guide)
+- backend/SMS_SETUP.md (general setup)
+- backend/admin/sms-diagnostics.php (diagnostics tool)
+

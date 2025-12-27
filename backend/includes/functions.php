@@ -1175,4 +1175,101 @@ function getBranchesByProvince($provinceId)
     $stmt->execute([$provinceId]);
     return $stmt->fetchAll();
 }
+
+/**
+ * Get cart summary with items and totals
+ */
+function getCartSummary($userId)
+{
+    $conn = getConnection();
+    
+    $stmt = $conn->prepare("
+        SELECT c.*, p.name, p.price, p.discount_price, p.image, p.sku,
+               (CASE 
+                   WHEN p.discount_price IS NOT NULL AND p.discount_price > 0 
+                   AND (p.discount_end IS NULL OR p.discount_end >= NOW())
+                   AND (p.discount_start IS NULL OR p.discount_start <= NOW())
+                   THEN p.discount_price 
+                   ELSE p.price 
+               END) as effective_price
+        FROM cart c
+        JOIN products p ON c.product_id = p.id
+        WHERE c.user_id = ?
+    ");
+    $stmt->execute([$userId]);
+    $items = $stmt->fetchAll();
+    
+    $subtotal = 0;
+    foreach ($items as &$item) {
+        $item['price'] = (float)$item['effective_price'];
+        $item['line_total'] = $item['price'] * $item['quantity'];
+        $subtotal += $item['line_total'];
+        $item['formatted_price'] = formatPrice($item['price']);
+        $item['formatted_line_total'] = formatPrice($item['line_total']);
+    }
+    
+    return [
+        'items' => $items,
+        'subtotal' => $subtotal,
+        'formatted_subtotal' => formatPrice($subtotal),
+        'shipping' => 0,
+        'total' => $subtotal
+    ];
+}
+
+/**
+ * Add item to cart
+ */
+function addToCart($userId, $productId, $quantity = 1)
+{
+    $conn = getConnection();
+    
+    // Check if item already exists
+    $stmt = $conn->prepare("SELECT * FROM cart WHERE user_id = ? AND product_id = ?");
+    $stmt->execute([$userId, $productId]);
+    $existing = $stmt->fetch();
+    
+    if ($existing) {
+        // Update quantity
+        $newQuantity = $existing['quantity'] + $quantity;
+        $stmt = $conn->prepare("UPDATE cart SET quantity = ? WHERE user_id = ? AND product_id = ?");
+        $stmt->execute([$newQuantity, $userId, $productId]);
+    } else {
+        // Insert new item
+        $stmt = $conn->prepare("INSERT INTO cart (user_id, product_id, quantity) VALUES (?, ?, ?)");
+        $stmt->execute([$userId, $productId, $quantity]);
+    }
+    
+    return ['success' => true, 'message' => 'به سبد خرید اضافه شد'];
+}
+
+/**
+ * Update cart item quantity
+ */
+function updateCartItem($userId, $productId, $quantity)
+{
+    $conn = getConnection();
+    
+    if ($quantity <= 0) {
+        return removeFromCart($userId, $productId);
+    }
+    
+    $stmt = $conn->prepare("UPDATE cart SET quantity = ? WHERE user_id = ? AND product_id = ?");
+    $stmt->execute([$quantity, $userId, $productId]);
+    
+    return ['success' => true, 'message' => 'سبد خرید بروزرسانی شد'];
+}
+
+/**
+ * Remove item from cart
+ */
+function removeFromCart($userId, $productId)
+{
+    $conn = getConnection();
+    
+    $stmt = $conn->prepare("DELETE FROM cart WHERE user_id = ? AND product_id = ?");
+    $stmt->execute([$userId, $productId]);
+    
+    return ['success' => true, 'message' => 'از سبد خرید حذف شد'];
+}
 ?>

@@ -1,0 +1,12 @@
+# Protect sensitive config files
+<FilesMatch "^(sms_config\.php|database\.php)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Allow access to check scripts
+<FilesMatch "^(check-soap\.php|sms-diagnostics\.php)$">
+    Order allow,deny
+    Allow from all
+</FilesMatch>
+

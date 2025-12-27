@@ -34,6 +34,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         } else {
             $error = $result['error'];
+            // Store result for displaying SMS status
+            $smsErrorResult = $result;
         }
     } elseif (isset($_POST['verify_otp'])) {
         $phone = sanitize($_POST['phone'] ?? '');
@@ -119,11 +121,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <h3 class="card-title text-center">ورود / ثبت‌نام</h3>
                                     
                                     <?php if ($error): ?>
-                                        <div class="alert alert-danger"><?= $error ?></div>
+                                        <div class="alert alert-danger">
+                                            <?= $error ?>
+                                            <?php if (isset($result['sms_status'])): ?>
+                                                <br><small>وضعیت ارسال پیامک: <?= htmlspecialchars($result['sms_status']) ?></small>
+                                            <?php endif; ?>
+                                        </div>
                                     <?php endif; ?>
                                     
                                     <?php if ($success): ?>
-                                        <div class="alert alert-success"><?= $success ?></div>
+                                        <div class="alert alert-success">
+                                            <?= $success ?>
+                                            <?php if (isset($result['is_test_mode']) && $result['is_test_mode']): ?>
+                                                <br><small class="text-warning">⚠️ حالت تست: پیامک واقعی ارسال نشد. کد: <strong><?= htmlspecialchars($result['dev_code'] ?? '') ?></strong></small>
+                                            <?php elseif (isset($result['actually_sent']) && $result['actually_sent']): ?>
+                                                <br><small>✓ پیامک با موفقیت ارسال شد</small>
+                                            <?php else: ?>
+                                                <br><small class="text-warning">⚠️ وضعیت ارسال نامشخص</small>
+                                            <?php endif; ?>
+                                        </div>
                                     <?php endif; ?>
 
                                     <?php if ($step === 'phone'): ?>
