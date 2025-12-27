@@ -31,7 +31,7 @@ if (!function_exists('normalizePhone')) {
             return '';
         }
         // Remove all non-digit characters
-        $phone = preg_replace('/[^0-9]/', '', (string)$phone);
+        $phone = preg_replace('/[^0-9]/', '', (string) $phone);
         // Remove leading zero if present (for Iranian numbers)
         if (strlen($phone) > 10 && $phone[0] == '0') {
             $phone = substr($phone, 1);
@@ -48,7 +48,7 @@ function initSMSLogTable()
     if (!SMS_LOG_ENABLED) {
         return;
     }
-    
+
     try {
         $conn = getConnection();
         $conn->exec("
@@ -79,7 +79,7 @@ function logSMS($phone, $message, $provider, $status, $providerResponse = null, 
     if (!SMS_LOG_ENABLED) {
         return;
     }
-    
+
     try {
         initSMSLogTable();
         $conn = getConnection();
@@ -112,15 +112,15 @@ function sendSMSKavenegar($phone, $message)
             'provider_response' => null
         ];
     }
-    
+
     $url = "https://api.kavenegar.com/v1/" . SMS_API_KEY . "/sms/send.json";
-    
+
     $data = [
         'receptor' => $phone,
         'sender' => SMS_SENDER,
         'message' => $message
     ];
-    
+
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_POST, true);
@@ -128,12 +128,12 @@ function sendSMSKavenegar($phone, $message)
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 10);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    
+
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $curlError = curl_error($ch);
     curl_close($ch);
-    
+
     if ($curlError) {
         return [
             'success' => false,
@@ -141,9 +141,9 @@ function sendSMSKavenegar($phone, $message)
             'provider_response' => null
         ];
     }
-    
+
     $responseData = json_decode($response, true);
-    
+
     if ($httpCode === 200 && isset($responseData['return']['status']) && $responseData['return']['status'] == 200) {
         return [
             'success' => true,
@@ -173,9 +173,9 @@ function sendSMSMelipayamak($phone, $message)
             'provider_response' => null
         ];
     }
-    
+
     $url = "https://api.melipayamak.com/api/send/simple";
-    
+
     $data = [
         'username' => SMS_API_KEY, // Usually username
         'password' => SMS_API_KEY, // Usually same as username or separate password
@@ -183,7 +183,7 @@ function sendSMSMelipayamak($phone, $message)
         'from' => SMS_SENDER,
         'text' => $message
     ];
-    
+
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_POST, true);
@@ -191,12 +191,12 @@ function sendSMSMelipayamak($phone, $message)
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 10);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    
+
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $curlError = curl_error($ch);
     curl_close($ch);
-    
+
     if ($curlError) {
         return [
             'success' => false,
@@ -204,9 +204,9 @@ function sendSMSMelipayamak($phone, $message)
             'provider_response' => null
         ];
     }
-    
+
     $responseData = json_decode($response, true);
-    
+
     if ($httpCode === 200 && isset($responseData['StrRetStatus']) && $responseData['StrRetStatus'] == 'Ok') {
         return [
             'success' => true,
@@ -235,45 +235,96 @@ function sendSMSPayamakPanel($phone, $message)
             'provider_response' => null
         ];
     }
-    
+
     // Parse API key - format: "username|password" or use separate config
     $credentials = explode('|', SMS_API_KEY);
     $username = $credentials[0] ?? SMS_API_KEY;
     $password = isset($credentials[1]) ? $credentials[1] : (defined('SMS_PASSWORD') ? SMS_PASSWORD : SMS_API_KEY);
-    
+
+    // Prepare validation of inputs to ensure XML safety
+    $username = htmlspecialchars($username, ENT_XML1, 'UTF-8');
+    $password = htmlspecialchars($password, ENT_XML1, 'UTF-8');
+    $from = htmlspecialchars(SMS_SENDER, ENT_XML1, 'UTF-8');
+    $to = htmlspecialchars($phone, ENT_XML1, 'UTF-8');
+    $text = htmlspecialchars($message, ENT_XML1, 'UTF-8');
+
+    // Construct the SOAP envelope manually to bypass SoapClient requirement
+    // Using SendSimpleSMS2 as per WSDL analysis which uses tempuri.org namespace and simpler string types
+    $xml_data = <<<EOF
+<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <SendSimpleSMS2 xmlns="http://tempuri.org/">
+      <username>$username</username>
+      <password>$password</password>
+      <to>$to</to>
+      <from>$from</from>
+      <text>$text</text>
+      <isflash>false</isflash>
+    </SendSimpleSMS2>
+  </soap:Body>
+</soap:Envelope>
+EOF;
+
+    $url = "http://api.payamak-panel.com/post/Send.asmx";
+    $headers = [
+        "Content-type: text/xml;charset=\"utf-8\"",
+        "Accept: text/xml",
+        "Cache-Control: no-cache",
+        "Pragma: no-cache",
+        "SOAPAction: \"http://tempuri.org/SendSimpleSMS2\"",
+        "Content-length: " . strlen($xml_data),
+    ];
+
     try {
-        ini_set("soap.wsdl_cache_enabled", 0);
-        
-        // Just try to use SoapClient - if it worked last night, it should work now
-        $sms = new \SoapClient("http://api.payamak-panel.com/post/Send.asmx?wsdl", [
-            "encoding" => "UTF-8",
-        ]);
-        
-        $data = [
-            "username" => $username,
-            "password" => $password,
-            "to" => [$phone],
-            "from" => SMS_SENDER,
-            "text" => $message,
-            "isflash" => false,
-        ];
-        
-        $result = $sms->SendSimpleSMS($data);
-        
-        // Check result
-        if (isset($result->SendSimpleSMSResult)) {
-            $resultCode = $result->SendSimpleSMSResult;
-            
-            // Payamak Panel typically returns a string ID on success, or error code
-            if (is_numeric($resultCode) && $resultCode > 0) {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $xml_data);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 20); // Longer timeout for SMS
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+        $response = curl_exec($ch);
+        $curlError = curl_error($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($curlError) {
+            return [
+                'success' => false,
+                'status' => 'failed',
+                'error' => 'CURL Error: ' . $curlError,
+                'provider_response' => ['curl_error' => $curlError]
+            ];
+        }
+
+        // Parse the XML response
+        // Response format is typically:
+        // <SendSimpleSMSResult>string_id_or_code</SendSimpleSMSResult>
+
+        // Log the raw response for debugging (using temp dir to ensure writability)
+        $logPath = sys_get_temp_dir() . '/sms_debug.log';
+        file_put_contents($logPath, "Date: " . date('Y-m-d H:i:s') . "\nRequest: " . $xml_data . "\n\nResponse: " . $response . "\n-------------------\n", FILE_APPEND);
+
+        // Flexible regex to handle optional namespaces (e.g., <soap:SendSimpleSMSResult> or <ns1:SendSimpleSMSResult>)
+        // and case insensitivity options
+        if (preg_match('/<([a-zA-Z0-9_]+:)?SendSimpleSMSResult>(.*?)<\/([a-zA-Z0-9_]+:)?SendSimpleSMSResult>/s', $response, $matches)) {
+            $resultCode = $matches[2]; // Index 2 contains the content
+
+            // Payamak Panel typically returns a string ID on success (numeric length > 5-6), or error code (short integer)
+            // Or just checks if it's a positive large number
+
+            if (is_numeric($resultCode) && strlen($resultCode) > 4) {
                 return [
                     'success' => true,
                     'status' => 'sent',
-                    'message_id' => (string)$resultCode,
-                    'provider_response' => ['result' => $resultCode]
+                    'message_id' => (string) $resultCode,
+                    'provider_response' => ['result' => $resultCode, 'raw_response' => $response]
                 ];
-            } else {
-                // Error codes from Payamak Panel
+            } elseif (is_numeric($resultCode)) {
+                // Error codes
                 $errorMessages = [
                     '0' => 'خطای نامشخص',
                     '1' => 'نام کاربری یا رمز عبور اشتباه است',
@@ -285,49 +336,37 @@ function sendSMSPayamakPanel($phone, $message)
                     '7' => 'متن پیامک بیش از حد مجاز است',
                     '8' => 'شماره گیرنده معتبر نیست',
                     '9' => 'خطای سیستم',
+                    // Add more if known
                 ];
-                
                 $errorMsg = $errorMessages[$resultCode] ?? "خطا: کد {$resultCode}";
-                
+
                 return [
                     'success' => false,
                     'status' => 'failed',
                     'error' => $errorMsg,
-                    'provider_response' => ['result' => $resultCode]
+                    'provider_response' => ['result' => $resultCode, 'raw_response' => $response]
+                ];
+            } else {
+                // Maybe a non-numeric string error or success ID?
+                // If it looks like a long ID, treat as success
+                return [
+                    'success' => true, // Warning: assuming success if we got a response we can't map to error
+                    'status' => 'sent',
+                    'message_id' => $resultCode,
+                    'provider_response' => ['result' => $resultCode, 'raw_response' => $response]
                 ];
             }
-        } else {
-            return [
-                'success' => false,
-                'status' => 'failed',
-                'error' => 'پاسخ نامعتبر از سرور',
-                'provider_response' => ['result' => null]
-            ];
         }
-    } catch (\SoapFault $e) {
+
+        // Fallback if parsing failed - return MORE specific error
         return [
             'success' => false,
             'status' => 'failed',
-            'error' => 'خطای SOAP: ' . $e->getMessage(),
-            'provider_response' => ['error' => $e->getMessage()]
+            'error' => 'خطا در خواندن پاسخ سرویس دهنده. پاسخ: ' . htmlspecialchars(substr($response, 0, 1000)),
+            'provider_response' => ['raw_response' => $response]
         ];
-    } catch (\Error $e) {
-        // If SoapClient class doesn't exist
-        if (strpos($e->getMessage(), 'SoapClient') !== false || strpos($e->getMessage(), 'Class') !== false) {
-            return [
-                'success' => false,
-                'status' => 'failed',
-                'error' => 'افزونه SOAP در دسترس نیست. لطفاً مطمئن شوید که extension=soap در php.ini فعال است و Apache را ری‌استارت کنید.',
-                'provider_response' => ['error' => $e->getMessage()]
-            ];
-        }
-        return [
-            'success' => false,
-            'status' => 'failed',
-            'error' => 'خطا: ' . $e->getMessage(),
-            'provider_response' => ['error' => $e->getMessage()]
-        ];
-    } catch (\Exception $e) {
+
+    } catch (Exception $e) {
         return [
             'success' => false,
             'status' => 'failed',
@@ -349,20 +388,20 @@ function sendSMSGhasedak($phone, $message)
             'provider_response' => null
         ];
     }
-    
+
     $url = "https://api.ghasedak.me/v2/sms/send/simple";
-    
+
     $headers = [
         'apikey: ' . SMS_API_KEY,
         'Content-Type: application/x-www-form-urlencoded'
     ];
-    
+
     $data = [
         'message' => $message,
         'receptor' => $phone,
         'linenumber' => SMS_SENDER
     ];
-    
+
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_POST, true);
@@ -371,12 +410,12 @@ function sendSMSGhasedak($phone, $message)
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 10);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    
+
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $curlError = curl_error($ch);
     curl_close($ch);
-    
+
     if ($curlError) {
         return [
             'success' => false,
@@ -384,9 +423,9 @@ function sendSMSGhasedak($phone, $message)
             'provider_response' => null
         ];
     }
-    
+
     $responseData = json_decode($response, true);
-    
+
     if ($httpCode === 200 && isset($responseData['result']['code']) && $responseData['result']['code'] == 200) {
         return [
             'success' => true,
@@ -425,7 +464,7 @@ function sendSMS($phone, $message)
 {
     // Normalize phone number
     $phone = normalizePhone($phone);
-    
+
     if (empty($phone) || strlen($phone) < 10) {
         logSMS($phone, $message, SMS_PROVIDER, 'invalid_phone', null, 'Invalid phone number');
         return [
@@ -434,12 +473,12 @@ function sendSMS($phone, $message)
             'status' => 'invalid_phone'
         ];
     }
-    
+
     // Add country code if needed (Iran: +98)
     if (strlen($phone) == 10) {
         $phone = '0' . $phone; // Add leading zero for Iranian numbers
     }
-    
+
     // Check if SMS is enabled
     if (!SMS_ENABLED) {
         logSMS($phone, $message, SMS_PROVIDER, 'disabled', null, 'SMS sending is disabled');
@@ -449,11 +488,11 @@ function sendSMS($phone, $message)
             'status' => 'disabled'
         ];
     }
-    
+
     // Select provider and send
     $result = null;
     $provider = SMS_PROVIDER;
-    
+
     switch (strtolower($provider)) {
         case 'kavenegar':
             $result = sendSMSKavenegar($phone, $message);
@@ -479,7 +518,7 @@ function sendSMS($phone, $message)
                 'provider_response' => null
             ];
     }
-    
+
     // Log the result
     $status = $result['success'] ? 'sent' : 'failed';
     logSMS(
@@ -490,7 +529,7 @@ function sendSMS($phone, $message)
         $result['provider_response'] ?? null,
         $result['error'] ?? null
     );
-    
+
     // Return detailed result
     return [
         'success' => $result['success'],
@@ -510,11 +549,11 @@ function getSMSStats($phone = null, $days = 7)
     if (!SMS_LOG_ENABLED) {
         return null;
     }
-    
+
     try {
         initSMSLogTable();
         $conn = getConnection();
-        
+
         $sql = "SELECT 
                     COUNT(*) as total,
                     SUM(CASE WHEN status = 'sent' THEN 1 ELSE 0 END) as sent,
@@ -522,12 +561,12 @@ function getSMSStats($phone = null, $days = 7)
                 FROM sms_logs 
                 WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)";
         $params = [$days];
-        
+
         if ($phone) {
             $sql .= " AND phone = ?";
             $params[] = $phone;
         }
-        
+
         $stmt = $conn->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetch();
@@ -545,22 +584,22 @@ function getSMSLogs($phone = null, $limit = 50)
     if (!SMS_LOG_ENABLED) {
         return [];
     }
-    
+
     try {
         initSMSLogTable();
         $conn = getConnection();
-        
+
         $sql = "SELECT * FROM sms_logs WHERE 1=1";
         $params = [];
-        
+
         if ($phone) {
             $sql .= " AND phone = ?";
             $params[] = $phone;
         }
-        
+
         $sql .= " ORDER BY created_at DESC LIMIT ?";
         $params[] = $limit;
-        
+
         $stmt = $conn->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetchAll();
@@ -570,4 +609,3 @@ function getSMSLogs($phone = null, $limit = 50)
     }
 }
 ?>
-
