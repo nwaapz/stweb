@@ -72,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || isset($_GET['auto'])) {
                 `user_id` INT NOT NULL,
                 `title` VARCHAR(100),
                 `recipient_name` VARCHAR(255) NOT NULL,
-                `phone` VARCHAR(15) NOT NULL,
+                `landline` VARCHAR(15) NOT NULL,
                 `province` VARCHAR(100) NOT NULL,
                 `city` VARCHAR(100) NOT NULL,
                 `address` TEXT NOT NULL,

@@ -24,7 +24,7 @@ $success = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $addressData = [
         'name' => sanitize($_POST['shipping_name'] ?? ''),
-        'phone' => sanitize($_POST['shipping_phone'] ?? ''),
+        'landline' => sanitize($_POST['shipping_landline'] ?? $_POST['shipping_phone'] ?? ''),
         'province' => sanitize($_POST['shipping_province'] ?? ''),
         'city' => sanitize($_POST['shipping_city'] ?? ''),
         'address' => sanitize($_POST['shipping_address'] ?? ''),
@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Validate
     if (
-        empty($addressData['name']) || empty($addressData['phone']) ||
+        empty($addressData['name']) || empty($addressData['landline']) ||
         empty($addressData['city']) || empty($addressData['address'])
     ) {
         $error = 'لطفاً تمام فیلدهای الزامی را پر کنید';
@@ -97,9 +97,12 @@ include 'header.php';
                                         value="<?= htmlspecialchars($user['name'] ?? '') ?>">
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label">شماره تماس <span class="text-danger">*</span></label>
-                                    <input type="tel" name="shipping_phone" class="form-control" required
-                                        value="<?= htmlspecialchars($user['phone'] ?? '') ?>">
+                                    <label class="form-label">تلفن ثابت <span class="text-danger">*</span></label>
+                                    <input type="tel" name="shipping_landline" class="form-control" 
+                                           placeholder="مثال: 02112345678" required
+                                           pattern="0[1-9][0-9]{1,3}[0-9]{6,8}"
+                                           title="شماره تلفن ثابت (نه موبایل). مثال: 02112345678">
+                                    <small class="form-text text-muted">لطفاً شماره تلفن ثابت وارد کنید (نه موبایل)</small>
                                 </div>
                             </div>
 
@@ -197,7 +200,7 @@ include 'header.php';
             if (val) {
                 const addr = JSON.parse(val);
                 $('input[name="shipping_name"]').val(addr.recipient_name || '');
-                $('input[name="shipping_phone"]').val(addr.phone || '');
+                $('input[name="shipping_landline"]').val(addr.landline || addr.phone || '');
                 $('input[name="shipping_province"]').val(addr.province || '');
                 $('input[name="shipping_city"]').val(addr.city || '');
                 $('textarea[name="shipping_address"]').val(addr.address || '');

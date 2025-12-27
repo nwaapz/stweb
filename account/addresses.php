@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_address'])) {
     $result = addUserAddress($user['id'], [
         'title' => $_POST['title'] ?? '',
         'recipient_name' => $_POST['recipient_name'] ?? '',
-        'phone' => $_POST['phone'] ?? '',
+        'landline' => $_POST['landline'] ?? $_POST['phone'] ?? '',
         'province' => $_POST['province'] ?? '',
         'city' => $_POST['city'] ?? '',
         'address' => $_POST['address'] ?? '',
@@ -94,7 +94,7 @@ include 'header.php';
                                                     <strong><?= htmlspecialchars($addr['recipient_name']) ?></strong>
                                                 </p>
                                                 <p class="mb-1 text-muted small">
-                                                    <?= htmlspecialchars($addr['phone']) ?>
+                                                    تلفن ثابت: <?= htmlspecialchars($addr['landline'] ?? $addr['phone'] ?? '') ?>
                                                 </p>
                                                 <p class="mb-0 small">
                                                     <?= htmlspecialchars($addr['province']) ?> -
@@ -142,8 +142,12 @@ include 'header.php';
 
                             <div class="row">
                                 <div class="col-md-4 mb-3">
-                                    <label class="form-label">شماره تماس <span class="text-danger">*</span></label>
-                                    <input type="tel" name="phone" class="form-control" required>
+                                    <label class="form-label">تلفن ثابت <span class="text-danger">*</span></label>
+                                    <input type="tel" name="landline" class="form-control" 
+                                           placeholder="مثال: 02112345678" required
+                                           pattern="0[1-9][0-9]{1,3}[0-9]{6,8}"
+                                           title="شماره تلفن ثابت (نه موبایل). مثال: 02112345678">
+                                    <small class="form-text text-muted">لطفاً شماره تلفن ثابت وارد کنید (نه موبایل)</small>
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label">استان <span class="text-danger">*</span></label>

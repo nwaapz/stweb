@@ -321,7 +321,7 @@ function logoutUser()
 }
 
 /**
- * Normalize phone number to 09XXXXXXXXX format
+ * Normalize phone number to 09XXXXXXXXX format (for mobile)
  */
 function normalizePhone($phone)
 {
@@ -342,6 +342,71 @@ function normalizePhone($phone)
     }
 
     return $phone;
+}
+
+/**
+ * Normalize landline number (Iranian landline format)
+ * Iranian landlines: 0 + area code (2-4 digits) + number (6-8 digits)
+ * Examples: 02112345678, 03112345678, 04112345678
+ */
+function normalizeLandline($landline)
+{
+    // Remove all non-digits
+    $landline = preg_replace('/[^0-9]/', '', $landline);
+
+    // Convert +98 or 98 to 0
+    if (substr($landline, 0, 2) === '98') {
+        $landline = '0' . substr($landline, 2);
+    }
+    if (substr($landline, 0, 3) === '+98') {
+        $landline = '0' . substr($landline, 3);
+    }
+
+    // Ensure it starts with 0
+    if (strlen($landline) > 0 && substr($landline, 0, 1) !== '0') {
+        $landline = '0' . $landline;
+    }
+
+    return $landline;
+}
+
+/**
+ * Validate landline number (must be landline, not mobile)
+ * @param string $landline Landline number
+ * @return bool|string True if valid, error message if invalid
+ */
+function validateLandline($landline)
+{
+    if (empty($landline)) {
+        return 'شماره تلفن ثابت الزامی است';
+    }
+
+    $normalized = normalizeLandline($landline);
+
+    // Must start with 0
+    if (substr($normalized, 0, 1) !== '0') {
+        return 'شماره تلفن ثابت باید با 0 شروع شود';
+    }
+
+    // Must NOT be a mobile number (mobile numbers start with 09)
+    if (substr($normalized, 0, 2) === '09') {
+        return 'شماره تلفن ثابت نمی‌تواند شماره موبایل باشد. لطفاً شماره تلفن ثابت وارد کنید';
+    }
+
+    // Iranian landline format: 0 + area code (2-4 digits) + number (6-8 digits)
+    // Total length: 10-13 digits
+    if (strlen($normalized) < 10 || strlen($normalized) > 13) {
+        return 'شماره تلفن ثابت نامعتبر است';
+    }
+
+    // Area code should be 2-4 digits after the leading 0
+    // Common area codes: 021 (Tehran), 031 (Isfahan), 041 (Tabriz), etc.
+    $areaCode = substr($normalized, 1, 4);
+    if (!preg_match('/^[1-9][0-9]{1,3}$/', $areaCode)) {
+        return 'کد شهر نامعتبر است';
+    }
+
+    return true;
 }
 
 /**
@@ -568,6 +633,18 @@ function createOrder($userId, $addressData, $notes = '')
         // Generate order number
         $orderNumber = generateOrderNumber();
 
+        // Get landline from address data (support both 'landline' and 'phone' for backward compatibility)
+        $landline = $addressData['landline'] ?? $addressData['phone'] ?? '';
+        
+        // Validate landline if provided
+        if (!empty($landline)) {
+            $landlineValidation = validateLandline($landline);
+            if ($landlineValidation !== true) {
+                throw new Exception($landlineValidation);
+            }
+            $landline = normalizeLandline($landline);
+        }
+
         // Create order
         $stmt = $conn->prepare("
             INSERT INTO orders (
@@ -583,7 +660,7 @@ function createOrder($userId, $addressData, $notes = '')
             $shippingCost,
             $total,
             $addressData['name'] ?? '',
-            $addressData['phone'] ?? '',
+            $landline,
             $addressData['province'] ?? '',
             $addressData['city'] ?? '',
             $addressData['address'] ?? '',
@@ -764,6 +841,18 @@ function addUserAddress($userId, $data)
 {
     $conn = getConnection();
 
+    // Get landline from data (support both 'phone' and 'landline' for backward compatibility)
+    $landline = $data['landline'] ?? $data['phone'] ?? '';
+
+    // Validate landline
+    $landlineValidation = validateLandline($landline);
+    if ($landlineValidation !== true) {
+        return ['success' => false, 'error' => $landlineValidation];
+    }
+
+    // Normalize landline
+    $landline = normalizeLandline($landline);
+
     // If this is the first address or marked as default, update others
     if (!empty($data['is_default'])) {
         $stmt = $conn->prepare("UPDATE user_addresses SET is_default = 0 WHERE user_id = ?");
@@ -772,14 +861,14 @@ function addUserAddress($userId, $data)
 
     $stmt = $conn->prepare("
         INSERT INTO user_addresses (
-            user_id, title, recipient_name, phone, province, city, address, postal_code, is_default
+            user_id, title, recipient_name, landline, province, city, address, postal_code, is_default
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     ");
     $stmt->execute([
         $userId,
         $data['title'] ?? '',
         $data['recipient_name'] ?? '',
-        $data['phone'] ?? '',
+        $landline,
         $data['province'] ?? '',
         $data['city'] ?? '',
         $data['address'] ?? '',

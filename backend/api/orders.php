@@ -69,9 +69,12 @@ try {
             $input = json_decode(file_get_contents('php://input'), true) ?: $_POST;
 
             // Address data
+            // Support both 'landline' and 'phone' for backward compatibility
+            $landline = $input['shipping_landline'] ?? $input['shipping_phone'] ?? '';
+            
             $addressData = [
                 'name' => $input['shipping_name'] ?? $user['name'] ?? '',
-                'phone' => $input['shipping_phone'] ?? $user['phone'] ?? '',
+                'landline' => $landline,
                 'province' => $input['shipping_province'] ?? '',
                 'city' => $input['shipping_city'] ?? '',
                 'address' => $input['shipping_address'] ?? '',
@@ -80,7 +83,7 @@ try {
 
             // Validate required fields
             if (
-                empty($addressData['name']) || empty($addressData['phone']) ||
+                empty($addressData['name']) || empty($addressData['landline']) ||
                 empty($addressData['address']) || empty($addressData['city'])
             ) {
                 throw new Exception('اطلاعات آدرس ناقص است');

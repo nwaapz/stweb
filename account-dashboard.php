@@ -1622,7 +1622,6 @@ $recentOrders = getUserOrders($user['id'], 3);
 									<li class="account-nav__item"><a href="account-addresses.html">آدرس‌ها</a></li>
 									<li class="account-nav__item"><a href="account-edit-address.html">ویرایش آدرس</a>
 									</li>
-									<li class="account-nav__item"><a href="account-password.html">رمز عبور</a></li>
 									<li class="account-nav__divider" role="presentation"></li>
 									<li class="account-nav__item"><a href="account-login.html">خروج</a></li>
 								</ul>
@@ -1663,11 +1662,11 @@ $recentOrders = getUserOrders($user['id'], 3);
 												<?php if (!empty($defaultAddress['address'])): ?><br><?= htmlspecialchars($defaultAddress['address']) ?><?php endif; ?>
 												<?php if (!empty($defaultAddress['postal_code'])): ?><br>کد پستی: <?= htmlspecialchars($defaultAddress['postal_code']) ?><?php endif; ?>
 											</div>
-											<?php if (!empty($defaultAddress['phone'])): ?>
+											<?php if (!empty($defaultAddress['landline'] ?? $defaultAddress['phone'] ?? '')): ?>
 											<div class="address-card__row">
-												<div class="address-card__row-title">شماره همراه</div>
+												<div class="address-card__row-title">تلفن ثابت</div>
 												<div class="address-card__row-content">
-													<?= htmlspecialchars($defaultAddress['phone']) ?>
+													<?= htmlspecialchars($defaultAddress['landline'] ?? $defaultAddress['phone'] ?? '') ?>
 												</div>
 											</div>
 											<?php endif; ?>
@@ -2702,4 +2701,5 @@ $recentOrders = getUserOrders($user['id'], 3);
 	<script src="js/main.js"></script>
 </body>
 
+</html>
 </html>

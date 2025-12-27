@@ -331,10 +331,10 @@
             html += '<div class="address-card__name">' + escapeHtml(address.recipient_name || '') + '</div>';
             html += '<div class="address-card__row">' + addressLines + '</div>';
             
-            if (address.phone) {
+            if (address.landline || address.phone) {
                 html += '<div class="address-card__row">';
-                html += '<div class="address-card__row-title">شماره تماس</div>';
-                html += '<div class="address-card__row-content">' + escapeHtml(address.phone) + '</div>';
+                html += '<div class="address-card__row-title">تلفن ثابت</div>';
+                html += '<div class="address-card__row-content">' + escapeHtml(address.landline || address.phone || '') + '</div>';
                 html += '</div>';
             }
             

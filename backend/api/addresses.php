@@ -40,10 +40,13 @@ try {
 
         case 'POST':
             // Add new address
+            // Support both 'phone' and 'landline' for backward compatibility
+            $landline = $input['landline'] ?? $input['phone'] ?? $_POST['landline'] ?? $_POST['phone'] ?? '';
+            
             $data = [
                 'title' => $input['title'] ?? $_POST['title'] ?? '',
                 'recipient_name' => $input['recipient_name'] ?? $_POST['recipient_name'] ?? '',
-                'phone' => $input['phone'] ?? $_POST['phone'] ?? '',
+                'landline' => $landline,
                 'province' => $input['province'] ?? $_POST['province'] ?? '',
                 'city' => $input['city'] ?? $_POST['city'] ?? '',
                 'address' => $input['address'] ?? $_POST['address'] ?? '',
@@ -53,7 +56,7 @@ try {
 
             // Validate required fields
             if (
-                empty($data['recipient_name']) || empty($data['phone']) ||
+                empty($data['recipient_name']) || empty($data['landline']) ||
                 empty($data['address']) || empty($data['city'])
             ) {
                 throw new Exception('فیلدهای الزامی را پر کنید');
