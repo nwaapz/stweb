@@ -43,7 +43,7 @@ function addToCompare($userId, $productId)
     $stmt = $conn->prepare("SELECT COUNT(*) as count FROM compares WHERE user_id = ?");
     $stmt->execute([$userId]);
     $result = $stmt->fetch();
-    
+
     if ($result['count'] >= 5) {
         return ['success' => false, 'error' => 'حداکثر ۵ محصول را می‌توانید مقایسه کنید'];
     }
@@ -104,7 +104,7 @@ function normalizePhone($phone)
         return '';
     }
     // Remove all non-digit characters
-    $phone = preg_replace('/[^0-9]/', '', (string)$phone);
+    $phone = preg_replace('/[^0-9]/', '', (string) $phone);
     // Remove leading zero if present (for Iranian numbers)
     if (strlen($phone) > 10 && $phone[0] == '0') {
         $phone = substr($phone, 1);
@@ -120,16 +120,16 @@ function getCurrentUser()
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
-    
+
     if (!isset($_SESSION['user_id'])) {
         return null;
     }
-    
+
     $conn = getConnection();
     $stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
     $stmt->execute([$_SESSION['user_id']]);
     $user = $stmt->fetch();
-    
+
     return $user ?: null;
 }
 
@@ -141,18 +141,18 @@ function logoutUser()
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
-    
+
     // Unset all session variables
     $_SESSION = array();
-    
+
     // Destroy the session cookie
     if (isset($_COOKIE[session_name()])) {
         setcookie(session_name(), '', time() - 3600, '/');
     }
-    
+
     // Destroy the session
     session_destroy();
-    
+
     return ['success' => true, 'message' => 'با موفقیت خارج شدید'];
 }
 
@@ -162,12 +162,12 @@ function logoutUser()
 function requireUserLogin()
 {
     $user = getCurrentUser();
-    
+
     if (!$user) {
         header('Location: account/login.php');
         exit;
     }
-    
+
     return $user;
 }
 
@@ -177,11 +177,11 @@ function requireUserLogin()
 function checkUserAuth()
 {
     $user = getCurrentUser();
-    
+
     if (!$user) {
         throw new Exception('کاربر وارد نشده است', 401);
     }
-    
+
     return $user;
 }
 
@@ -192,37 +192,38 @@ function requestOTP($phone)
 {
     // Include SMS service
     require_once __DIR__ . '/sms_service.php';
-    
+
     $phone = normalizePhone($phone);
-    
+
     if (empty($phone) || strlen($phone) < 10) {
         return ['success' => false, 'error' => 'شماره موبایل معتبر نیست'];
     }
-    
+
+
     $conn = getConnection();
-    
+
     // Generate 6-digit OTP
     $otp = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
-    
-    // Store OTP in session (expires in 5 minutes)
+
+    // Store OTP in session (expires in 15 minutes)
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
     $_SESSION['otp_phone'] = $phone;
     $_SESSION['otp_code'] = $otp;
-    $_SESSION['otp_expires'] = time() + 300; // 5 minutes
-    
+    $_SESSION['otp_expires'] = time() + 900; // 15 minutes
+
     // Prepare SMS message
-    $message = "کد تایید شما: {$otp}\nاستارتک";
-    
+    $message = "کد تایید شما: {$otp}\nاعتبار: ۱۵ دقیقه\nاستارتک";
+
     // Send SMS
     $smsResult = sendSMS($phone, $message);
-    
+
     // Check SMS sending result
     if (!$smsResult['success']) {
         // Log the error
         error_log("SMS sending failed for {$phone}: " . ($smsResult['error'] ?? 'Unknown error'));
-        
+
         // Return error with details
         return [
             'success' => false,
@@ -231,11 +232,11 @@ function requestOTP($phone)
             'sms_provider' => $smsResult['provider'] ?? null
         ];
     }
-    
+
     // Check if SMS was actually sent (not test mode)
     $isTestMode = (strtolower(SMS_PROVIDER) === 'test');
     $actuallySent = $smsResult['success'] && !$isTestMode;
-    
+
     // SMS sent successfully
     $result = [
         'success' => true,
@@ -246,12 +247,12 @@ function requestOTP($phone)
         'is_test_mode' => $isTestMode,
         'actually_sent' => $actuallySent
     ];
-    
+
     // Development mode or test mode - include OTP in response (for testing)
     if (defined('DEV_MODE') && DEV_MODE || $isTestMode) {
         $result['dev_code'] = $otp;
     }
-    
+
     return $result;
 }
 
@@ -261,52 +262,52 @@ function requestOTP($phone)
 function verifyOTP($phone, $code)
 {
     $phone = normalizePhone($phone);
-    
+
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
-    
+
     // Check if OTP exists and is not expired
     if (!isset($_SESSION['otp_phone']) || $_SESSION['otp_phone'] !== $phone) {
         return ['success' => false, 'error' => 'کد تایید یافت نشد'];
     }
-    
+
     if (!isset($_SESSION['otp_code']) || $_SESSION['otp_code'] !== $code) {
         return ['success' => false, 'error' => 'کد تایید اشتباه است'];
     }
-    
+
     if (!isset($_SESSION['otp_expires']) || $_SESSION['otp_expires'] < time()) {
         unset($_SESSION['otp_phone'], $_SESSION['otp_code'], $_SESSION['otp_expires']);
         return ['success' => false, 'error' => 'کد تایید منقضی شده است'];
     }
-    
+
     // OTP is valid, create or get user
     $conn = getConnection();
-    
+
     // Check if user exists
     $stmt = $conn->prepare("SELECT * FROM users WHERE phone = ?");
     $stmt->execute([$phone]);
     $user = $stmt->fetch();
-    
+
     if (!$user) {
         // Create new user
         $stmt = $conn->prepare("INSERT INTO users (phone, created_at) VALUES (?, NOW())");
         $stmt->execute([$phone]);
         $userId = $conn->lastInsertId();
-        
+
         // Get the new user
         $stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
         $stmt->execute([$userId]);
         $user = $stmt->fetch();
     }
-    
+
     // Set session
     $_SESSION['user_id'] = $user['id'];
     $_SESSION['user_phone'] = $user['phone'];
-    
+
     // Clear OTP
     unset($_SESSION['otp_phone'], $_SESSION['otp_code'], $_SESSION['otp_expires']);
-    
+
     return [
         'success' => true,
         'message' => 'ورود موفقیت‌آمیز بود',
@@ -320,40 +321,40 @@ function verifyOTP($phone, $code)
 function updateUserProfile($userId, $data)
 {
     $conn = getConnection();
-    
+
     $allowedFields = ['name', 'email', 'phone'];
     $updates = [];
     $params = [];
-    
+
     foreach ($allowedFields as $field) {
         if (isset($data[$field])) {
             $updates[] = "`$field` = ?";
             $params[] = sanitize($data[$field]);
         }
     }
-    
+
     if (empty($updates)) {
         return ['success' => false, 'error' => 'هیچ فیلدی برای بروزرسانی وجود ندارد'];
     }
-    
+
     $params[] = $userId;
     $sql = "UPDATE users SET " . implode(', ', $updates) . " WHERE id = ?";
-    
+
     try {
         $stmt = $conn->prepare($sql);
         $stmt->execute($params);
-        
+
         // Get updated user
         $stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
         $stmt->execute([$userId]);
         $user = $stmt->fetch();
-        
+
         // Update session
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
         $_SESSION['user_phone'] = $user['phone'];
-        
+
         return ['success' => true, 'message' => 'پروفایل با موفقیت بروزرسانی شد', 'user' => $user];
     } catch (Exception $e) {
         return ['success' => false, 'error' => 'خطا در بروزرسانی پروفایل'];
@@ -366,7 +367,7 @@ function updateUserProfile($userId, $data)
 function getUserAddresses($userId)
 {
     $conn = getConnection();
-    
+
     $stmt = $conn->prepare("SELECT * FROM user_addresses WHERE user_id = ? ORDER BY is_default DESC, created_at DESC");
     $stmt->execute([$userId]);
     return $stmt->fetchAll();
@@ -378,12 +379,12 @@ function getUserAddresses($userId)
 function getUserOrders($userId, $limit = null)
 {
     $conn = getConnection();
-    
+
     $sql = "SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC";
     if ($limit) {
-        $sql .= " LIMIT " . (int)$limit;
+        $sql .= " LIMIT " . (int) $limit;
     }
-    
+
     $stmt = $conn->prepare($sql);
     $stmt->execute([$userId]);
     return $stmt->fetchAll();
@@ -395,32 +396,32 @@ function getUserOrders($userId, $limit = null)
 function createOrder($userId, $addressData, $notes = '')
 {
     require_once __DIR__ . '/sms_service.php';
-    
+
     $conn = getConnection();
-    
+
     try {
         $conn->beginTransaction();
-        
+
         // Get cart items
         $cartSummary = getCartSummary($userId);
         if (empty($cartSummary['items'])) {
             throw new Exception('سبد خرید خالی است');
         }
-        
+
         // Generate order number
         $orderNumber = 'ORD-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -6));
-        
+
         // Get user phone for SMS
         $userStmt = $conn->prepare("SELECT phone FROM users WHERE id = ?");
         $userStmt->execute([$userId]);
         $user = $userStmt->fetch();
         $userPhone = $user['phone'] ?? '';
-        
+
         // Calculate totals
         $subtotal = $cartSummary['subtotal'] ?? 0;
         $shippingCost = 0; // Free shipping
         $total = $subtotal + $shippingCost;
-        
+
         // Create order
         $stmt = $conn->prepare("
             INSERT INTO orders (
@@ -430,7 +431,7 @@ function createOrder($userId, $addressData, $notes = '')
                 subtotal, shipping_cost, total, notes, created_at
             ) VALUES (?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
         ");
-        
+
         $stmt->execute([
             $userId,
             $orderNumber,
@@ -445,9 +446,9 @@ function createOrder($userId, $addressData, $notes = '')
             $total,
             $notes
         ]);
-        
+
         $orderId = $conn->lastInsertId();
-        
+
         // Create order items
         foreach ($cartSummary['items'] as $item) {
             $itemStmt = $conn->prepare("
@@ -456,7 +457,7 @@ function createOrder($userId, $addressData, $notes = '')
                     product_image, price, quantity, line_total
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ");
-            
+
             $itemStmt->execute([
                 $orderId,
                 $item['product_id'],
@@ -468,25 +469,25 @@ function createOrder($userId, $addressData, $notes = '')
                 $item['line_total']
             ]);
         }
-        
+
         // Clear cart
         $conn->prepare("DELETE FROM cart WHERE user_id = ?")->execute([$userId]);
-        
+
         $conn->commit();
-        
+
         // Send SMS notification
         if (!empty($userPhone) && SMS_ENABLED) {
             $message = "استارتک\nسفارش شما با شماره {$orderNumber} ثبت شد.\nمبلغ: " . formatPrice($total);
             sendSMS($userPhone, $message);
         }
-        
+
         return [
             'success' => true,
             'order_id' => $orderId,
             'order_number' => $orderNumber,
             'message' => 'سفارش با موفقیت ثبت شد'
         ];
-        
+
     } catch (Exception $e) {
         $conn->rollBack();
         return [

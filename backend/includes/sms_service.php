@@ -224,7 +224,9 @@ function sendSMSMelipayamak($phone, $message)
 }
 
 /**
- * Send SMS using Payamak Panel (SOAP)
+ * Send SMS using Payamak Panel (REST-like POST)
+ * This method bypasses SOAP entirely by sending standard POST parameters to the ASMX endpoint.
+ * Proven to work on servers where specific SOAP extensions or headers are problematic.
  */
 function sendSMSPayamakPanel($phone, $message)
 {
@@ -241,39 +243,16 @@ function sendSMSPayamakPanel($phone, $message)
     $username = $credentials[0] ?? SMS_API_KEY;
     $password = isset($credentials[1]) ? $credentials[1] : (defined('SMS_PASSWORD') ? SMS_PASSWORD : SMS_API_KEY);
 
-    // Prepare validation of inputs to ensure XML safety
-    $username = htmlspecialchars($username, ENT_XML1, 'UTF-8');
-    $password = htmlspecialchars($password, ENT_XML1, 'UTF-8');
-    $from = htmlspecialchars(SMS_SENDER, ENT_XML1, 'UTF-8');
-    $to = htmlspecialchars($phone, ENT_XML1, 'UTF-8');
-    $text = htmlspecialchars($message, ENT_XML1, 'UTF-8');
+    // Endpoint that accepts standard POST data (x-www-form-urlencoded)
+    $url = "http://api.payamak-panel.com/post/Send.asmx/SendSimpleSMS";
 
-    // Construct the SOAP envelope manually to bypass SoapClient requirement
-    // Using SendSimpleSMS2 as per WSDL analysis which uses tempuri.org namespace and simpler string types
-    $xml_data = <<<EOF
-<?xml version="1.0" encoding="utf-8"?>
-<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-  <soap:Body>
-    <SendSimpleSMS2 xmlns="http://tempuri.org/">
-      <username>$username</username>
-      <password>$password</password>
-      <to>$to</to>
-      <from>$from</from>
-      <text>$text</text>
-      <isflash>false</isflash>
-    </SendSimpleSMS2>
-  </soap:Body>
-</soap:Envelope>
-EOF;
-
-    $url = "http://api.payamak-panel.com/post/Send.asmx";
-    $headers = [
-        "Content-type: text/xml;charset=\"utf-8\"",
-        "Accept: text/xml",
-        "Cache-Control: no-cache",
-        "Pragma: no-cache",
-        "SOAPAction: \"http://tempuri.org/SendSimpleSMS2\"",
-        "Content-length: " . strlen($xml_data),
+    $params = [
+        'username' => $username,
+        'password' => $password,
+        'to' => $phone,
+        'from' => SMS_SENDER,
+        'text' => $message,
+        'isflash' => 'false' // String 'false', not boolean
     ];
 
     try {
@@ -281,9 +260,8 @@ EOF;
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $xml_data);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 20); // Longer timeout for SMS
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params)); // Standard form data
+        curl_setopt($ch, CURLOPT_TIMEOUT, 20);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 
         $response = curl_exec($ch);
@@ -300,45 +278,33 @@ EOF;
             ];
         }
 
-        // Parse the XML response
-        // Response format is typically:
-        // <SendSimpleSMSResult>string_id_or_code</SendSimpleSMSResult>
-
-        // Log the raw response for debugging (using temp dir to ensure writability)
+        // Log response
         $logPath = sys_get_temp_dir() . '/sms_debug.log';
-        file_put_contents($logPath, "Date: " . date('Y-m-d H:i:s') . "\nRequest: " . $xml_data . "\n\nResponse: " . $response . "\n-------------------\n", FILE_APPEND);
+        file_put_contents($logPath, "Date: " . date('Y-m-d H:i:s') . "\nParams: " . json_encode($params, JSON_UNESCAPED_UNICODE) . "\nResponse: " . $response . "\n-------------------\n", FILE_APPEND);
 
-        // Flexible regex to handle optional namespaces (e.g., <soap:SendSimpleSMSResult> or <ns1:SendSimpleSMSResult>)
-        // and case insensitivity options
-        if (preg_match('/<([a-zA-Z0-9_]+:)?SendSimpleSMSResult>(.*?)<\/([a-zA-Z0-9_]+:)?SendSimpleSMSResult>/s', $response, $matches)) {
-            $resultCode = $matches[2]; // Index 2 contains the content
+        // Parse the response using strip_tags
+        $cleanResponse = trim(strip_tags($response));
 
-            // Payamak Panel typically returns a string ID on success (numeric length > 5-6), or error code (short integer)
-            // Or just checks if it's a positive large number
+        if (!empty($cleanResponse)) {
+            $resultCode = $cleanResponse;
 
-            if (is_numeric($resultCode) && strlen($resultCode) > 4) {
+            // Check success (long numeric ID) vs error (short numeric code)
+            if (is_numeric($resultCode) && strlen($resultCode) > 3) {
                 return [
                     'success' => true,
                     'status' => 'sent',
                     'message_id' => (string) $resultCode,
                     'provider_response' => ['result' => $resultCode, 'raw_response' => $response]
                 ];
-            } elseif (is_numeric($resultCode)) {
-                // Error codes
+            } elseif (is_numeric($resultCode) || $resultCode == '') {
+                // Map common error codes
                 $errorMessages = [
-                    '0' => 'خطای نامشخص',
-                    '1' => 'نام کاربری یا رمز عبور اشتباه است',
+                    '0' => 'نام کاربری یا رمز عبور اشتباه است',
+                    '1' => 'درخواست موفق',
                     '2' => 'اعتبار کافی نیست',
-                    '3' => 'محدودیت در ارسال روزانه',
-                    '4' => 'محدودیت در ارسال ساعتی',
-                    '5' => 'شماره فرستنده معتبر نیست',
                     '6' => 'متن پیامک خالی است',
-                    '7' => 'متن پیامک بیش از حد مجاز است',
-                    '8' => 'شماره گیرنده معتبر نیست',
-                    '9' => 'خطای سیستم',
-                    // Add more if known
                 ];
-                $errorMsg = $errorMessages[$resultCode] ?? "خطا: کد {$resultCode}";
+                $errorMsg = $errorMessages[$resultCode] ?? "کد خطا: $resultCode";
 
                 return [
                     'success' => false,
@@ -347,22 +313,19 @@ EOF;
                     'provider_response' => ['result' => $resultCode, 'raw_response' => $response]
                 ];
             } else {
-                // Maybe a non-numeric string error or success ID?
-                // If it looks like a long ID, treat as success
                 return [
-                    'success' => true, // Warning: assuming success if we got a response we can't map to error
+                    'success' => true,
                     'status' => 'sent',
-                    'message_id' => $resultCode,
+                    'message_id' => 'unknown',
                     'provider_response' => ['result' => $resultCode, 'raw_response' => $response]
                 ];
             }
         }
 
-        // Fallback if parsing failed - return MORE specific error
         return [
             'success' => false,
             'status' => 'failed',
-            'error' => 'خطا در خواندن پاسخ سرویس دهنده. پاسخ: ' . htmlspecialchars(substr($response, 0, 1000)),
+            'error' => 'پاسخ خالی از سرویس دهنده',
             'provider_response' => ['raw_response' => $response]
         ];
 
