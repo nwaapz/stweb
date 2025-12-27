@@ -570,6 +570,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Create lookup for provinces that have branches in CMS database
         const provinceHasBranchesMap = {}; // Name -> Has Branches
+        // Create a comprehensive mapping: API province -> matched GeoJSON feature
+        const apiProvinceMap = {}; // Multiple keys pointing to API province object
+        const provinceIdToMeshMap = {}; // Province ID -> Mesh (for direct lookup)
+        
         if (provinceData.success && provinceData.data && Array.isArray(provinceData.data)) {
             provinceData.data.forEach(p => {
                 // Check if province has branches (branch_count > 0)
@@ -587,9 +591,32 @@ document.addEventListener('DOMContentLoaded', () => {
                         provinceHasBranchesMap[p.slug] = true;
                     }
                 }
+                
+                // Create multiple lookup keys for this API province
+                const normalize = (str) => {
+                    if (!str) return '';
+                    return String(str).trim().toLowerCase().replace(/\s+/g, ' ');
+                };
+                
+                // Store by ID (most reliable)
+                if (p.id) {
+                    apiProvinceMap[p.id] = p;
+                }
+                
+                // Store by normalized names and slug
+                if (p.name) {
+                    apiProvinceMap[normalize(p.name)] = p;
+                }
+                if (p.name_en) {
+                    apiProvinceMap[normalize(p.name_en)] = p;
+                }
+                if (p.slug) {
+                    apiProvinceMap[normalize(p.slug)] = p;
+                }
             });
             const provincesWithBranches = Object.keys(provinceHasBranchesMap);
             console.log(`Found ${provincesWithBranches.length} provinces with branches in CMS:`, provincesWithBranches);
+            console.log(`Created API province map with ${Object.keys(apiProvinceMap).length} lookup keys`);
         } else {
             console.warn('No provinces data received from CMS:', provinceData);
         }
@@ -686,14 +713,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 side: THREE.DoubleSide
             });
 
+            // Try to find matching API province data
+            const normalize = (str) => {
+                if (!str) return '';
+                return String(str).trim().toLowerCase().replace(/\s+/g, ' ');
+            };
+            
+            let matchedApiProvince = null;
+            // Try to match by normalized names
+            if (apiProvinceMap[normalize(provinceName)]) {
+                matchedApiProvince = apiProvinceMap[normalize(provinceName)];
+            } else if (provinceNameEn && apiProvinceMap[normalize(provinceNameEn)]) {
+                matchedApiProvince = apiProvinceMap[normalize(provinceNameEn)];
+            }
+            
             const mesh = new THREE.Mesh(geometry, material);
             mesh.userData = {
                 name: provinceName,
+                nameEn: provinceNameEn, // Store English name for matching
+                apiProvince: matchedApiProvince, // Store matched API province data
+                provinceId: matchedApiProvince ? matchedApiProvince.id : null, // Store province ID for direct lookup
                 address: hasBranches ? 'برای مشاهده شعب کلیک کنید' : 'شعبه فعال وجود ندارد',
                 hasBranches: hasBranches, // True if province has branches in CMS
                 baseColor: baseColor, // Store for reset logic
                 shapes: shapes // Store shapes for dot grid generation
             };
+            
+            // Add to lookup map by province ID if we have a match
+            if (matchedApiProvince && matchedApiProvince.id) {
+                provinceIdToMeshMap[matchedApiProvince.id] = mesh;
+            }
 
             // Add Border/Edge for better visibility
             const edges = new THREE.EdgesGeometry(geometry);
@@ -707,6 +756,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const box = new THREE.Box3().setFromObject(mapGroup);
         const center = box.getCenter(new THREE.Vector3());
         mapGroup.position.sub(center); // Move group so center is at 0,0,0
+        
+        // Log matching summary
+        const matchedCount = Object.keys(provinceIdToMeshMap).length;
+        const totalMeshes = mapGroup.children.length;
+        console.log(`Province matching summary: ${matchedCount} meshes matched to API provinces out of ${totalMeshes} total meshes`);
 
         // --- Create Province List Table ---
         if (provinceData.success && provinceData.data) {
@@ -770,13 +824,79 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
 
                 // Click Action
-                item.onclick = () => {
-                    // Find mesh
-                    const mesh = mapGroup.children.find(m => m.userData.name === p.name);
+                item.onclick = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    let mesh = null;
+                    
+                    // Method 1: Direct lookup by province ID (most reliable)
+                    if (p.id && provinceIdToMeshMap[p.id]) {
+                        mesh = provinceIdToMeshMap[p.id];
+                        console.log(`Found mesh by ID for province: ${p.name} (ID: ${p.id})`);
+                    } else {
+                        // Method 2: Find by matching API province data stored in mesh
+                        mesh = mapGroup.children.find(m => {
+                            if (m.userData.apiProvince && m.userData.apiProvince.id === p.id) {
+                                return true;
+                            }
+                            return false;
+                        });
+                        
+                        if (mesh) {
+                            console.log(`Found mesh by API province match for: ${p.name}`);
+                        }
+                    }
+                    
+                    // Method 3: Fallback to name matching if ID lookup failed
+                    if (!mesh) {
+                        const normalize = (str) => {
+                            if (!str) return '';
+                            return String(str).trim().toLowerCase().replace(/\s+/g, ' ');
+                        };
+                        
+                        const apiName = normalize(p.name);
+                        const apiNameEn = p.name_en ? normalize(p.name_en) : null;
+                        const apiSlug = p.slug ? normalize(p.slug) : null;
+                        
+                        mesh = mapGroup.children.find(m => {
+                            const meshName = normalize(m.userData.name);
+                            const meshNameEn = m.userData.nameEn ? normalize(m.userData.nameEn) : null;
+                            
+                            // Try exact match first
+                            if (meshName === apiName) return true;
+                            if (meshNameEn === apiName) return true;
+                            if (meshName === apiNameEn) return true;
+                            if (meshNameEn === apiNameEn) return true;
+                            
+                            // Try case-insensitive match
+                            if (meshName === apiName) return true;
+                            if (meshNameEn && apiNameEn && meshNameEn === apiNameEn) return true;
+                            
+                            // Try partial match (contains)
+                            if (meshName.includes(apiName) || apiName.includes(meshName)) return true;
+                            if (meshNameEn && apiNameEn && (meshNameEn.includes(apiNameEn) || apiNameEn.includes(meshNameEn))) return true;
+                            
+                            return false;
+                        });
+                        
+                        if (mesh) {
+                            console.log(`Found mesh by name matching for province: ${p.name} -> ${mesh.userData.name}`);
+                        }
+                    }
+                    
                     if (mesh) {
                         selectProvince(mesh);
-                        // Scroll to map top?
-                        container.scrollIntoView({ behavior: 'smooth' });
+                        // Scroll to map top
+                        container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    } else {
+                        console.warn(`Could not find mesh for province: ${p.name} (ID: ${p.id})`, {
+                            availableMeshes: mapGroup.children.map(m => ({
+                                name: m.userData.name,
+                                nameEn: m.userData.nameEn,
+                                provinceId: m.userData.provinceId
+                            }))
+                        });
                     }
                 };
 
