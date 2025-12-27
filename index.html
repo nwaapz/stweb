@@ -449,7 +449,7 @@
 									<div class="main-menu__submenu">
 										<ul class="menu">
 											<li class="menu__item"><a href="account-login.html" class="menu__link">ورود
-													& Register</a></li>
+													و ثبت نام</a></li>
 											<li class="menu__item"><a href="account-dashboard.html"
 													class="menu__link">داشبورد</a></li>
 											<li class="menu__item"><a href="account-garage.html"
@@ -465,7 +465,7 @@
 											<li class="menu__item"><a href="account-edit-address.html"
 													class="menu__link">ویرایش آدرس</a></li>
 											<li class="menu__item"><a href="account-password.html"
-													class="menu__link">Change رمز عبور</a></li>
+													class="menu__link">تغییر رمز</a></li>
 										</ul>
 									</div>
 								</li>
@@ -682,27 +682,13 @@
 							<div class="account-menu">
 								<form class="account-menu__form">
 									<div class="account-menu__form-title">ورود به حساب کاربری شما</div>
-									<div class="form-group"><label for="header-signin-email" class="sr-only">آدرس
-											ایمیل</label> <input id="header-signin-email" type="email"
-											class="form-control form-control-sm" placeholder="آدرس ایمیل"></div>
-									<div class="form-group"><label for="header-signin-password" class="sr-only">رمز
-											عبور</label>
-										<div class="account-menu__form-forgot"><input id="header-signin-password"
-												type="password" class="form-control form-control-sm"
-												placeholder="رمز عبور"> <a href=""
-												class="account-menu__form-forgot-link">فراموش کرده‌اید؟</a></div>
-									</div>
 									<div class="form-group account-menu__form-button"><button type="submit"
 											class="btn btn-primary btn-sm">ورود</button></div>
-									<div class="account-menu__form-link"><a href="account-login.html">ایجاد حساب
-											کاربری</a></div>
 								</form>
 								<div class="account-menu__divider"></div><a href="" class="account-menu__user">
-									<div class="account-menu__user-avatar"><img src="images/avatars/avatar-4.jpg"
-											alt=""></div>
 									<div class="account-menu__user-info">
-										<div class="account-menu__user-name">حسین عبدالمحمدی</div>
-										<div class="account-menu__user-email">hsn@gmail.com</div>
+										<div class="account-menu__user-name" id="account-menu-user-name">حسین عبدالمحمدی</div>
+										<div class="account-menu__user-email" id="account-menu-user-email">hsn@gmail.com</div>
 									</div>
 								</a>
 								<div class="account-menu__divider"></div>
@@ -5509,7 +5495,7 @@
 									<div class="mobile-menu__panel-body">
 										<ul class="mobile-menu__links">
 											<li data-mobile-menu-item><a href="account-login.html" class=""
-													data-mobile-menu-trigger>ورود & Register</a></li>
+													data-mobile-menu-trigger>ورود و ثبت نام</a></li>
 											<li data-mobile-menu-item><a href="account-dashboard.html" class=""
 													data-mobile-menu-trigger>داشبورد</a></li>
 											<li data-mobile-menu-item><a href="account-garage.html" class=""
@@ -5525,7 +5511,7 @@
 											<li data-mobile-menu-item><a href="account-edit-address.html" class=""
 													data-mobile-menu-trigger>ویرایش آدرس</a></li>
 											<li data-mobile-menu-item><a href="account-password.html" class=""
-													data-mobile-menu-trigger>Change رمز عبور</a></li>
+													data-mobile-menu-trigger>تغییر رمز</a></li>
 										</ul>
 									</div>
 								</div>
@@ -6582,6 +6568,86 @@
 	<a href="https://wa.me/989360590157" class="whatsapp-float" target="_blank" title="تماس با ما در واتساپ">
 		<i class="fab fa-whatsapp"></i>
 	</a>
+
+	<!-- User Account Info Script -->
+	<script>
+		(function() {
+			function updateUserAccountInfo() {
+				const userNameEl = document.getElementById('account-menu-user-name');
+				const userEmailEl = document.getElementById('account-menu-user-email');
+				
+				if (!userNameEl || !userEmailEl) {
+					return;
+				}
+				
+				try {
+					// Try to get user data from localStorage
+					const userDataStr = localStorage.getItem('user') || localStorage.getItem('currentUser');
+					
+					if (userDataStr) {
+						const userData = JSON.parse(userDataStr);
+						
+						// If user is logged in
+						if (userData && (userData.id || userData.userId || userData.isLoggedIn)) {
+							// Get user name or mobile number
+							let displayName = '';
+							if (userData.name && userData.name.trim() !== '') {
+								displayName = userData.name;
+							} else if (userData.mobile && userData.mobile.trim() !== '') {
+								displayName = userData.mobile;
+							} else if (userData.phone && userData.phone.trim() !== '') {
+								displayName = userData.phone;
+							} else {
+								displayName = 'کاربر';
+							}
+							
+							// Update name
+							userNameEl.textContent = displayName;
+							
+							// Update email (if available)
+							if (userData.email && userData.email.trim() !== '') {
+								userEmailEl.textContent = userData.email;
+							} else if (userData.mobile && userData.mobile.trim() !== '') {
+								userEmailEl.textContent = userData.mobile;
+							} else {
+								userEmailEl.textContent = '';
+							}
+						} else {
+							// Not logged in
+							userNameEl.textContent = 'وارد نشده';
+							userEmailEl.textContent = '';
+						}
+					} else {
+						// No user data found - not logged in
+						userNameEl.textContent = 'وارد نشده';
+						userEmailEl.textContent = '';
+					}
+				} catch (error) {
+					console.error('Error updating user account info:', error);
+					// Fallback to "not logged in"
+					userNameEl.textContent = 'وارد نشده';
+					userEmailEl.textContent = '';
+				}
+			}
+			
+			// Update on page load
+			if (document.readyState === 'loading') {
+				document.addEventListener('DOMContentLoaded', updateUserAccountInfo);
+			} else {
+				updateUserAccountInfo();
+			}
+			
+			// Update when storage changes (e.g., login/logout in another tab)
+			window.addEventListener('storage', function(e) {
+				if (e.key === 'user' || e.key === 'currentUser') {
+					updateUserAccountInfo();
+				}
+			});
+			
+			// Make function globally available for manual updates
+			window.updateUserAccountInfo = updateUserAccountInfo;
+		})();
+	</script>
 </body>
 
 </html>
