@@ -658,6 +658,11 @@ function getUserOrders($userId, $limit = 20, $offset = 0)
     foreach ($orders as &$order) {
         $order['status_text'] = getOrderStatusText($order['status']);
         $order['formatted_total'] = formatPrice($order['total']);
+        
+        // Get items count
+        $countStmt = $conn->prepare("SELECT SUM(quantity) FROM order_items WHERE order_id = ?");
+        $countStmt->execute([$order['id']]);
+        $order['items_count'] = (int)($countStmt->fetchColumn() ?: 0);
     }
 
     return $orders;
