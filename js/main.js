@@ -2088,6 +2088,9 @@
                 owlCarousel.trigger('next.owl.carousel', [500]);
             });
         });
+        // Static timer removed - now handled dynamically based on product discount_end dates
+        // See index.html for the dynamic timer implementation
+        /*
         $('.block-sale__timer').each(function () {
             const timer = $(this);
             const MINUTE = 60;
@@ -2130,6 +2133,7 @@
 
             updateTimer();
         });
+        */
     });
 
     /*
