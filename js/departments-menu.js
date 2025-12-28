@@ -150,8 +150,13 @@
 
     /**
      * Populate departments menu with categories
+     * DISABLED: Menu now uses static links only
      */
     function populateDepartmentsMenu() {
+        // Disabled - using static links in HTML instead
+        return;
+        
+        /* COMMENTED OUT - Static links are used instead
         const $departmentsList = $('.departments__list');
         if ($departmentsList.length === 0) {
             console.warn('Departments list not found');
@@ -177,6 +182,7 @@
         if (typeof window.initDepartmentsMenu === 'function') {
             window.initDepartmentsMenu();
         }
+        */
     }
 
     /**
@@ -190,7 +196,9 @@
             return;
         }
 
-        // Load categories when button is clicked
+        // DISABLED: Load categories when button is clicked
+        // Static links are used instead of dynamic categories
+        /*
         $departmentsButton.on('click', function() {
             if (!categoriesLoaded) {
                 // Clear any existing items except padding
@@ -214,6 +222,7 @@
                 });
             }
         }
+        */
     }
 
     // Initialize when DOM is ready

@@ -2247,9 +2247,8 @@
                 return false;
             }
 
-            // Redirect to search/category page with selected vehicle
-            // You can customize this URL based on your routing structure
-            const searchUrl = 'category.html?make=' + makeId + '&model=' + modelId;
+            // Redirect to shop page with selected vehicle
+            const searchUrl = 'shop-grid-4-columns-sidebar.html?vehicle=' + modelId;
             window.location.href = searchUrl;
 
             return false;
