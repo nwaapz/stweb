@@ -6,13 +6,13 @@
 
 // Database credentials
 define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_NAME', 'startech_cms');
+define('DB_USER', 'startech_sms');
+define('DB_PASS', '101010');
+define('DB_NAME', 'startech_sms');
 define('DB_CHARSET', 'utf8mb4');
 
 // Site settings
-define('SITE_URL', 'http://localhost/backend');
+define('SITE_URL', 'https://startechgroup.ir/test/backend');
 define('UPLOAD_PATH', __DIR__ . '/../uploads/');
 define('UPLOAD_URL', SITE_URL . '/uploads/');
 
