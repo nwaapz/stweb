@@ -8,9 +8,9 @@
 
 // Database credentials - Edit these values
 $DB_HOST = 'localhost';
-$DB_USER = 'root';
-$DB_PASS = '';
-$DB_NAME = 'startech_cms';
+$DB_USER = 'startech_sms';
+$DB_PASS = '101010';
+$DB_NAME = 'startech_sms';
 $DB_CHARSET = 'utf8mb4';
 
 $errors = [];
@@ -157,6 +157,339 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || isset($_GET['auto'])) {
                 `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 FOREIGN KEY (`author_id`) REFERENCES `admin_users`(`id`) ON DELETE SET NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
+        ");
+        
+        // Create users table (matching migrate_users.php structure)
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `users` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `phone` VARCHAR(15) NOT NULL UNIQUE,
+                `name` VARCHAR(255),
+                `email` VARCHAR(255),
+                `password` VARCHAR(255),
+                `avatar` VARCHAR(500),
+                `is_active` TINYINT(1) DEFAULT 1,
+                `is_blocked` TINYINT(1) DEFAULT 0,
+                `last_login` DATETIME,
+                `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX `idx_phone` (`phone`),
+                INDEX `idx_is_active` (`is_active`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
+        ");
+        
+        // Migrate existing users table from old structure to new structure
+        try {
+            // Check if table has old structure (first_name column exists)
+            $stmt = $pdo->query("SHOW COLUMNS FROM `users` LIKE 'first_name'");
+            if ($stmt->rowCount() > 0) {
+                // Old structure exists - migrate it
+                // Check if phone column exists
+                $stmt = $pdo->query("SHOW COLUMNS FROM `users` LIKE 'phone'");
+                $phoneExists = $stmt->rowCount() > 0;
+                
+                if (!$phoneExists) {
+                    // Add phone column (nullable for now, will be populated from email or set to default)
+                    $pdo->exec("ALTER TABLE `users` ADD COLUMN `phone` VARCHAR(15) NULL AFTER `id`");
+                }
+                
+                // Add name column if it doesn't exist
+                $stmt = $pdo->query("SHOW COLUMNS FROM `users` LIKE 'name'");
+                if ($stmt->rowCount() == 0) {
+                    $pdo->exec("ALTER TABLE `users` ADD COLUMN `name` VARCHAR(255) NULL AFTER `phone`");
+                    // Populate name from first_name and last_name
+                    $pdo->exec("UPDATE `users` SET `name` = CONCAT(COALESCE(`first_name`, ''), ' ', COALESCE(`last_name`, '')) WHERE `name` IS NULL OR `name` = ''");
+                }
+                
+                // Add missing columns
+                $stmt = $pdo->query("SHOW COLUMNS FROM `users` LIKE 'avatar'");
+                if ($stmt->rowCount() == 0) {
+                    $pdo->exec("ALTER TABLE `users` ADD COLUMN `avatar` VARCHAR(500) NULL AFTER `email`");
+                }
+                
+                $stmt = $pdo->query("SHOW COLUMNS FROM `users` LIKE 'is_blocked'");
+                if ($stmt->rowCount() == 0) {
+                    $pdo->exec("ALTER TABLE `users` ADD COLUMN `is_blocked` TINYINT(1) DEFAULT 0 AFTER `is_active`");
+                }
+                
+                $stmt = $pdo->query("SHOW COLUMNS FROM `users` LIKE 'last_login'");
+                if ($stmt->rowCount() == 0) {
+                    $pdo->exec("ALTER TABLE `users` ADD COLUMN `last_login` DATETIME NULL AFTER `is_blocked`");
+                }
+                
+                // Set default phone for users without phone (use a placeholder)
+                $pdo->exec("UPDATE `users` SET `phone` = CONCAT('09', LPAD(`id`, 9, '0')) WHERE `phone` IS NULL OR `phone` = ''");
+                
+                // Make phone NOT NULL and UNIQUE after populating
+                try {
+                    $pdo->exec("ALTER TABLE `users` MODIFY COLUMN `phone` VARCHAR(15) NOT NULL");
+                    $pdo->exec("ALTER TABLE `users` ADD UNIQUE INDEX `idx_phone_unique` (`phone`)");
+                } catch (PDOException $e) {
+                    // Index might already exist, ignore
+                }
+                
+                // Remove old columns (optional - comment out if you want to keep them)
+                // $pdo->exec("ALTER TABLE `users` DROP COLUMN `first_name`");
+                // $pdo->exec("ALTER TABLE `users` DROP COLUMN `last_name`");
+            }
+        } catch (PDOException $e) {
+            // Migration failed, but continue
+            error_log("Users table migration error: " . $e->getMessage());
+        }
+        
+        // Create OTP codes table
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `otp_codes` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `phone` VARCHAR(15) NOT NULL,
+                `code` VARCHAR(6) NOT NULL,
+                `expires_at` DATETIME NOT NULL,
+                `is_used` TINYINT(1) DEFAULT 0,
+                `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX `idx_phone_code` (`phone`, `code`),
+                INDEX `idx_expires` (`expires_at`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
+        ");
+        
+        // Create user_sessions table
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `user_sessions` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `user_id` INT NOT NULL,
+                `token` VARCHAR(64) NOT NULL UNIQUE,
+                `ip_address` VARCHAR(45),
+                `user_agent` TEXT,
+                `expires_at` DATETIME NOT NULL,
+                `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+                INDEX `idx_token` (`token`),
+                INDEX `idx_expires` (`expires_at`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
+        ");
+        
+        // Create user_addresses table
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `user_addresses` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `user_id` INT NOT NULL,
+                `title` VARCHAR(100),
+                `recipient_name` VARCHAR(255) NOT NULL,
+                `landline` VARCHAR(15) NOT NULL,
+                `province` VARCHAR(100) NOT NULL,
+                `city` VARCHAR(100) NOT NULL,
+                `address` TEXT NOT NULL,
+                `postal_code` VARCHAR(20),
+                `is_default` TINYINT(1) DEFAULT 0,
+                `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+                INDEX `idx_user` (`user_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
+        ");
+        
+        // Create cart table
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `cart` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `user_id` INT NOT NULL,
+                `product_id` INT NOT NULL,
+                `quantity` INT NOT NULL DEFAULT 1,
+                `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+                FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON DELETE CASCADE,
+                UNIQUE KEY `unique_user_product` (`user_id`, `product_id`),
+                INDEX `idx_user` (`user_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
+        ");
+        
+        // Create orders table
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `orders` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `user_id` INT NOT NULL,
+                `order_number` VARCHAR(20) NOT NULL UNIQUE,
+                `status` ENUM('pending', 'processing', 'shipped', 'delivered', 'cancelled') DEFAULT 'pending',
+                `subtotal` DECIMAL(15, 0) NOT NULL DEFAULT 0,
+                `shipping_cost` DECIMAL(15, 0) DEFAULT 0,
+                `discount_amount` DECIMAL(15, 0) DEFAULT 0,
+                `total` DECIMAL(15, 0) NOT NULL DEFAULT 0,
+                `shipping_address_id` INT,
+                `shipping_name` VARCHAR(255),
+                `shipping_phone` VARCHAR(15),
+                `shipping_province` VARCHAR(100),
+                `shipping_city` VARCHAR(100),
+                `shipping_address` TEXT,
+                `shipping_postal_code` VARCHAR(20),
+                `notes` TEXT,
+                `admin_notes` TEXT,
+                `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+                INDEX `idx_user` (`user_id`),
+                INDEX `idx_status` (`status`),
+                INDEX `idx_order_number` (`order_number`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
+        ");
+        
+        // Create order_items table
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `order_items` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `order_id` INT NOT NULL,
+                `product_id` INT,
+                `product_name` VARCHAR(255) NOT NULL,
+                `product_image` VARCHAR(500),
+                `product_sku` VARCHAR(100),
+                `price` DECIMAL(15, 0) NOT NULL,
+                `quantity` INT NOT NULL DEFAULT 1,
+                `total` DECIMAL(15, 0) NOT NULL,
+                `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (`order_id`) REFERENCES `orders`(`id`) ON DELETE CASCADE,
+                FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON DELETE SET NULL,
+                INDEX `idx_order` (`order_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
+        ");
+        
+        // Create wishlists table
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `wishlists` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `user_id` INT NOT NULL,
+                `product_id` INT NOT NULL,
+                `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+                FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON DELETE CASCADE,
+                UNIQUE KEY `unique_user_product` (`user_id`, `product_id`),
+                INDEX `idx_user` (`user_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
+        ");
+        
+        // Create compares table
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `compares` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `user_id` INT NOT NULL,
+                `product_id` INT NOT NULL,
+                `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+                FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON DELETE CASCADE,
+                UNIQUE KEY `unique_user_product` (`user_id`, `product_id`),
+                INDEX `idx_user` (`user_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
+        ");
+        
+        // Create provinces table
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `provinces` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `name` VARCHAR(255) NOT NULL,
+                `name_en` VARCHAR(255),
+                `slug` VARCHAR(255) NOT NULL UNIQUE,
+                `description` TEXT,
+                `is_active` TINYINT(1) DEFAULT 1,
+                `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
+        ");
+        
+        // Create branches table
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `branches` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `province_id` INT NOT NULL,
+                `name` VARCHAR(255) NOT NULL,
+                `address` TEXT NOT NULL,
+                `phone` VARCHAR(50),
+                `email` VARCHAR(255),
+                `latitude` DECIMAL(10, 8),
+                `longitude` DECIMAL(11, 8),
+                `sort_order` INT DEFAULT 0,
+                `is_active` TINYINT(1) DEFAULT 1,
+                `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (`province_id`) REFERENCES `provinces`(`id`) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
+        ");
+        
+        // Create user_vehicles table
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `user_vehicles` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `user_id` INT NOT NULL,
+                `vehicle_id` INT DEFAULT NULL,
+                `factory_id` INT DEFAULT NULL,
+                `custom_brand` VARCHAR(255) DEFAULT NULL,
+                `custom_model` VARCHAR(255) DEFAULT NULL,
+                `engine` VARCHAR(255) DEFAULT NULL,
+                `year` INT DEFAULT NULL,
+                `vin` VARCHAR(255) DEFAULT NULL,
+                `type` ENUM('car', 'motorcycle', 'truck') DEFAULT 'car',
+                `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+                FOREIGN KEY (`vehicle_id`) REFERENCES `vehicles`(`id`) ON DELETE SET NULL,
+                FOREIGN KEY (`factory_id`) REFERENCES `factories`(`id`) ON DELETE SET NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
+        ");
+        
+        // Create about_page table
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `about_page` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `title` VARCHAR(255) NOT NULL DEFAULT 'درباره ما',
+                `description` TEXT,
+                `author_name` VARCHAR(255),
+                `author_title` VARCHAR(255),
+                `feature_image` VARCHAR(500),
+                `is_active` TINYINT(1) DEFAULT 1,
+                `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
+        ");
+        
+        // Create about_team table
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `about_team` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `name` VARCHAR(255) NOT NULL,
+                `position` VARCHAR(255) NOT NULL,
+                `description` TEXT,
+                `image` VARCHAR(500),
+                `sort_order` INT DEFAULT 0,
+                `is_active` TINYINT(1) DEFAULT 1,
+                `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
+        ");
+        
+        // Create about_testimonials table
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `about_testimonials` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `text` TEXT NOT NULL,
+                `author_name` VARCHAR(255) NOT NULL,
+                `author_title` VARCHAR(255),
+                `rating` INT DEFAULT 5,
+                `avatar` VARCHAR(500),
+                `sort_order` INT DEFAULT 0,
+                `is_active` TINYINT(1) DEFAULT 1,
+                `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
+        ");
+        
+        // Create about_statistics table
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `about_statistics` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `value` VARCHAR(50) NOT NULL,
+                `title` VARCHAR(255) NOT NULL,
+                `sort_order` INT DEFAULT 0,
+                `is_active` TINYINT(1) DEFAULT 1,
+                `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci
         ");
         

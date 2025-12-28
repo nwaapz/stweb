@@ -30,18 +30,63 @@ $stats = [
 // User/Order stats (only if tables exist)
 if ($usersTableExists) {
     $stats['users'] = $conn->query("SELECT COUNT(*) FROM users")->fetchColumn();
-    $stats['orders'] = $conn->query("SELECT COUNT(*) FROM orders")->fetchColumn();
-    $stats['pending_orders'] = $conn->query("SELECT COUNT(*) FROM orders WHERE status = 'pending'")->fetchColumn();
-    $stats['revenue'] = $conn->query("SELECT COALESCE(SUM(total), 0) FROM orders WHERE status != 'cancelled'")->fetchColumn();
+    
+    // Check if orders table exists
+    $ordersTableExists = false;
+    try {
+        $conn->query("SELECT 1 FROM orders LIMIT 1");
+        $ordersTableExists = true;
+    } catch (Exception $e) {
+        $ordersTableExists = false;
+    }
+    
+    if ($ordersTableExists) {
+        $stats['orders'] = $conn->query("SELECT COUNT(*) FROM orders")->fetchColumn();
+        $stats['pending_orders'] = $conn->query("SELECT COUNT(*) FROM orders WHERE status = 'pending'")->fetchColumn();
+        $stats['revenue'] = $conn->query("SELECT COALESCE(SUM(total), 0) FROM orders WHERE status != 'cancelled'")->fetchColumn();
 
-    // Recent orders
-    $stmt = $conn->query("
-        SELECT o.*, u.name as user_name, u.phone as user_phone 
-        FROM orders o 
-        JOIN users u ON o.user_id = u.id 
-        ORDER BY o.created_at DESC LIMIT 5
-    ");
-    $recentOrders = $stmt->fetchAll();
+        // Check if users table has phone column (new structure) or first_name/last_name (old structure)
+        $hasPhoneColumn = false;
+        $hasNameColumn = false;
+        try {
+            $stmt = $conn->query("SHOW COLUMNS FROM users LIKE 'phone'");
+            $hasPhoneColumn = $stmt->rowCount() > 0;
+            $stmt = $conn->query("SHOW COLUMNS FROM users LIKE 'name'");
+            $hasNameColumn = $stmt->rowCount() > 0;
+        } catch (PDOException $e) {
+            // Ignore
+        }
+        
+        // Recent orders - handle both old and new table structures
+        try {
+            if ($hasPhoneColumn && $hasNameColumn) {
+                // New structure: phone and name columns
+                $stmt = $conn->query("
+                    SELECT o.*, u.name as user_name, u.phone as user_phone 
+                    FROM orders o 
+                    JOIN users u ON o.user_id = u.id 
+                    ORDER BY o.created_at DESC LIMIT 5
+                ");
+            } else {
+                // Old structure: first_name, last_name, email
+                $stmt = $conn->query("
+                    SELECT o.*, CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, '')) as user_name, COALESCE(u.email, '') as user_phone 
+                    FROM orders o 
+                    JOIN users u ON o.user_id = u.id 
+                    ORDER BY o.created_at DESC LIMIT 5
+                ");
+            }
+            $recentOrders = $stmt->fetchAll();
+        } catch (PDOException $e) {
+            // If query fails, set empty array
+            $recentOrders = [];
+        }
+    } else {
+        $stats['orders'] = 0;
+        $stats['pending_orders'] = 0;
+        $stats['revenue'] = 0;
+        $recentOrders = [];
+    }
 }
 
 // Get recent products
