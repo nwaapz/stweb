@@ -1204,16 +1204,19 @@ function getCartSummary($userId)
     $items = $stmt->fetchAll();
 
     $subtotal = 0;
+    $totalItems = 0;
     foreach ($items as &$item) {
         $item['price'] = (float) $item['effective_price'];
         $item['line_total'] = $item['price'] * $item['quantity'];
         $subtotal += $item['line_total'];
+        $totalItems += (int) $item['quantity'];
         $item['formatted_price'] = formatPrice($item['price']);
         $item['formatted_line_total'] = formatPrice($item['line_total']);
     }
 
     return [
         'items' => $items,
+        'total_items' => $totalItems,
         'subtotal' => $subtotal,
         'formatted_subtotal' => formatPrice($subtotal),
         'shipping' => 0,

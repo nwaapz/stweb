@@ -197,7 +197,13 @@ C9.2,7.8,9.2,8.4,8.8,8.8z"/>
         const counterEl = indicator.querySelector('.indicator__counter');
         const valueEl = indicator.querySelector('.indicator__value');
 
-        const totalItems = data.total_items || (data.items ? data.items.length : 0);
+        // Calculate total items (sum of quantities)
+        let totalItems = 0;
+        if (data.total_items !== undefined) {
+            totalItems = data.total_items;
+        } else if (data.items && Array.isArray(data.items)) {
+            totalItems = data.items.reduce((sum, item) => sum + (item.quantity || 1), 0);
+        }
 
         // Update desktop counter
         if (counterEl) {
@@ -212,7 +218,7 @@ C9.2,7.8,9.2,8.4,8.8,8.8z"/>
             }
         }
 
-        // Update mobile counter (if exists)
+        // Update mobile counter in header (if exists)
         const mobileCounterEl = document.querySelector('.mobile-indicator__counter');
         if (mobileCounterEl) {
             mobileCounterEl.textContent = totalItems;
@@ -221,6 +227,18 @@ C9.2,7.8,9.2,8.4,8.8,8.8z"/>
                 mobileCounterEl.style.visibility = 'visible';
             } else {
                 mobileCounterEl.style.display = 'none';
+            }
+        }
+
+        // Update mobile menu indicator counter (in mobile menu)
+        const mobileMenuCounterEl = document.querySelector('.mobile-menu__indicator-counter');
+        if (mobileMenuCounterEl) {
+            mobileMenuCounterEl.textContent = totalItems;
+            if (totalItems > 0) {
+                mobileMenuCounterEl.style.display = '';
+                mobileMenuCounterEl.style.visibility = 'visible';
+            } else {
+                mobileMenuCounterEl.style.display = 'none';
             }
         }
 
