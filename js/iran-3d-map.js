@@ -1,6 +1,8 @@
 
-// Wait for DOM to be ready
-document.addEventListener('DOMContentLoaded', () => {
+// Initialize map - handle both early and late script loading
+(function() {
+	// If DOMContentLoaded already fired, run immediately, otherwise wait for it
+	const init = () => {
     // Configuration
     const CONFIG = {
         containerId: 'iran-3d-map-container',
@@ -1149,5 +1151,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     animate();
 
-});  // Close DOMContentLoaded listener
+	};
+	
+	// If DOM is already loaded, run immediately, otherwise wait for DOMContentLoaded
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', init);
+	} else {
+		init();
+	}
+})(); // Close wrapper
 
