@@ -299,8 +299,14 @@ function isLoggedIn()
 function requireLogin()
 {
     if (!isLoggedIn()) {
-        header('Location: login.php');
-        exit;
+        if (!headers_sent()) {
+            header('Location: login.php');
+            exit;
+        } else {
+            // If headers already sent, use JavaScript redirect
+            echo '<script>window.location.href = "login.php";</script>';
+            exit;
+        }
     }
 }
 

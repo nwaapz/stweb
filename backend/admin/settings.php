@@ -4,8 +4,23 @@
  * تنظیمات سایت
  */
 
-$pageTitle = 'تنظیمات';
-require_once 'header.php';
+// Start output buffering
+ob_start();
+
+session_start();
+require_once '../config/database.php';
+require_once '../includes/functions.php';
+
+if (!isLoggedIn()) {
+    ob_end_clean();
+    if (!headers_sent()) {
+        header('Location: login.php');
+        exit;
+    } else {
+        echo '<script>window.location.href = "login.php";</script>';
+        exit;
+    }
+}
 
 $conn = getConnection();
 
@@ -27,7 +42,7 @@ function setSetting($key, $value) {
     $stmt->execute([$key, $value, $value]);
 }
 
-// Handle form submission
+// Handle form submission - MUST be before header.php is included
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     setSetting('site_name', sanitize($_POST['site_name'] ?? ''));
     setSetting('site_description', sanitize($_POST['site_description'] ?? ''));
@@ -37,9 +52,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     setSetting('currency', sanitize($_POST['currency'] ?? 'تومان'));
     
     setFlashMessage('success', 'تنظیمات با موفقیت ذخیره شد');
-    header('Location: settings.php');
-    exit;
+    
+    // Clear buffer and redirect
+    ob_end_clean();
+    if (!headers_sent()) {
+        header('Location: settings.php');
+        exit;
+    } else {
+        echo '<script>window.location.href = "settings.php";</script>';
+        exit;
+    }
 }
+
+$pageTitle = 'تنظیمات';
+require_once 'header.php';
 
 $flash = getFlashMessage();
 ?>
@@ -161,4 +187,7 @@ $flash = getFlashMessage();
     </div>
 </div>
 
-<?php require_once 'footer.php'; ?>
+<?php 
+require_once 'footer.php'; 
+ob_end_flush(); // Flush output buffer
+?>

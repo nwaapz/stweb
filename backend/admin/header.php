@@ -5,7 +5,18 @@
  */
 
 require_once __DIR__ . '/../includes/functions.php';
-requireLogin();
+
+// Check login - but don't redirect if headers already sent
+if (!isLoggedIn()) {
+    if (!headers_sent()) {
+        header('Location: login.php');
+        exit;
+    } else {
+        // Headers already sent - output JavaScript redirect and stop
+        echo '<script>window.location.href = "login.php";</script>';
+        exit;
+    }
+}
 
 $currentPage = basename($_SERVER['PHP_SELF'], '.php');
 ?>

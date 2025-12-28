@@ -4,6 +4,9 @@
  * مدیریت سفارشات
  */
 
+// Start output buffering to prevent headers already sent errors
+ob_start();
+
 session_start();
 require_once '../config/database.php';
 require_once '../includes/functions.php';
@@ -11,11 +14,39 @@ require_once '../includes/user_functions.php';
 require_once '../includes/sms_service.php';
 
 if (!isLoggedIn()) {
-    header('Location: login.php');
-    exit;
+    ob_end_clean(); // Clear any output
+    if (!headers_sent()) {
+        header('Location: login.php');
+        exit;
+    } else {
+        echo '<script>window.location.href = "login.php";</script>';
+        exit;
+    }
 }
 
 $conn = getConnection();
+
+// Check users table structure
+$hasPhoneColumn = false;
+$hasNameColumn = false;
+$hasFirstNameColumn = false;
+$hasLastNameColumn = false;
+$hasEmailColumn = false;
+
+try {
+    $stmt = $conn->query("SHOW COLUMNS FROM users");
+    $columns = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    
+    $hasPhoneColumn = in_array('phone', $columns);
+    $hasNameColumn = in_array('name', $columns);
+    $hasFirstNameColumn = in_array('first_name', $columns);
+    $hasLastNameColumn = in_array('last_name', $columns);
+    $hasEmailColumn = in_array('email', $columns);
+} catch (PDOException $e) {
+    // Default to new structure if we can't check
+    $hasPhoneColumn = true;
+    $hasNameColumn = true;
+}
 
 // Handle status update
 if (isset($_POST['update_status'])) {
@@ -26,16 +57,24 @@ if (isset($_POST['update_status'])) {
     if (in_array($newStatus, $allowed)) {
         $conn->prepare("UPDATE orders SET status = ? WHERE id = ?")->execute([$newStatus, $orderId]);
 
-        // Send SMS notification
-        $stmt = $conn->prepare("
-            SELECT o.*, u.phone FROM orders o 
-            JOIN users u ON o.user_id = u.id 
-            WHERE o.id = ?
-        ");
+        // Send SMS notification - get phone number based on table structure
+        if ($hasPhoneColumn) {
+            $stmt = $conn->prepare("
+                SELECT o.*, u.phone FROM orders o 
+                JOIN users u ON o.user_id = u.id 
+                WHERE o.id = ?
+            ");
+        } else {
+            $stmt = $conn->prepare("
+                SELECT o.*, u.email as phone FROM orders o 
+                JOIN users u ON o.user_id = u.id 
+                WHERE o.id = ?
+            ");
+        }
         $stmt->execute([$orderId]);
         $order = $stmt->fetch();
 
-        if ($order) {
+        if ($order && !empty($order['phone'])) {
             $statusTexts = [
                 'processing' => 'در حال پردازش',
                 'shipped' => 'ارسال شده',
@@ -48,8 +87,16 @@ if (isset($_POST['update_status'])) {
             }
         }
     }
-    header('Location: ' . $_SERVER['REQUEST_URI']);
-    exit;
+    // Redirect before any output - clear buffer first
+    ob_end_clean();
+    if (!headers_sent()) {
+        header('Location: ' . $_SERVER['REQUEST_URI']);
+        exit;
+    } else {
+        // If headers already sent, use JavaScript redirect
+        echo '<script>window.location.href = "' . htmlspecialchars($_SERVER['REQUEST_URI']) . '";</script>';
+        exit;
+    }
 }
 
 // Filters
@@ -58,17 +105,46 @@ $status = $_GET['status'] ?? '';
 $dateFrom = $_GET['date_from'] ?? '';
 $dateTo = $_GET['date_to'] ?? '';
 
-// Build query
-$sql = "SELECT o.*, u.name as user_name, u.phone as user_phone 
-        FROM orders o 
-        JOIN users u ON o.user_id = u.id 
-        WHERE 1=1";
+// Build query - handle both table structures
+if ($hasPhoneColumn && $hasNameColumn) {
+    // New structure
+    $sql = "SELECT o.*, u.name as user_name, u.phone as user_phone 
+            FROM orders o 
+            JOIN users u ON o.user_id = u.id 
+            WHERE 1=1";
+} elseif ($hasFirstNameColumn || $hasLastNameColumn) {
+    // Old structure
+    $sql = "SELECT o.*, CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, '')) as user_name, 
+            COALESCE(u.email, '') as user_phone 
+            FROM orders o 
+            JOIN users u ON o.user_id = u.id 
+            WHERE 1=1";
+} else {
+    // Fallback
+    $sql = "SELECT o.*, '' as user_name, '' as user_phone 
+            FROM orders o 
+            WHERE 1=1";
+}
 $params = [];
 
 if ($search) {
-    $sql .= " AND (o.order_number LIKE ? OR u.phone LIKE ? OR u.name LIKE ?)";
+    $searchConditions = ["o.order_number LIKE ?"];
+    
+    if ($hasPhoneColumn) {
+        $searchConditions[] = "u.phone LIKE ?";
+    } elseif ($hasEmailColumn) {
+        $searchConditions[] = "u.email LIKE ?";
+    }
+    
+    if ($hasNameColumn) {
+        $searchConditions[] = "u.name LIKE ?";
+    } elseif ($hasFirstNameColumn || $hasLastNameColumn) {
+        $searchConditions[] = "CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, '')) LIKE ?";
+    }
+    
+    $sql .= " AND (" . implode(" OR ", $searchConditions) . ")";
     $searchParam = "%$search%";
-    $params = array_merge($params, [$searchParam, $searchParam, $searchParam]);
+    $params = array_fill(0, count($searchConditions), $searchParam);
 }
 
 if ($status) {
@@ -246,4 +322,7 @@ include 'header.php';
     </div>
 </main>
 
-<?php include 'footer.php'; ?>
+<?php 
+include 'footer.php'; 
+ob_end_flush(); // Flush output buffer
+?>

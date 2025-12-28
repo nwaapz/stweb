@@ -48,16 +48,26 @@ if ($usersTableExists) {
         // Check if users table has phone column (new structure) or first_name/last_name (old structure)
         $hasPhoneColumn = false;
         $hasNameColumn = false;
+        $hasFirstNameColumn = false;
+        $hasLastNameColumn = false;
+        
         try {
-            $stmt = $conn->query("SHOW COLUMNS FROM users LIKE 'phone'");
-            $hasPhoneColumn = $stmt->rowCount() > 0;
-            $stmt = $conn->query("SHOW COLUMNS FROM users LIKE 'name'");
-            $hasNameColumn = $stmt->rowCount() > 0;
+            // Get all columns from users table
+            $stmt = $conn->query("SHOW COLUMNS FROM users");
+            $columns = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            
+            $hasPhoneColumn = in_array('phone', $columns);
+            $hasNameColumn = in_array('name', $columns);
+            $hasFirstNameColumn = in_array('first_name', $columns);
+            $hasLastNameColumn = in_array('last_name', $columns);
         } catch (PDOException $e) {
-            // Ignore
+            // If we can't check columns, assume old structure
+            $hasFirstNameColumn = true;
+            $hasLastNameColumn = true;
         }
         
         // Recent orders - handle both old and new table structures
+        $recentOrders = [];
         try {
             if ($hasPhoneColumn && $hasNameColumn) {
                 // New structure: phone and name columns
@@ -67,7 +77,8 @@ if ($usersTableExists) {
                     JOIN users u ON o.user_id = u.id 
                     ORDER BY o.created_at DESC LIMIT 5
                 ");
-            } else {
+                $recentOrders = $stmt->fetchAll();
+            } elseif ($hasFirstNameColumn || $hasLastNameColumn) {
                 // Old structure: first_name, last_name, email
                 $stmt = $conn->query("
                     SELECT o.*, CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, '')) as user_name, COALESCE(u.email, '') as user_phone 
@@ -75,10 +86,19 @@ if ($usersTableExists) {
                     JOIN users u ON o.user_id = u.id 
                     ORDER BY o.created_at DESC LIMIT 5
                 ");
+                $recentOrders = $stmt->fetchAll();
+            } else {
+                // Fallback: just get order data without user info
+                $stmt = $conn->query("
+                    SELECT o.*, '' as user_name, '' as user_phone 
+                    FROM orders o 
+                    ORDER BY o.created_at DESC LIMIT 5
+                ");
+                $recentOrders = $stmt->fetchAll();
             }
-            $recentOrders = $stmt->fetchAll();
         } catch (PDOException $e) {
-            // If query fails, set empty array
+            // If query fails, set empty array and log error
+            error_log("Error fetching recent orders: " . $e->getMessage());
             $recentOrders = [];
         }
     } else {

@@ -18,7 +18,15 @@ $conn = getConnection();
 // Handle block/unblock
 if (isset($_GET['toggle_block'])) {
     $userId = (int) $_GET['toggle_block'];
-    $conn->prepare("UPDATE users SET is_blocked = NOT is_blocked WHERE id = ?")->execute([$userId]);
+    // Check if is_blocked column exists
+    try {
+        $stmt = $conn->query("SHOW COLUMNS FROM users LIKE 'is_blocked'");
+        if ($stmt->rowCount() > 0) {
+            $conn->prepare("UPDATE users SET is_blocked = NOT is_blocked WHERE id = ?")->execute([$userId]);
+        }
+    } catch (PDOException $e) {
+        // Column doesn't exist, ignore
+    }
     header('Location: users.php');
     exit;
 }
@@ -26,6 +34,32 @@ if (isset($_GET['toggle_block'])) {
 // Filters
 $search = $_GET['search'] ?? '';
 $status = $_GET['status'] ?? '';
+
+// Check table structure
+$hasPhoneColumn = false;
+$hasNameColumn = false;
+$hasFirstNameColumn = false;
+$hasLastNameColumn = false;
+$hasCreatedAtColumn = false;
+$hasIsBlockedColumn = false;
+
+try {
+    $stmt = $conn->query("SHOW COLUMNS FROM users");
+    $columns = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    
+    $hasPhoneColumn = in_array('phone', $columns);
+    $hasNameColumn = in_array('name', $columns);
+    $hasFirstNameColumn = in_array('first_name', $columns);
+    $hasLastNameColumn = in_array('last_name', $columns);
+    $hasCreatedAtColumn = in_array('created_at', $columns);
+    $hasIsBlockedColumn = in_array('is_blocked', $columns);
+} catch (PDOException $e) {
+    // Default to new structure if we can't check
+    $hasPhoneColumn = true;
+    $hasNameColumn = true;
+    $hasCreatedAtColumn = true;
+    $hasIsBlockedColumn = true;
+}
 
 // Build query
 $sql = "SELECT u.*, 
@@ -35,18 +69,48 @@ $sql = "SELECT u.*,
 $params = [];
 
 if ($search) {
-    $sql .= " AND (u.phone LIKE ? OR u.name LIKE ? OR u.email LIKE ?)";
-    $searchParam = "%$search%";
-    $params = array_merge($params, [$searchParam, $searchParam, $searchParam]);
+    $searchConditions = [];
+    if ($hasPhoneColumn) {
+        $searchConditions[] = "u.phone LIKE ?";
+    }
+    if ($hasNameColumn) {
+        $searchConditions[] = "u.name LIKE ?";
+    } elseif ($hasFirstNameColumn || $hasLastNameColumn) {
+        $searchConditions[] = "CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, '')) LIKE ?";
+    }
+    // Check if email column exists
+    $hasEmailColumn = false;
+    try {
+        $stmt = $conn->query("SHOW COLUMNS FROM users LIKE 'email'");
+        $hasEmailColumn = $stmt->rowCount() > 0;
+    } catch (PDOException $e) {
+        // Ignore
+    }
+    if ($hasEmailColumn) {
+        $searchConditions[] = "u.email LIKE ?";
+    }
+    
+    if (!empty($searchConditions)) {
+        $sql .= " AND (" . implode(" OR ", $searchConditions) . ")";
+        $searchParam = "%$search%";
+        $params = array_fill(0, count($searchConditions), $searchParam);
+    }
 }
 
-if ($status === 'active') {
-    $sql .= " AND u.is_blocked = 0";
-} elseif ($status === 'blocked') {
-    $sql .= " AND u.is_blocked = 1";
+if ($hasIsBlockedColumn) {
+    if ($status === 'active') {
+        $sql .= " AND u.is_blocked = 0";
+    } elseif ($status === 'blocked') {
+        $sql .= " AND u.is_blocked = 1";
+    }
 }
 
-$sql .= " ORDER BY u.created_at DESC";
+// Order by - use created_at if exists, otherwise use id
+if ($hasCreatedAtColumn) {
+    $sql .= " ORDER BY u.created_at DESC";
+} else {
+    $sql .= " ORDER BY u.id DESC";
+}
 
 $stmt = $conn->prepare($sql);
 $stmt->execute($params);
@@ -54,8 +118,18 @@ $users = $stmt->fetchAll();
 
 // Stats
 $totalUsers = $conn->query("SELECT COUNT(*) FROM users")->fetchColumn();
-$activeUsers = $conn->query("SELECT COUNT(*) FROM users WHERE is_blocked = 0")->fetchColumn();
-$todayUsers = $conn->query("SELECT COUNT(*) FROM users WHERE DATE(created_at) = CURDATE()")->fetchColumn();
+
+if ($hasIsBlockedColumn) {
+    $activeUsers = $conn->query("SELECT COUNT(*) FROM users WHERE is_blocked = 0")->fetchColumn();
+} else {
+    $activeUsers = $totalUsers; // If no is_blocked column, assume all are active
+}
+
+if ($hasCreatedAtColumn) {
+    $todayUsers = $conn->query("SELECT COUNT(*) FROM users WHERE DATE(created_at) = CURDATE()")->fetchColumn();
+} else {
+    $todayUsers = 0;
+}
 
 $pageTitle = 'مدیریت مشتریان';
 include 'header.php';
@@ -148,18 +222,36 @@ include 'header.php';
                                     <tr>
                                         <td><?= $u['id'] ?></td>
                                         <td>
-                                            <strong><?= htmlspecialchars($u['name'] ?: '-') ?></strong>
-                                            <?php if ($u['email']): ?>
+                                            <?php
+                                            $userName = '';
+                                            if ($hasNameColumn && !empty($u['name'])) {
+                                                $userName = $u['name'];
+                                            } elseif ($hasFirstNameColumn || $hasLastNameColumn) {
+                                                $userName = trim(($u['first_name'] ?? '') . ' ' . ($u['last_name'] ?? ''));
+                                            }
+                                            ?>
+                                            <strong><?= htmlspecialchars($userName ?: '-') ?></strong>
+                                            <?php if (!empty($u['email'])): ?>
                                                 <br><small class="text-muted"><?= htmlspecialchars($u['email']) ?></small>
                                             <?php endif; ?>
                                         </td>
-                                        <td><?= htmlspecialchars($u['phone']) ?></td>
+                                        <td><?= htmlspecialchars($u['phone'] ?? $u['email'] ?? '-') ?></td>
                                         <td><?= number_format($u['order_count']) ?></td>
                                         <td><?= formatPrice($u['total_spent'] ?? 0) ?></td>
-                                        <td><?= date('Y/m/d', strtotime($u['created_at'])) ?></td>
                                         <td>
-                                            <?php if ($u['is_blocked']): ?>
-                                                <span class="badge bg-danger">مسدود</span>
+                                            <?php if ($hasCreatedAtColumn && !empty($u['created_at'])): ?>
+                                                <?= date('Y/m/d', strtotime($u['created_at'])) ?>
+                                            <?php else: ?>
+                                                -
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <?php if ($hasIsBlockedColumn): ?>
+                                                <?php if ($u['is_blocked']): ?>
+                                                    <span class="badge bg-danger">مسدود</span>
+                                                <?php else: ?>
+                                                    <span class="badge bg-success">فعال</span>
+                                                <?php endif; ?>
                                             <?php else: ?>
                                                 <span class="badge bg-success">فعال</span>
                                             <?php endif; ?>
