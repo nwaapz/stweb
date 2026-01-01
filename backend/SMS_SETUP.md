@@ -132,3 +132,4 @@ The `sms_logs` table is automatically created with:
 3. Monitor SMS logs to ensure delivery
 4. Set up alerts for failed SMS attempts if needed
 
+

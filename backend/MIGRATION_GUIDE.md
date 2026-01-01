@@ -94,3 +94,4 @@ DESCRIBE table_name;
 ### خطا: "Access denied"
 اطمینان حاصل کنید که اطلاعات اتصال به پایگاه داده در `config/database.php` صحیح است.
 
+

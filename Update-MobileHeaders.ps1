@@ -73,3 +73,4 @@ foreach ($file in $htmlFiles) {
 Write-Host "`n" + ("=" * 60)
 Write-Host "Summary: $updated files updated, $skipped files skipped" -ForegroundColor Cyan
 
+
